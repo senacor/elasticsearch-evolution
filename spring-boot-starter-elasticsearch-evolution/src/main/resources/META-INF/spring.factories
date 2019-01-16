@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.senacor.elasticsearch.evolution.spring.boot.starter.autoconfigure.ElasticsearchEvolutionAutoConfiguration
