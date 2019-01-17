@@ -51,7 +51,8 @@ public class ElasticsearchEvolution {
      */
     public ElasticsearchEvolution(ElasticsearchEvolutionConfig elasticsearchEvolutionProperties,
                                   RestHighLevelClient restHighLevelClient) {
-        this.elasticsearchEvolutionProperties = requireNonNull(elasticsearchEvolutionProperties, "elasticsearchEvolutionProperties must not be null");
+        this.elasticsearchEvolutionProperties = requireNonNull(elasticsearchEvolutionProperties, "elasticsearchEvolutionProperties must not be null")
+                .validate();
         this.restHighLevelClient = requireNonNull(restHighLevelClient, "restHighLevelClient must not be null");
     }
 
