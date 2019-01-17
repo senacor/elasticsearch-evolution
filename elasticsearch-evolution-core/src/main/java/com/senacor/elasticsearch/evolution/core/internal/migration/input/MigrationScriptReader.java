@@ -3,8 +3,16 @@ package com.senacor.elasticsearch.evolution.core.internal.migration.input;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 
 import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Andreas Keefer
@@ -38,7 +46,44 @@ public class MigrationScriptReader {
      * @return List of {@link RawMigrationScript}'s
      */
     public List<RawMigrationScript> read() {
-        // TODO (ak) impl
-        return Collections.emptyList();
+        List<RawMigrationScript> scriptList = new ArrayList<RawMigrationScript>();
+        for (String location : this.locations) {
+            for (String suffix : this.esMigrationSuffixes) {
+                try {
+                    Files.walk(Paths.get(location))
+                            .filter(path -> {
+                                String fileName = path.getFileName().toString();
+                                return fileName.startsWith(this.esMigrationPrefix) && fileName.endsWith(suffix);
+                            })
+                            .map(this::readFile)
+                            .forEach(scriptList::add);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return scriptList;
+    }
+
+    private RawMigrationScript readFile(Path path) {
+        try (Stream<String> stream = Files.lines(path)) {
+
+            String content = stream.collect(Collectors.joining("\n"));
+
+            return new RawMigrationScript().setContent(content).setFileName(path.getFileName().toString());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            //should probably handle this better
+            return new RawMigrationScript();
+        }
+    }
+
+    public static void main(String[] args) {
+        MigrationScriptReader reader = new MigrationScriptReader(Arrays.asList(".\\elasticsearch-evolution\\resources"),
+                Charset.defaultCharset(), "V", Arrays.asList(".txt", ".http"));
+        List<RawMigrationScript> scriptList = reader.read();
+        System.out.println(scriptList);
     }
 }

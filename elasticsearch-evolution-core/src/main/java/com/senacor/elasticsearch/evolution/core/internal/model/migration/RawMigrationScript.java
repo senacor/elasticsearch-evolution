@@ -34,4 +34,8 @@ public class RawMigrationScript {
         this.content = content;
         return this;
     }
+
+    public String toString() {
+        return "Filename: " + fileName + ", content: " + content;
+    }
 }
