@@ -5,8 +5,6 @@ import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigr
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -67,7 +65,7 @@ public class MigrationScriptReader {
     }
 
     private RawMigrationScript readFile(Path path) {
-        try (Stream<String> stream = Files.lines(path)) {
+        try (Stream<String> stream = Files.lines(path, this.encoding)) {
 
             String content = stream.collect(Collectors.joining("\n"));
 
@@ -78,12 +76,5 @@ public class MigrationScriptReader {
             //should probably handle this better
             return new RawMigrationScript();
         }
-    }
-
-    public static void main(String[] args) {
-        MigrationScriptReader reader = new MigrationScriptReader(Arrays.asList(".\\elasticsearch-evolution\\resources"),
-                Charset.defaultCharset(), "V", Arrays.asList(".txt", ".http"));
-        List<RawMigrationScript> scriptList = reader.read();
-        System.out.println(scriptList);
     }
 }
