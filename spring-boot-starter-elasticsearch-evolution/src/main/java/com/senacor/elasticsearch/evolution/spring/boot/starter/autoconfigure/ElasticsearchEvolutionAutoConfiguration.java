@@ -1,7 +1,7 @@
 package com.senacor.elasticsearch.evolution.spring.boot.starter.autoconfigure;
 
 import com.senacor.elasticsearch.evolution.core.ElasticsearchEvolution;
-import com.senacor.elasticsearch.evolution.core.ElasticsearchEvolutionProperties;
+import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
@@ -25,14 +25,14 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConditionalOnProperty(prefix = "spring.elasticsearch.evolution", name = "enabled", havingValue = "true", matchIfMissing = true)
 @ConditionalOnClass(ElasticsearchEvolution.class)
-@EnableConfigurationProperties({ElasticsearchEvolutionProperties.class})
+@EnableConfigurationProperties({ElasticsearchEvolutionConfig.class})
 @AutoConfigureAfter(RestClientAutoConfiguration.class)
 public class ElasticsearchEvolutionAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnBean(RestHighLevelClient.class)
-    public ElasticsearchEvolution elasticsearchEvolution(ElasticsearchEvolutionProperties elasticsearchEvolutionProperties,
+    public ElasticsearchEvolution elasticsearchEvolution(ElasticsearchEvolutionConfig elasticsearchEvolutionProperties,
                                                          RestHighLevelClient restHighLevelClient) {
         return new ElasticsearchEvolution(elasticsearchEvolutionProperties, restHighLevelClient);
     }
