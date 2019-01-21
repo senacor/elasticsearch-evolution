@@ -16,6 +16,14 @@ public class AssertionUtils {
         return obj;
     }
 
+    public static String requireNotBlank(String obj, String message) {
+        Objects.requireNonNull(obj, message);
+        if (obj.trim().isEmpty()) {
+            throw new IllegalStateException(message);
+        }
+        return obj;
+    }
+
     public static Collection<?> requireNotEmpty(Collection<?> obj, String message) {
         Objects.requireNonNull(obj, message);
         if (obj.isEmpty()) {

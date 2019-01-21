@@ -1,5 +1,8 @@
 package com.senacor.elasticsearch.evolution.core.internal.model.dbhistory;
 
+import com.senacor.elasticsearch.evolution.core.internal.model.FileNameInfo;
+import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
+
 import java.time.ZonedDateTime;
 
 /**
@@ -7,12 +10,12 @@ import java.time.ZonedDateTime;
  *
  * @author Andreas Keefer
  */
-public class MigrationScriptProtocol {
+public class MigrationScriptProtocol implements FileNameInfo {
 
     /**
      * not-null
      */
-    private String version;
+    private MigrationVersion version;
 
     /**
      * The index this scrip was applied to
@@ -62,12 +65,21 @@ public class MigrationScriptProtocol {
     public MigrationScriptProtocol() {
     }
 
-    public String getVersion() {
+    @Override
+    public MigrationVersion getVersion() {
         return version;
     }
 
-    public void setVersion(String version) {
+    public String getVersionAsString() {
+        return version.getVersion();
+    }
+
+    public void setVersion(MigrationVersion version) {
         this.version = version;
+    }
+
+    public void setVersion(String version) {
+        this.version = MigrationVersion.fromVersion(version);
     }
 
     public String getIndexName() {

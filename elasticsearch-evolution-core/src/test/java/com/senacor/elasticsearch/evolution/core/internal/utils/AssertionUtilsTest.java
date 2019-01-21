@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 import java.util.List;
 
+import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotBlank;
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotEmpty;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -39,6 +40,45 @@ class AssertionUtilsTest {
         String msg = "msg";
 
         assertThatThrownBy(() -> requireNotEmpty(obj, msg))
+                .hasMessage(msg)
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void requireNotBlank_nonEmptyString() {
+        String obj = "a";
+        String msg = "msg";
+
+        assertThat(requireNotBlank(obj, msg))
+                .isEqualTo(obj);
+    }
+
+    @Test
+    void requireNotBlank_emptyString() {
+        String obj = "";
+        String msg = "msg";
+
+        assertThatThrownBy(() -> requireNotBlank(obj, msg))
+                .hasMessage(msg)
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void requireNotBlank_blankString() {
+        String obj = " ";
+        String msg = "msg";
+
+        assertThatThrownBy(() -> requireNotBlank(obj, msg))
+                .hasMessage(msg)
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void requireNotBlank_nullString() {
+        String obj = null;
+        String msg = "msg";
+
+        assertThatThrownBy(() -> requireNotBlank(obj, msg))
                 .hasMessage(msg)
                 .isInstanceOf(NullPointerException.class);
     }

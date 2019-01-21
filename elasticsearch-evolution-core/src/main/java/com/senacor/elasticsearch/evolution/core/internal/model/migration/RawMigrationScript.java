@@ -8,7 +8,7 @@ package com.senacor.elasticsearch.evolution.core.internal.model.migration;
 public class RawMigrationScript {
 
     /**
-     * script file name
+     * script file name without any packages/directories
      */
     private String fileName;
 
