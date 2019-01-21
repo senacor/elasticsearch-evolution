@@ -39,7 +39,7 @@ public class MigrationScriptReader {
             String location = locations.get(i);
             if (location.startsWith("classpath:")) {
                 locations.set(i, location.substring("classpath:".length()));
-            } else if (location.matches("^\\w*:")) {
+            } else if (location.matches("\\w*:.*")) {
                 throw new MigrationException(String.format("could not read location path %s, " +
                         "should look like this: classpath:es/migration", location));
             }
@@ -65,7 +65,10 @@ public class MigrationScriptReader {
                         throw new MigrationException(
                                 String.format("couldn't read scripts from %s", location), e);
                     }
-                }).forEach(migrationScripts::addAll);
+                }).forEach((migrationList) -> {
+            migrationScripts.removeAll(migrationList);
+            migrationScripts.addAll(migrationList);
+        });
         return migrationScripts;
     }
 

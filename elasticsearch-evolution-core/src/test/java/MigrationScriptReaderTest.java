@@ -2,13 +2,14 @@ import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptReader;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 import org.junit.jupiter.api.Nested;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Andreas Keefer
@@ -34,7 +35,7 @@ class MigrationScriptReaderTest {
                     "c",
                     Arrays.asList(".http"));
             List<RawMigrationScript> actual = reader.readAllScripts();
-            assertThat(actual).contains(new RawMigrationScript().setFileName("content.http").setContent("content!"),
+            assertThat(actual).containsExactly(new RawMigrationScript().setFileName("content.http").setContent("content!"),
                     new RawMigrationScript().setFileName("content_sub.http").setContent("sub content!"));
 
         }
@@ -46,7 +47,7 @@ class MigrationScriptReaderTest {
                     "c",
                     Arrays.asList(".http", ".other"));
             List<RawMigrationScript> actual = reader.readAllScripts();
-            assertThat(actual).contains(new RawMigrationScript().setFileName("content.http").setContent("content!"),
+            assertThat(actual).containsExactlyInAnyOrder(new RawMigrationScript().setFileName("content.http").setContent("content!"),
                     new RawMigrationScript().setFileName("content_sub.http").setContent("sub content!"),
                     new RawMigrationScript().setFileName("content.other").setContent("content!"));
         }
@@ -58,17 +59,32 @@ class MigrationScriptReaderTest {
                     "c",
                     Arrays.asList(".http", ".other"));
             List<RawMigrationScript> actual = reader.readAllScripts();
-            assertThat(actual).contains(new RawMigrationScript().setFileName("content.http").setContent("content!"),
+            assertThat(actual).containsExactlyInAnyOrder(new RawMigrationScript().setFileName("content.http").setContent("content!"),
                     new RawMigrationScript().setFileName("content_sub.http").setContent("sub content!"),
                     new RawMigrationScript().setFileName("content.other").setContent("content!"));
         }
 
-        @Test(expected = MigrationException.class)
-        void fromClasspathResourcesDirectoryWithWrongProtocol() {
-            MigrationScriptReader reader = new MigrationScriptReader(Arrays.asList("classpath:scriptreader", "http:scriptreader"),
+        @Test
+        void fromClasspathResourcesDirectoryWithSameLocation() {
+            MigrationScriptReader reader = new MigrationScriptReader(Arrays.asList("classpath:scriptreader", "classpath:scriptreader"),
                     StandardCharsets.UTF_8,
                     "c",
                     Arrays.asList(".http", ".other"));
+            List<RawMigrationScript> actual = reader.readAllScripts();
+            assertThat(actual).containsExactlyInAnyOrder(new RawMigrationScript().setFileName("content.http").setContent("content!"),
+                    new RawMigrationScript().setFileName("content_sub.http").setContent("sub content!"),
+                    new RawMigrationScript().setFileName("content.other").setContent("content!"));
+            assertThat(actual).hasSize(3);
+        }
+
+        @Test()
+        void fromClasspathResourcesDirectoryWithWrongProtocol() {
+            assertThrows(MigrationException.class, () -> {
+                new MigrationScriptReader(Arrays.asList("classpath:scriptreader", "http:scriptreader"),
+                        StandardCharsets.UTF_8,
+                        "c",
+                        Arrays.asList(".http", ".other"));
+            });
 
         }
 
