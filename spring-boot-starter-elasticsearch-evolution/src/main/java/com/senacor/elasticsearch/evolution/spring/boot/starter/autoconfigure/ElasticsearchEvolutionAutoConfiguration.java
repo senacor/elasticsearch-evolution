@@ -32,9 +32,9 @@ public class ElasticsearchEvolutionAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnBean(RestHighLevelClient.class)
-    public ElasticsearchEvolution elasticsearchEvolution(ElasticsearchEvolutionConfig elasticsearchEvolutionProperties,
+    public ElasticsearchEvolution elasticsearchEvolution(ElasticsearchEvolutionConfig elasticsearchEvolutionConfig,
                                                          RestHighLevelClient restHighLevelClient) {
-        return new ElasticsearchEvolution(elasticsearchEvolutionProperties, restHighLevelClient);
+        return new ElasticsearchEvolution(elasticsearchEvolutionConfig, restHighLevelClient);
     }
 
     @Bean

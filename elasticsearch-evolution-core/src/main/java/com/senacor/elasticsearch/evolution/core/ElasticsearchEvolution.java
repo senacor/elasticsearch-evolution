@@ -3,6 +3,8 @@ package com.senacor.elasticsearch.evolution.core;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static java.util.Objects.requireNonNull;
 
@@ -23,7 +25,9 @@ import static java.util.Objects.requireNonNull;
  */
 public class ElasticsearchEvolution {
 
-    private final ElasticsearchEvolutionConfig elasticsearchEvolutionProperties;
+    private static final Logger logger = LoggerFactory.getLogger(ElasticsearchEvolution.class);
+
+    private final ElasticsearchEvolutionConfig elasticsearchEvolutionConfig;
     private final RestHighLevelClient restHighLevelClient;
 
     /**
@@ -46,13 +50,17 @@ public class ElasticsearchEvolution {
     /**
      * Create ElasticsearchEvolution
      *
-     * @param elasticsearchEvolutionProperties configuration properties
-     * @param restHighLevelClient              REST client to interact with Elasticsearch
+     * @param elasticsearchEvolutionConfig configuration
+     * @param restHighLevelClient          REST client to interact with Elasticsearch
      */
-    public ElasticsearchEvolution(ElasticsearchEvolutionConfig elasticsearchEvolutionProperties,
+    public ElasticsearchEvolution(ElasticsearchEvolutionConfig elasticsearchEvolutionConfig,
                                   RestHighLevelClient restHighLevelClient) {
-        this.elasticsearchEvolutionProperties = requireNonNull(elasticsearchEvolutionProperties, "elasticsearchEvolutionProperties must not be null");
+        this.elasticsearchEvolutionConfig = requireNonNull(elasticsearchEvolutionConfig, "elasticsearchEvolutionConfig must not be null")
+                .validate();
         this.restHighLevelClient = requireNonNull(restHighLevelClient, "restHighLevelClient must not be null");
+
+        logger.info("Created ElasticsearchEvolution with config='{}' and client='{}'",
+                this.elasticsearchEvolutionConfig, this.restHighLevelClient.getLowLevelClient().getNodes());
     }
 
     /**
