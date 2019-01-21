@@ -1,22 +1,14 @@
+import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptReader;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Andreas Keefer
@@ -57,6 +49,27 @@ class MigrationScriptReaderTest {
             assertThat(actual).contains(new RawMigrationScript().setFileName("content.http").setContent("content!"),
                     new RawMigrationScript().setFileName("content_sub.http").setContent("sub content!"),
                     new RawMigrationScript().setFileName("content.other").setContent("content!"));
+        }
+
+        @Test
+        void fromClasspathResourcesDirectoryWithClassPathPrepended() {
+            MigrationScriptReader reader = new MigrationScriptReader(Arrays.asList("classpath:scriptreader"),
+                    StandardCharsets.UTF_8,
+                    "c",
+                    Arrays.asList(".http", ".other"));
+            List<RawMigrationScript> actual = reader.readAllScripts();
+            assertThat(actual).contains(new RawMigrationScript().setFileName("content.http").setContent("content!"),
+                    new RawMigrationScript().setFileName("content_sub.http").setContent("sub content!"),
+                    new RawMigrationScript().setFileName("content.other").setContent("content!"));
+        }
+
+        @Test(expected = MigrationException.class)
+        void fromClasspathResourcesDirectoryWithWrongProtocol() {
+            MigrationScriptReader reader = new MigrationScriptReader(Arrays.asList("classpath:scriptreader", "http:scriptreader"),
+                    StandardCharsets.UTF_8,
+                    "c",
+                    Arrays.asList(".http", ".other"));
+
         }
 
     }

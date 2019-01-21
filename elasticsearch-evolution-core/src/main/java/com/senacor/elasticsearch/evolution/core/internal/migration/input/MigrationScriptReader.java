@@ -1,5 +1,6 @@
 package com.senacor.elasticsearch.evolution.core.internal.migration.input;
 
+import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 
 import java.io.BufferedReader;
@@ -7,7 +8,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,7 +26,7 @@ public class MigrationScriptReader {
     private final List<String> esMigrationSuffixes;
 
     /**
-     * @param locations               Locations of migrations scripts.
+     * @param locations               Locations of migrations scripts, e.g classpath:es/migration
      * @param encoding                migrations scripts encoding
      * @param esMigrationFilePrefix   File name prefix for ES migrations.
      * @param esMigrationFileSuffixes File name suffix for ES migrations.
@@ -35,52 +35,62 @@ public class MigrationScriptReader {
                                  Charset encoding,
                                  String esMigrationFilePrefix,
                                  List<String> esMigrationFileSuffixes) {
+        for (int i = 0; i < locations.size(); i++) {
+            String location = locations.get(i);
+            if (location.startsWith("classpath:")) {
+                locations.set(i, location.substring("classpath:".length()));
+            } else if (location.matches("^\\w*:")) {
+                throw new MigrationException(String.format("could not read location path %s, " +
+                        "should look like this: classpath:es/migration", location));
+            }
+        }
         this.locations = locations;
         this.encoding = encoding;
         this.esMigrationPrefix = esMigrationFilePrefix;
         this.esMigrationSuffixes = esMigrationFileSuffixes;
     }
 
-
+    /**
+     * Reads all migration scripts from the specified locations that match prefixes and suffixes
+     *
+     * @return a list of {@link RawMigrationScript}
+     */
     public List<RawMigrationScript> readAllScripts() {
         List<RawMigrationScript> migrationScripts = new ArrayList<>();
         this.locations.stream()
                 .map(location -> {
-                    List<RawMigrationScript> subMigrationScripts = new ArrayList<>();
-                    this.esMigrationSuffixes.stream()
-                            .map(suffix -> {
-                                try {
-                                    return read(location, suffix);
-                                } catch (URISyntaxException e) {
-                                    System.out.println("there was a URI syntax exception");
-                                } catch (IOException e) {
-                                    System.out.println(" there was an error reading a file");
-                                }
-                                return Collections.<RawMigrationScript>emptyList();
-                            }).forEach(subMigrationScripts::addAll);
-                    return subMigrationScripts;
+                    try {
+                        return read(location);
+                    } catch (URISyntaxException | IOException e) {
+                        throw new MigrationException(
+                                String.format("couldn't read scripts from %s", location), e);
+                    }
                 }).forEach(migrationScripts::addAll);
         return migrationScripts;
     }
 
+
     /**
-     * Reads all migration scrips to {@link RawMigrationScript}'s objects.
+     * Reads migration scripts from a specific location
      *
-     * @return List of {@link RawMigrationScript}'s
+     * @param location path where to look for migration scripts
+     * @return a list of {@link RawMigrationScript}
+     * @throws URISyntaxException
+     * @throws IOException
      */
-    public List<RawMigrationScript> read(String location, String suffix) throws URISyntaxException, IOException {
+    public List<RawMigrationScript> read(String location) throws URISyntaxException, IOException {
         URL url = resolveURL(location);
         URI uri = url.toURI();
 
         return processResource(uri, path -> Files
                 .find(path, 10, (p, basicFileAttributes) ->
                         !basicFileAttributes.isDirectory()
-                                && p.toString().endsWith(suffix)
+                                && this.esMigrationSuffixes.contains(p.toString().substring(p.toString().lastIndexOf(".")))
                                 && basicFileAttributes.size() > 0
                                 && p.getFileName().toString().startsWith(this.esMigrationPrefix))
                 .map(file -> {
                     String filename = file.getFileName().toString();
-                    try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+                    try (BufferedReader reader = Files.newBufferedReader(file, this.encoding)) {
                         String content = reader.lines()
                                 .collect(Collectors.joining(System.lineSeparator()));
                         return new RawMigrationScript().setFileName(filename).setContent(content);
