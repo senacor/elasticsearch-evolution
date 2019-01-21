@@ -1,6 +1,5 @@
 package resources;
 
-import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptReader;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -34,7 +33,7 @@ class MigrationScriptReaderTest {
 
         @Test
         void fromClassPathResourcesDircetory() throws URISyntaxException, IOException {
-            assertThat(readMigrationScripts("scriptreader/test", ".http"))
+            assertThat(readMigrationScripts("scriptreader", ".http"))
                     .isNotEmpty();
         }
     }
