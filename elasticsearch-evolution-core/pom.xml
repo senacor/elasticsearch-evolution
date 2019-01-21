@@ -105,6 +105,16 @@
             </plugin>
 
         </plugins>
+        <testResources>
+            <testResource>
+                <directory>
+                    src/test
+                </directory>
+                <includes>
+                    <include>**/*.txt</include>
+                </includes>
+            </testResource>
+        </testResources>
     </build>
 
 </project>
