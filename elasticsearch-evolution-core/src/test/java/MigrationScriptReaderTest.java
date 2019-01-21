@@ -1,5 +1,4 @@
-package resources;
-
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -27,30 +26,38 @@ class MigrationScriptReaderTest {
         void fromClassPathJar() throws URISyntaxException, IOException {
             assertThat(readMigrationScripts(
                     "META-INF/maven/org.assertj/assertj-core",
-                    ".properties"))
+                    ".properties",
+                    "p"))
                     .isNotEmpty();
         }
 
         @Test
         void fromClassPathResourcesDircetory() throws URISyntaxException, IOException {
-            assertThat(readMigrationScripts("scriptreader", ".http"))
-                    .isNotEmpty();
+            assertThat(readMigrationScripts("scriptreader", ".http", "c")).hasSize(2);
+
+        }
+
+        @Test
+        void fromClassPathResouceDir() throws URISyntaxException, IOException {
+            List<RawMigrationScript> migrationScripts = readMigrationScripts("scriptreader", ".http", "c");
+
         }
     }
 
-    private List<String> readMigrationScripts(String location, String suffix) throws URISyntaxException, IOException {
+    private List<RawMigrationScript> readMigrationScripts(String location, String suffix, String prefix) throws URISyntaxException, IOException {
         URL url = resolveURL(location);
         System.out.println("url=" + url);
         URI uri = url.toURI();
         System.out.println("uri=" + uri);
 
-        List<String> migrationScripts = processResource(uri, path -> {
+        List<RawMigrationScript> migrationScripts = processResource(uri, path -> {
             System.out.println("path=" + path);
             return Files
                     .find(path, 10, (p, basicFileAttributes) ->
                             !basicFileAttributes.isDirectory()
                                     && p.toString().endsWith(suffix)
-                                    && basicFileAttributes.size() > 0)
+                                    && basicFileAttributes.size() > 0
+                                    && p.getFileName().toString().startsWith(prefix))
                     .map(file -> {
                         String filename = file.getFileName().toString();
                         System.out.println("filename=" + filename);
@@ -58,7 +65,7 @@ class MigrationScriptReaderTest {
                             String content = reader.lines()
                                     .collect(Collectors.joining(System.lineSeparator()));
                             System.out.println("content=" + content);
-                            return filename + ":\n" + content + "\n";
+                            return new RawMigrationScript().setFileName(filename).setContent(content);
                         } catch (IOException e) {
                             throw new IllegalStateException("can't read file: " + file.getFileName().toString(), e);
                         }

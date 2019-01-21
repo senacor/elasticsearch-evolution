@@ -36,6 +36,14 @@ public class RawMigrationScript {
     }
 
     public String toString() {
-        return "Filename: " + fileName + ", content: " + content;
+        return "filename: " + fileName + ", content: " + content;
+    }
+
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RawMigrationScript script = (RawMigrationScript) o;
+        return fileName.equals(script.getFileName()) &&
+                content.equals(script.getContent());
     }
 }
