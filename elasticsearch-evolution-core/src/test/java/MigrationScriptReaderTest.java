@@ -1,8 +1,8 @@
-package com.senacor.elasticsearch.evolution.core.internal.migration.input;
+package resources;
 
+import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptReader;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.util.ClassUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -88,7 +88,7 @@ class MigrationScriptReaderTest {
         }
         if (cl == null) {
             // No thread context class loader -> use class loader of this class.
-            cl = ClassUtils.class.getClassLoader();
+            cl = MigrationScriptReaderTest.class.getClassLoader();
             if (cl == null) {
                 // getClassLoader() returning null indicates the bootstrap ClassLoader
                 try {
