@@ -123,10 +123,6 @@ public class MigrationScriptRequest {
         return body.length() == 0;
     }
 
-    public void validate() throws MigrationException {
-
-    }
-
     public enum HttpMethod {
         GET,
         HEAD,

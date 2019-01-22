@@ -2,8 +2,15 @@ package com.senacor.elasticsearch.evolution.core;
 
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
-import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptParser;
-import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptReader;
+import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptParser;
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptReader;
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationService;
+import com.senacor.elasticsearch.evolution.core.internal.migration.execution.HistoryRepositoryImpl;
+import com.senacor.elasticsearch.evolution.core.internal.migration.execution.MigrationServiceImpl;
+import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptParserImpl;
+import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptReaderImpl;
+import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -11,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
@@ -35,6 +43,10 @@ public class ElasticsearchEvolution {
 
     private final ElasticsearchEvolutionConfig config;
     private final RestHighLevelClient restHighLevelClient;
+
+    private final MigrationScriptReader migrationScriptReader;
+    private final MigrationScriptParser migrationScriptParser;
+    private final MigrationService migrationService;
 
     /**
      * This is your starting point. This creates a configuration which can be customized to your needs before being
@@ -65,8 +77,12 @@ public class ElasticsearchEvolution {
                 .validate();
         this.restHighLevelClient = requireNonNull(restHighLevelClient, "restHighLevelClient must not be null");
 
+        this.migrationScriptReader = createMigrationScriptReader();
+        this.migrationScriptParser = createMigrationScriptParser();
+        this.migrationService = createMigrationService();
+
         logger.info("Created ElasticsearchEvolution with config='{}' and client='{}'",
-                this.config, this.restHighLevelClient.getLowLevelClient().getNodes());
+                this.getConfig(), this.getRestHighLevelClient().getLowLevelClient().getNodes());
     }
 
     /**
@@ -79,34 +95,12 @@ public class ElasticsearchEvolution {
     public int migrate() throws MigrationException {
         logger.info("start elasticsearch migration...");
         logger.info("reading migration scripts...");
-        Collection<RawMigrationScript> rawMigrationScripts = readMigrationScripts();
+        Collection<RawMigrationScript> rawMigrationScripts = migrationScriptReader.read();
         logger.info("parsing migration scripts...");
-        Collection<ParsedMigrationScript> parsedMigrationScripts = parseMigrationScripts(rawMigrationScripts);
-
-        // TODO (ak) impl
-        return 0;
-    }
-
-    protected Collection<ParsedMigrationScript> parseMigrationScripts(Collection<RawMigrationScript> rawMigrationScripts) {
-        return new MigrationScriptParser(
-                config.getEsMigrationPrefix(),
-                config.getEsMigrationSuffixes(),
-                config.getPlaceholders(),
-                config.getPlaceholderPrefix(),
-                config.getPlaceholderSuffix(),
-                config.isPlaceholderReplacement()
-        )
-                .parse(rawMigrationScripts);
-    }
-
-    protected Collection<RawMigrationScript> readMigrationScripts() {
-        return new MigrationScriptReader(
-                config.getLocations(),
-                config.getEncoding(),
-                config.getEsMigrationPrefix(),
-                config.getEsMigrationSuffixes()
-        )
-                .read();
+        Collection<ParsedMigrationScript> parsedMigrationScripts = migrationScriptParser.parse(rawMigrationScripts);
+        logger.info("execute migration scripts...");
+        List<MigrationScriptProtocol> executedScripts = migrationService.executePendingScripts(parsedMigrationScripts);
+        return executedScripts.size();
     }
 
     protected ElasticsearchEvolutionConfig getConfig() {
@@ -115,5 +109,32 @@ public class ElasticsearchEvolution {
 
     protected RestHighLevelClient getRestHighLevelClient() {
         return restHighLevelClient;
+    }
+
+    protected MigrationScriptParser createMigrationScriptParser() {
+        return new MigrationScriptParserImpl(
+                getConfig().getEsMigrationPrefix(),
+                getConfig().getEsMigrationSuffixes(),
+                getConfig().getPlaceholders(),
+                getConfig().getPlaceholderPrefix(),
+                getConfig().getPlaceholderSuffix(),
+                getConfig().isPlaceholderReplacement()
+        );
+    }
+
+    protected MigrationScriptReader createMigrationScriptReader() {
+        return new MigrationScriptReaderImpl(
+                getConfig().getLocations(),
+                getConfig().getEncoding(),
+                getConfig().getEsMigrationPrefix(),
+                getConfig().getEsMigrationSuffixes());
+    }
+
+    protected HistoryRepository createHistoryRepository() {
+        return new HistoryRepositoryImpl(getRestHighLevelClient());
+    }
+
+    protected MigrationService createMigrationService() {
+        return new MigrationServiceImpl(createHistoryRepository());
     }
 }

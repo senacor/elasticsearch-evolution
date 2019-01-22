@@ -4,13 +4,14 @@ import com.senacor.elasticsearch.evolution.core.internal.model.FileNameInfo;
 import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 /**
  * Represents a Script execution in the database.
  *
  * @author Andreas Keefer
  */
-public class MigrationScriptProtocol implements FileNameInfo {
+public class MigrationScriptProtocol implements FileNameInfo, Comparable<MigrationScriptProtocol> {
 
     /**
      * not-null
@@ -60,9 +61,24 @@ public class MigrationScriptProtocol implements FileNameInfo {
     private boolean success;
 
     /**
+     * a flag to implement a "index lock". If a document in the index is locked, the application will not continue.
+     * not-null
+     */
+    private boolean locked = true;
+
+    /**
      * Default Constructor
      */
     public MigrationScriptProtocol() {
+    }
+
+    public MigrationScriptProtocol setVersion(String version) {
+        this.version = MigrationVersion.fromVersion(version);
+        return this;
+    }
+
+    public String getVersionAsString() {
+        return version.getVersion();
     }
 
     @Override
@@ -70,71 +86,107 @@ public class MigrationScriptProtocol implements FileNameInfo {
         return version;
     }
 
-    public String getVersionAsString() {
-        return version.getVersion();
-    }
-
-    public void setVersion(MigrationVersion version) {
+    public MigrationScriptProtocol setVersion(MigrationVersion version) {
         this.version = version;
-    }
-
-    public void setVersion(String version) {
-        this.version = MigrationVersion.fromVersion(version);
+        return this;
     }
 
     public String getIndexName() {
         return indexName;
     }
 
-    public void setIndexName(String indexName) {
+    public MigrationScriptProtocol setIndexName(String indexName) {
         this.indexName = indexName;
+        return this;
     }
 
+    @Override
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public MigrationScriptProtocol setDescription(String description) {
         this.description = description;
+        return this;
     }
 
+    @Override
     public String getScriptName() {
         return scriptName;
     }
 
-    public void setScriptName(String scriptName) {
+    public MigrationScriptProtocol setScriptName(String scriptName) {
         this.scriptName = scriptName;
+        return this;
     }
 
     public int getChecksum() {
         return checksum;
     }
 
-    public void setChecksum(int checksum) {
+    public MigrationScriptProtocol setChecksum(int checksum) {
         this.checksum = checksum;
+        return this;
     }
 
     public ZonedDateTime getExecutionTimestamp() {
         return executionTimestamp;
     }
 
-    public void setExecutionTimestamp(ZonedDateTime executionTimestamp) {
+    public MigrationScriptProtocol setExecutionTimestamp(ZonedDateTime executionTimestamp) {
         this.executionTimestamp = executionTimestamp;
+        return this;
     }
 
     public int getExecutionRuntimeInMillis() {
         return executionRuntimeInMillis;
     }
 
-    public void setExecutionRuntimeInMillis(int executionRuntimeInMillis) {
+    public MigrationScriptProtocol setExecutionRuntimeInMillis(int executionRuntimeInMillis) {
         this.executionRuntimeInMillis = executionRuntimeInMillis;
+        return this;
     }
 
     public boolean isSuccess() {
         return success;
     }
 
-    public void setSuccess(boolean success) {
+    public MigrationScriptProtocol setSuccess(boolean success) {
         this.success = success;
+        return this;
+    }
+
+    public boolean isLocked() {
+        return locked;
+    }
+
+    public MigrationScriptProtocol setLocked(boolean locked) {
+        this.locked = locked;
+        return this;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(version);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final MigrationScriptProtocol other = (MigrationScriptProtocol) obj;
+        return Objects.equals(this.version, other.version);
+    }
+
+    @Override
+    public int compareTo(MigrationScriptProtocol o) {
+        if (o == null) {
+            return 1;
+        }
+        return version.compareTo(o.version);
     }
 }

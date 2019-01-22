@@ -1,6 +1,7 @@
 package com.senacor.elasticsearch.evolution.core.internal.migration.input;
 
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptParser;
 import com.senacor.elasticsearch.evolution.core.internal.model.FileNameInfo;
 import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.FileNameInfoImpl;
@@ -30,7 +31,7 @@ class MigrationScriptParserTest {
         @Test
         void withOneReplacement_isReplaced() {
             String template = "POST /foo/${index}/bar\nfoo:bar";
-            MigrationScriptParser parser = new MigrationScriptParser(null,
+            MigrationScriptParserImpl parser = new MigrationScriptParserImpl(null,
                     null,
                     Maps.newHashMap("index", "myIndex"),
                     "${",
@@ -45,7 +46,7 @@ class MigrationScriptParserTest {
         @Test
         void withMultipleReplacementsOfSameKey_isReplaced() {
             String template = "POST /foo/${index}/bar\nfoo:${index}";
-            MigrationScriptParser parser = new MigrationScriptParser(null,
+            MigrationScriptParserImpl parser = new MigrationScriptParserImpl(null,
                     null,
                     Maps.newHashMap("index", "myIndex"),
                     "${",
@@ -62,7 +63,7 @@ class MigrationScriptParserTest {
             String template = "POST /foo/${index}/bar\nfoo:${foo-header}";
             Map<String, String> placeholders = Maps.newHashMap("index", "myIndex");
             placeholders.put("foo-header", "foobar");
-            MigrationScriptParser parser = new MigrationScriptParser(null,
+            MigrationScriptParserImpl parser = new MigrationScriptParserImpl(null,
                     null,
                     placeholders,
                     "${",
@@ -78,7 +79,7 @@ class MigrationScriptParserTest {
     @Nested
     class parseFilename {
 
-        private MigrationScriptParser underTest = new MigrationScriptParser(
+        private MigrationScriptParserImpl underTest = new MigrationScriptParserImpl(
                 "V",
                 Collections.singletonList(".http"),
                 null,
@@ -130,7 +131,7 @@ class MigrationScriptParserTest {
 
     @Nested
     class parseCollection {
-        private MigrationScriptParser underTest = new MigrationScriptParser(
+        private MigrationScriptParser underTest = new MigrationScriptParserImpl(
                 "V",
                 Collections.singletonList(".http"),
                 null,
@@ -169,7 +170,7 @@ class MigrationScriptParserTest {
 
     @Nested
     class parseSingle {
-        private MigrationScriptParser underTest = new MigrationScriptParser(
+        private MigrationScriptParserImpl underTest = new MigrationScriptParserImpl(
                 "V",
                 Collections.singletonList(".http"),
                 null,
@@ -341,7 +342,7 @@ class MigrationScriptParserTest {
             placeholders.put("index", "my-index");
             placeholders.put("auth", "my-auth-key");
 
-            ParsedMigrationScript res = new MigrationScriptParser(
+            ParsedMigrationScript res = new MigrationScriptParserImpl(
                     "V",
                     Collections.singletonList(".http"),
                     placeholders,

@@ -1,6 +1,7 @@
 package com.senacor.elasticsearch.evolution.core.internal.migration.input;
 
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptParser;
 import com.senacor.elasticsearch.evolution.core.internal.model.FileNameInfo;
 import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.FileNameInfoImpl;
@@ -27,7 +28,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Andreas Keefer
  */
-public class MigrationScriptParser {
+public class MigrationScriptParserImpl implements MigrationScriptParser {
 
     private static final String VERSION_DESCRIPTION_SEPARATOR = "__";
 
@@ -41,12 +42,12 @@ public class MigrationScriptParser {
     /**
      * create Parser
      */
-    public MigrationScriptParser(String esMigrationPrefix,
-                                 List<String> esMigrationSuffixes,
-                                 Map<String, String> placeholders,
-                                 String placeholderPrefix,
-                                 String placeholderSuffix,
-                                 boolean placeholderReplacement) {
+    public MigrationScriptParserImpl(String esMigrationPrefix,
+                                     List<String> esMigrationSuffixes,
+                                     Map<String, String> placeholders,
+                                     String placeholderPrefix,
+                                     String placeholderSuffix,
+                                     boolean placeholderReplacement) {
         this.esMigrationPrefix = esMigrationPrefix;
         this.esMigrationSuffixes = esMigrationSuffixes;
         this.placeholders = placeholders;
@@ -55,12 +56,7 @@ public class MigrationScriptParser {
         this.placeholderReplacement = placeholderReplacement;
     }
 
-    /**
-     * parses all migration scripts
-     *
-     * @param rawMigrationScripts the migration scripts to parse
-     * @return List of {@link RawMigrationScript}'s
-     */
+    @Override
     public Collection<ParsedMigrationScript> parse(Collection<RawMigrationScript> rawMigrationScripts) {
         requireNonNull(rawMigrationScripts, "rawMigrationScripts must not be null");
         return rawMigrationScripts.stream()
@@ -111,7 +107,6 @@ public class MigrationScriptParser {
             throw new MigrationException("failed parsing content of " + script.getFileName(), e);
         }
 
-        res.validate();
         return res;
     }
 
