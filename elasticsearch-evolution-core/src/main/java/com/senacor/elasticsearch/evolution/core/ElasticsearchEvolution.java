@@ -2,9 +2,15 @@ package com.senacor.elasticsearch.evolution.core;
 
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
+import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptParser;
+import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptReader;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
 
 import static java.util.Objects.requireNonNull;
 
@@ -27,7 +33,7 @@ public class ElasticsearchEvolution {
 
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchEvolution.class);
 
-    private final ElasticsearchEvolutionConfig elasticsearchEvolutionConfig;
+    private final ElasticsearchEvolutionConfig config;
     private final RestHighLevelClient restHighLevelClient;
 
     /**
@@ -55,12 +61,12 @@ public class ElasticsearchEvolution {
      */
     public ElasticsearchEvolution(ElasticsearchEvolutionConfig elasticsearchEvolutionConfig,
                                   RestHighLevelClient restHighLevelClient) {
-        this.elasticsearchEvolutionConfig = requireNonNull(elasticsearchEvolutionConfig, "elasticsearchEvolutionConfig must not be null")
+        this.config = requireNonNull(elasticsearchEvolutionConfig, "elasticsearchEvolutionConfig must not be null")
                 .validate();
         this.restHighLevelClient = requireNonNull(restHighLevelClient, "restHighLevelClient must not be null");
 
         logger.info("Created ElasticsearchEvolution with config='{}' and client='{}'",
-                this.elasticsearchEvolutionConfig, this.restHighLevelClient.getLowLevelClient().getNodes());
+                this.config, this.restHighLevelClient.getLowLevelClient().getNodes());
     }
 
     /**
@@ -71,8 +77,43 @@ public class ElasticsearchEvolution {
      * @throws MigrationException when the migration failed.
      */
     public int migrate() throws MigrationException {
-        System.out.println("migrate...");
+        logger.info("start elasticsearch migration...");
+        logger.info("reading migration scripts...");
+        Collection<RawMigrationScript> rawMigrationScripts = readMigrationScripts();
+        logger.info("parsing migration scripts...");
+        Collection<ParsedMigrationScript> parsedMigrationScripts = parseMigrationScripts(rawMigrationScripts);
+
         // TODO (ak) impl
         return 0;
+    }
+
+    protected Collection<ParsedMigrationScript> parseMigrationScripts(Collection<RawMigrationScript> rawMigrationScripts) {
+        return new MigrationScriptParser(
+                config.getEsMigrationPrefix(),
+                config.getEsMigrationSuffixes(),
+                config.getPlaceholders(),
+                config.getPlaceholderPrefix(),
+                config.getPlaceholderSuffix(),
+                config.isPlaceholderReplacement()
+        )
+                .parse(rawMigrationScripts);
+    }
+
+    protected Collection<RawMigrationScript> readMigrationScripts() {
+        return new MigrationScriptReader(
+                config.getLocations(),
+                config.getEncoding(),
+                config.getEsMigrationPrefix(),
+                config.getEsMigrationSuffixes()
+        )
+                .read();
+    }
+
+    protected ElasticsearchEvolutionConfig getConfig() {
+        return config;
+    }
+
+    protected RestHighLevelClient getRestHighLevelClient() {
+        return restHighLevelClient;
     }
 }
