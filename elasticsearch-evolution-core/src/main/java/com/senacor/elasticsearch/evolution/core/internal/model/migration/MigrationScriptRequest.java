@@ -1,8 +1,13 @@
 package com.senacor.elasticsearch.evolution.core.internal.model.migration;
 
+import com.senacor.elasticsearch.evolution.core.api.MigrationException;
+
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Represents the HTTP request from the migration script
@@ -15,7 +20,7 @@ public class MigrationScriptRequest {
      * http method,like POST, PUT or DELETE
      * non-null
      */
-    private String httpMethod;
+    private HttpMethod httpMethod;
 
     /**
      * relative path to the endpoint without hostname, like /my_index
@@ -38,11 +43,11 @@ public class MigrationScriptRequest {
     public MigrationScriptRequest() {
     }
 
-    public String getHttpMethod() {
+    public HttpMethod getHttpMethod() {
         return httpMethod;
     }
 
-    public MigrationScriptRequest setHttpMethod(String httpMethod) {
+    public MigrationScriptRequest setHttpMethod(HttpMethod httpMethod) {
         this.httpMethod = httpMethod;
         return this;
     }
@@ -116,5 +121,31 @@ public class MigrationScriptRequest {
 
     public boolean isBodyEmpty() {
         return body.length() == 0;
+    }
+
+    public void validate() throws MigrationException {
+
+    }
+
+    public enum HttpMethod {
+        GET,
+        HEAD,
+        POST,
+        PUT,
+        DELETE,
+        OPTIONS,
+        PATCH;
+
+        public static HttpMethod create(String method) throws MigrationException {
+            String normalizedMethod = requireNonNull(method, "method must not be null")
+                    .toUpperCase()
+                    .trim();
+            return Arrays.stream(values())
+                    .filter(m -> m.name().equals(normalizedMethod))
+                    .findFirst()
+                    .orElseThrow(() -> new MigrationException(String.format(
+                            "Method '%s' not supported, only %s is supported.",
+                            method, Arrays.toString(values()))));
+        }
     }
 }

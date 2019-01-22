@@ -5,16 +5,14 @@ import com.senacor.elasticsearch.evolution.core.internal.model.FileNameInfo;
 import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.FileNameInfoImpl;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest.HttpMethod;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 import org.assertj.core.util.Maps;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 import static java.lang.System.lineSeparator;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -153,7 +151,7 @@ class MigrationScriptParserTest {
 
 
             MigrationScriptRequest expectedRequest = new MigrationScriptRequest()
-                    .setHttpMethod("PUT")
+                    .setHttpMethod(HttpMethod.PUT)
                     .setPath("/")
                     .addHttpHeader("Header", "value")
                     .addToBody("{" + lineSeparator() + "\"body\":\"value\"" + lineSeparator() + "}");
@@ -180,7 +178,7 @@ class MigrationScriptParserTest {
                 false);
 
         @Test
-        void success() {
+        void success_withMethodAndPathAndHeaderAndBody() {
             String defaultContent = createDefaultContent();
 
             String fileName = "V1__create.http";
@@ -203,7 +201,7 @@ class MigrationScriptParserTest {
                         .isEqualTo("create");
                 softly.assertThat(res.getMigrationScriptRequest().getHttpMethod())
                         .as("methot")
-                        .isEqualTo("PUT");
+                        .isEqualTo(HttpMethod.PUT);
                 softly.assertThat(res.getMigrationScriptRequest().getPath())
                         .as("path")
                         .isEqualTo("/");
@@ -215,6 +213,211 @@ class MigrationScriptParserTest {
                         .as("body")
                         .isEqualTo("{" + System.lineSeparator() + "\"body\":\"value\"" + System.lineSeparator() + "}");
             });
+        }
+
+        @Test
+        void success_noHeader() {
+            String defaultContent = "PUT /" + lineSeparator() +
+                    lineSeparator() +
+                    "{" + lineSeparator() + "\"body\":\"value\"" + lineSeparator() + "}";
+
+            String fileName = "V1__create.http";
+            ParsedMigrationScript res = underTest.parse(new RawMigrationScript()
+                    .setFileName(fileName)
+                    .setContent(defaultContent));
+
+            assertSoftly(softly -> {
+                softly.assertThat(res.getChecksum())
+                        .as("Checksum")
+                        .isEqualTo(defaultContent.hashCode());
+                softly.assertThat(res.getFileNameInfo().getVersion())
+                        .as("version")
+                        .isEqualTo(MigrationVersion.fromVersion("1"));
+                softly.assertThat(res.getFileNameInfo().getScriptName())
+                        .as("scriptName")
+                        .isEqualTo(fileName);
+                softly.assertThat(res.getFileNameInfo().getDescription())
+                        .as("description")
+                        .isEqualTo("create");
+                softly.assertThat(res.getMigrationScriptRequest().getHttpMethod())
+                        .as("methot")
+                        .isEqualTo(HttpMethod.PUT);
+                softly.assertThat(res.getMigrationScriptRequest().getPath())
+                        .as("path")
+                        .isEqualTo("/");
+                softly.assertThat(res.getMigrationScriptRequest().getHttpHeader())
+                        .as("header")
+                        .isEmpty();
+                softly.assertThat(res.getMigrationScriptRequest().getBody())
+                        .as("body")
+                        .isEqualTo("{" + System.lineSeparator() + "\"body\":\"value\"" + System.lineSeparator() + "}");
+            });
+        }
+
+        @Test
+        void success_noBody() {
+            String defaultContent = "PUT /" + lineSeparator() +
+                    "Header = value:a";
+
+            String fileName = "V1__create.http";
+            ParsedMigrationScript res = underTest.parse(new RawMigrationScript()
+                    .setFileName(fileName)
+                    .setContent(defaultContent));
+
+            assertSoftly(softly -> {
+                softly.assertThat(res.getChecksum())
+                        .as("Checksum")
+                        .isEqualTo(defaultContent.hashCode());
+                softly.assertThat(res.getFileNameInfo().getVersion())
+                        .as("version")
+                        .isEqualTo(MigrationVersion.fromVersion("1"));
+                softly.assertThat(res.getFileNameInfo().getScriptName())
+                        .as("scriptName")
+                        .isEqualTo(fileName);
+                softly.assertThat(res.getFileNameInfo().getDescription())
+                        .as("description")
+                        .isEqualTo("create");
+                softly.assertThat(res.getMigrationScriptRequest().getHttpMethod())
+                        .as("methot")
+                        .isEqualTo(HttpMethod.PUT);
+                softly.assertThat(res.getMigrationScriptRequest().getPath())
+                        .as("path")
+                        .isEqualTo("/");
+                softly.assertThat(res.getMigrationScriptRequest().getHttpHeader())
+                        .as("header")
+                        .containsEntry("Header", "value:a")
+                        .hasSize(1);
+                softly.assertThat(res.getMigrationScriptRequest().getBody())
+                        .as("body")
+                        .isBlank();
+            });
+        }
+
+        @Test
+        void success_noHeaderAndNoBody() {
+            String defaultContent = "put /";
+
+            String fileName = "V1__create.http";
+            ParsedMigrationScript res = underTest.parse(new RawMigrationScript()
+                    .setFileName(fileName)
+                    .setContent(defaultContent));
+
+            assertSoftly(softly -> {
+                softly.assertThat(res.getChecksum())
+                        .as("Checksum")
+                        .isEqualTo(defaultContent.hashCode());
+                softly.assertThat(res.getFileNameInfo().getVersion())
+                        .as("version")
+                        .isEqualTo(MigrationVersion.fromVersion("1"));
+                softly.assertThat(res.getFileNameInfo().getScriptName())
+                        .as("scriptName")
+                        .isEqualTo(fileName);
+                softly.assertThat(res.getFileNameInfo().getDescription())
+                        .as("description")
+                        .isEqualTo("create");
+                softly.assertThat(res.getMigrationScriptRequest().getHttpMethod())
+                        .as("methot")
+                        .isEqualTo(HttpMethod.PUT);
+                softly.assertThat(res.getMigrationScriptRequest().getPath())
+                        .as("path")
+                        .isEqualTo("/");
+                softly.assertThat(res.getMigrationScriptRequest().getHttpHeader())
+                        .as("header")
+                        .isEmpty();
+                softly.assertThat(res.getMigrationScriptRequest().getBody())
+                        .as("body")
+                        .isBlank();
+            });
+        }
+
+        @Test
+        void success_replacePlaceholders() {
+            String defaultContent = "PUT /${index}" + lineSeparator() +
+                    "Authorization: ${auth}" + lineSeparator() +
+                    lineSeparator() +
+                    "{" + lineSeparator() + "\"index\":\"${index}\"" + lineSeparator() + "}";
+            String fileName = "V1__create.http";
+            HashMap<String, String> placeholders = new HashMap<>();
+            placeholders.put("index", "my-index");
+            placeholders.put("auth", "my-auth-key");
+
+            ParsedMigrationScript res = new MigrationScriptParser(
+                    "V",
+                    Collections.singletonList(".http"),
+                    placeholders,
+                    "${",
+                    "}",
+                    true)
+                    .parse(new RawMigrationScript()
+                            .setFileName(fileName)
+                            .setContent(defaultContent));
+
+            assertSoftly(softly -> {
+                softly.assertThat(res.getChecksum())
+                        .as("Checksum")
+                        .isEqualTo(defaultContent.hashCode());
+                softly.assertThat(res.getFileNameInfo().getVersion())
+                        .as("version")
+                        .isEqualTo(MigrationVersion.fromVersion("1"));
+                softly.assertThat(res.getFileNameInfo().getScriptName())
+                        .as("scriptName")
+                        .isEqualTo(fileName);
+                softly.assertThat(res.getFileNameInfo().getDescription())
+                        .as("description")
+                        .isEqualTo("create");
+                softly.assertThat(res.getMigrationScriptRequest().getHttpMethod())
+                        .as("methot")
+                        .isEqualTo(HttpMethod.PUT);
+                softly.assertThat(res.getMigrationScriptRequest().getPath())
+                        .as("path")
+                        .isEqualTo("/my-index");
+                softly.assertThat(res.getMigrationScriptRequest().getHttpHeader())
+                        .as("header")
+                        .containsEntry("Authorization", "my-auth-key");
+                softly.assertThat(res.getMigrationScriptRequest().getBody())
+                        .as("body")
+                        .isEqualTo("{" + System.lineSeparator() + "\"index\":\"my-index\"" + System.lineSeparator() + "}");
+            });
+        }
+
+        @Test
+        void failed_MethodAndPathInvalid() {
+            String defaultContent = "/";
+
+            String fileName = "V1__create.http";
+            assertThatThrownBy(() ->
+                    underTest.parse(new RawMigrationScript()
+                            .setFileName(fileName)
+                            .setContent(defaultContent)))
+                    .isInstanceOf(MigrationException.class)
+                    .hasMessage("can't parse method and path: '/'. Method and path must be separated by space and should look like this: 'PUT /my_index'");
+        }
+
+        @Test
+        void failed_methodNotSupported() {
+            String defaultContent = "TRACE /";
+
+            String fileName = "V1__create.http";
+            assertThatThrownBy(() ->
+                    underTest.parse(new RawMigrationScript()
+                            .setFileName(fileName)
+                            .setContent(defaultContent)))
+                    .isInstanceOf(MigrationException.class)
+                    .hasMessage("Method 'TRACE' not supported, only [GET, HEAD, POST, PUT, DELETE, OPTIONS, PATCH] is supported.");
+        }
+
+        @Test
+        void failed_headerInvalid() {
+            String defaultContent = "PUT /" + lineSeparator() +
+                    "Header value";
+
+            String fileName = "V1__create.http";
+            assertThatThrownBy(() ->
+                    underTest.parse(new RawMigrationScript()
+                            .setFileName(fileName)
+                            .setContent(defaultContent)))
+                    .isInstanceOf(MigrationException.class)
+                    .hasMessage("can't parse header: 'Header value'. Header must be separated by ':' and should look like this: 'Content-Type: application/json'");
         }
     }
 

@@ -5,6 +5,7 @@ import com.senacor.elasticsearch.evolution.core.internal.model.FileNameInfo;
 import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.FileNameInfoImpl;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest.HttpMethod;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 
@@ -28,7 +29,8 @@ import static java.util.Objects.requireNonNull;
  */
 public class MigrationScriptParser {
 
-    public static final String VERSION_DESCRIPTION_SEPARATOR = "__";
+    private static final String VERSION_DESCRIPTION_SEPARATOR = "__";
+
     private final String esMigrationPrefix;
     private final List<String> esMigrationSuffixes;
     private final Map<String, String> placeholders;
@@ -85,33 +87,17 @@ public class MigrationScriptParser {
             reader.lines().forEachOrdered(line -> {
                 switch (state.get()) {
                     case METHOD_PATH:
-                        // TODO (extract)
-                        String[] methodAndPath = line.trim().split("[ ]+", 2);
-                        if (methodAndPath.length != 2) {
-                            throw new MigrationException(String.format(
-                                    "can't parse method and path: '%s'. Method and path must be separated by space and should look like this: 'PUT /my_index'",
-                                    line));
-                        }
-                        res.setHttpMethod(methodAndPath[0].trim())
-                                .setPath(methodAndPath[1].trim());
+                        parseMethodWithPath(res, line);
                         state.set(ParseState.HEADER);
                         break;
                     case HEADER:
-                        // TODO (extract)
                         if (line.trim().isEmpty()) {
                             state.set(ParseState.CONTENT);
                         } else {
-                            String[] header = line.trim().split(":", 2);
-                            if (header.length != 2) {
-                                throw new MigrationException(String.format(
-                                        "can't parse header: '%s'. Header must be separated by ':' and should look like this: 'Content-Type: application/json'",
-                                        line));
-                            }
-                            res.addHttpHeader(header[0].trim(), header[1].trim());
+                            parseHeader(res, line);
                         }
                         break;
                     case CONTENT:
-                        // TODO (extract)
                         if (!res.isBodyEmpty()) {
                             res.addToBody(lineSeparator());
                         }
@@ -125,7 +111,29 @@ public class MigrationScriptParser {
             throw new MigrationException("failed parsing content of " + script.getFileName(), e);
         }
 
+        res.validate();
         return res;
+    }
+
+    private void parseHeader(MigrationScriptRequest res, String line) {
+        String[] header = line.trim().split("[:=]", 2);
+        if (header.length != 2) {
+            throw new MigrationException(String.format(
+                    "can't parse header: '%s'. Header must be separated by ':' and should look like this: 'Content-Type: application/json'",
+                    line));
+        }
+        res.addHttpHeader(header[0].trim(), header[1].trim());
+    }
+
+    private void parseMethodWithPath(MigrationScriptRequest res, String line) {
+        String[] methodAndPath = line.trim().split("[ ]+", 2);
+        if (methodAndPath.length != 2) {
+            throw new MigrationException(String.format(
+                    "can't parse method and path: '%s'. Method and path must be separated by space and should look like this: 'PUT /my_index'",
+                    line));
+        }
+        res.setHttpMethod(HttpMethod.create(methodAndPath[0]))
+                .setPath(methodAndPath[1].trim());
     }
 
     FileNameInfo parseFileName(String fileName) {
