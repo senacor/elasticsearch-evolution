@@ -1,12 +1,12 @@
 package com.senacor.elasticsearch.evolution.core.internal.utils;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
 
-import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotBlank;
-import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotEmpty;
+import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -15,100 +15,149 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class AssertionUtilsTest {
 
-    @Test
-    void requireNotEmpty_nonEmptyString() {
-        String obj = "a";
-        String msg = "msg";
+    @Nested
+    class requireNotEmptyString {
+        @Test
+        void nonEmptyString() {
+            String obj = "a";
+            String msg = "msg";
 
-        assertThat(requireNotEmpty(obj, msg))
-                .isEqualTo(obj);
+            assertThat(requireNotEmpty(obj, msg))
+                    .isEqualTo(obj);
+        }
+
+        @Test
+        void emptyString() {
+            String obj = "";
+            String msg = "msg";
+
+            assertThatThrownBy(() -> requireNotEmpty(obj, msg))
+                    .hasMessage(msg)
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        void nullString() {
+            String obj = null;
+            String msg = "msg";
+
+            assertThatThrownBy(() -> requireNotEmpty(obj, msg))
+                    .hasMessage(msg)
+                    .isInstanceOf(NullPointerException.class);
+        }
     }
 
-    @Test
-    void requireNotEmpty_emptyString() {
-        String obj = "";
-        String msg = "msg";
+    @Nested
+    class requireNotBlank {
+        @Test
+        void nonEmptyString() {
+            String obj = "a";
+            String msg = "msg";
 
-        assertThatThrownBy(() -> requireNotEmpty(obj, msg))
-                .hasMessage(msg)
-                .isInstanceOf(IllegalStateException.class);
+            assertThat(requireNotBlank(obj, msg))
+                    .isEqualTo(obj);
+        }
+
+        @Test
+        void emptyString() {
+            String obj = "";
+            String msg = "msg";
+
+            assertThatThrownBy(() -> requireNotBlank(obj, msg))
+                    .hasMessage(msg)
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        void blankString() {
+            String obj = " ";
+            String msg = "msg";
+
+            assertThatThrownBy(() -> requireNotBlank(obj, msg))
+                    .hasMessage(msg)
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        void nullString() {
+            String obj = null;
+            String msg = "msg";
+
+            assertThatThrownBy(() -> requireNotBlank(obj, msg))
+                    .hasMessage(msg)
+                    .isInstanceOf(NullPointerException.class);
+        }
     }
 
-    @Test
-    void requireNotEmpty_nullString() {
-        String obj = null;
-        String msg = "msg";
+    @Nested
+    class requireNotEmptyCollection {
+        @Test
+        void nonEmptyCollection() {
+            List obj = Collections.singletonList("a");
+            String msg = "msg";
 
-        assertThatThrownBy(() -> requireNotEmpty(obj, msg))
-                .hasMessage(msg)
-                .isInstanceOf(NullPointerException.class);
+            assertThat(requireNotEmpty(obj, msg))
+                    .isEqualTo(obj);
+        }
+
+        @Test
+        void emptyCollection() {
+            List obj = Collections.emptyList();
+            String msg = "msg";
+
+            assertThatThrownBy(() -> requireNotEmpty(obj, msg))
+                    .hasMessage(msg)
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        void nullCollection() {
+            List obj = null;
+            String msg = "msg";
+
+            assertThatThrownBy(() -> requireNotEmpty(obj, msg))
+                    .hasMessage(msg)
+                    .isInstanceOf(NullPointerException.class);
+        }
     }
 
-    @Test
-    void requireNotBlank_nonEmptyString() {
-        String obj = "a";
-        String msg = "msg";
 
-        assertThat(requireNotBlank(obj, msg))
-                .isEqualTo(obj);
-    }
+    @Nested
+    class requireCondition {
+        @Test
+        void isValid() {
+            boolean value = true;
 
-    @Test
-    void requireNotBlank_emptyString() {
-        String obj = "";
-        String msg = "msg";
+            Boolean res = requireCondition(value, Boolean.TRUE::equals, "my value (%s) must be true", value);
 
-        assertThatThrownBy(() -> requireNotBlank(obj, msg))
-                .hasMessage(msg)
-                .isInstanceOf(IllegalStateException.class);
-    }
+            assertThat(res).isEqualTo(value);
+        }
 
-    @Test
-    void requireNotBlank_blankString() {
-        String obj = " ";
-        String msg = "msg";
+        @Test
+        void isInvalidValue() {
+            boolean value = false;
 
-        assertThatThrownBy(() -> requireNotBlank(obj, msg))
-                .hasMessage(msg)
-                .isInstanceOf(IllegalStateException.class);
-    }
+            assertThatThrownBy(() -> requireCondition(value, Boolean.TRUE::equals, "my value (%s) must be true", value))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("my value (false) must be true");
+        }
 
-    @Test
-    void requireNotBlank_nullString() {
-        String obj = null;
-        String msg = "msg";
+        @Test
+        void isInvalidValueNoParameters() {
+            boolean value = false;
 
-        assertThatThrownBy(() -> requireNotBlank(obj, msg))
-                .hasMessage(msg)
-                .isInstanceOf(NullPointerException.class);
-    }
+            assertThatThrownBy(() -> requireCondition(value, Boolean.TRUE::equals, "my value must be true"))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("my value must be true");
+        }
 
-    @Test
-    void requireNotEmpty_nonEmptyCollection() {
-        List obj = Collections.singletonList("a");
-        String msg = "msg";
+        @Test
+        void isInvalidNull() {
+            Boolean value = null;
 
-        assertThat(requireNotEmpty(obj, msg))
-                .isEqualTo(obj);
-    }
-
-    @Test
-    void requireNotEmpty_emptyCollection() {
-        List obj = Collections.emptyList();
-        String msg = "msg";
-
-        assertThatThrownBy(() -> requireNotEmpty(obj, msg))
-                .hasMessage(msg)
-                .isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    void requireNotEmpty_nullCollection() {
-        List obj = null;
-        String msg = "msg";
-
-        assertThatThrownBy(() -> requireNotEmpty(obj, msg))
-                .hasMessage(msg)
-                .isInstanceOf(NullPointerException.class);
+            assertThatThrownBy(() -> requireCondition(value, Boolean.TRUE::equals, "my value (%s) must be true", value))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("my value (null) must be true");
+        }
     }
 }

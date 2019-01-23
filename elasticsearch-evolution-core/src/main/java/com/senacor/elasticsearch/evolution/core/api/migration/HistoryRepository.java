@@ -2,6 +2,7 @@ package com.senacor.elasticsearch.evolution.core.api.migration;
 
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.TreeSet;
 
@@ -23,6 +24,11 @@ public interface HistoryRepository {
      * @param migrationScriptProtocol the protocol to save
      */
     void saveOrUpdate(MigrationScriptProtocol migrationScriptProtocol);
+
+    /**
+     * @param migrationScriptProtocols the protocols to save
+     */
+    void saveOrUpdate(List<MigrationScriptProtocol> migrationScriptProtocols);
 
     /**
      * @return true, if the index is locked and Elasticsearch-Evolution has to wait until the lock is released.

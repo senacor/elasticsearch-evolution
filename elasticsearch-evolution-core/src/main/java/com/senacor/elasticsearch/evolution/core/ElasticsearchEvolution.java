@@ -135,6 +135,6 @@ public class ElasticsearchEvolution {
     }
 
     protected MigrationService createMigrationService() {
-        return new MigrationServiceImpl(createHistoryRepository());
+        return new MigrationServiceImpl(createHistoryRepository(), 1_000, 10_000);
     }
 }

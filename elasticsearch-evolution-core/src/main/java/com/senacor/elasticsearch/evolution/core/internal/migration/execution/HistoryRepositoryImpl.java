@@ -4,6 +4,7 @@ import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import org.elasticsearch.client.RestHighLevelClient;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.TreeSet;
 
@@ -33,6 +34,11 @@ public class HistoryRepositoryImpl implements HistoryRepository {
 
     @Override
     public void saveOrUpdate(MigrationScriptProtocol migrationScriptProtocol) {
+        // TODO (ak) impl
+    }
+
+    @Override
+    public void saveOrUpdate(List<MigrationScriptProtocol> migrationScriptProtocols) {
         // TODO (ak) impl
     }
 
