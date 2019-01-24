@@ -1,7 +1,6 @@
 package com.senacor.elasticsearch.evolution.core.internal.migration.input;
 
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
-import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptReaderImpl;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
