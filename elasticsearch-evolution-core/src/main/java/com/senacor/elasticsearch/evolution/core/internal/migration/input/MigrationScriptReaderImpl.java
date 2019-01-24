@@ -38,16 +38,6 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
                                      Charset encoding,
                                      String esMigrationFilePrefix,
                                      List<String> esMigrationFileSuffixes) {
-        for (int i = 0; i < locations.size(); i++) {
-            String location = locations.get(i);
-            if (location.startsWith("classpath:")) {
-                locations.set(i, location.substring("classpath:".length()));
-            } else if (location.matches("^\\w*:.*")) {
-                throw new MigrationException(String.format("could not read location path %s, " +
-                        "should look like this: classpath:es/migration", location));
-            }
-        }
-
         this.locations = locations;
         this.encoding = encoding;
         this.esMigrationPrefix = esMigrationFilePrefix;
@@ -61,7 +51,9 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
      */
     public List<RawMigrationScript> read() {
         List<RawMigrationScript> migrationScripts = new ArrayList<>();
+
         this.locations.stream()
+                .map(MigrationScriptReaderImpl::extractLocationString)
                 .map(location -> {
                     try {
                         return readFromLocation(location);
@@ -115,6 +107,19 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         }
     }
 
+    public static String extractLocationString(String location) throws MigrationException {
+        String parsedPath = "";
+        if (location.startsWith("classpath:")) {
+            parsedPath = location.substring("classpath:".length());
+            return parsedPath;
+        } else if (location.matches("^\\w*:.*")) {
+            throw new MigrationException(String.format("could not read location path %s, " +
+                    "should look like this: classpath:es/migration", location));
+        }
+        return parsedPath;
+    }
+
+
     public static ClassLoader getDefaultClassLoader() {
         ClassLoader cl = null;
         try {
@@ -124,7 +129,7 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         }
         if (cl == null) {
             // No thread context class loader -> use class loader of this class.
-            cl = MigrationScriptReader.class.getClassLoader();
+            cl = MigrationScriptReaderImpl.class.getClassLoader();
             if (cl == null) {
                 // getClassLoader() returning null indicates the bootstrap ClassLoader
                 try {
@@ -140,6 +145,7 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
     @FunctionalInterface
     interface IOFunction<T, R> {
         R accept(T t) throws IOException;
+
     }
 
     public static <R> R processResource(URI uri, IOFunction<Path, R> action) throws IOException {

@@ -21,16 +21,6 @@ class MigrationScriptReaderTest {
     class readResources {
 
         @Test
-        void fromClassPathJar() {
-            MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(Arrays.asList("META-INF/maven/org.assertj/assertj-core"),
-                    StandardCharsets.UTF_8,
-                    "p",
-                    Arrays.asList(".properties"));
-            List<RawMigrationScript> actual = reader.read();
-            assertThat(actual).hasSize(1);
-        }
-
-        @Test
         void fromClassPathResourcesDircetory() {
             MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(Arrays.asList("scriptreader"),
                     StandardCharsets.UTF_8,
@@ -39,7 +29,6 @@ class MigrationScriptReaderTest {
             List<RawMigrationScript> actual = reader.read();
             assertThat(actual).containsExactly(new RawMigrationScript().setFileName("content.http").setContent("content!"),
                     new RawMigrationScript().setFileName("content_sub.http").setContent("sub content!"));
-
         }
 
         @Test
@@ -85,7 +74,7 @@ class MigrationScriptReaderTest {
                 new MigrationScriptReaderImpl(Arrays.asList("classpath:scriptreader", "http:scriptreader"),
                         StandardCharsets.UTF_8,
                         "c",
-                        Arrays.asList(".http", ".other"));
+                        Arrays.asList(".http", ".other")).read();
             });
 
         }
