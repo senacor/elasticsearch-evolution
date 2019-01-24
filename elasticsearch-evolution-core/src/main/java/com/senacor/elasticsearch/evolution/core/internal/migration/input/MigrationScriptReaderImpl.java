@@ -1,5 +1,6 @@
 package com.senacor.elasticsearch.evolution.core.internal.migration.input;
 
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptReader;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 
 import java.nio.charset.Charset;
@@ -17,7 +18,7 @@ import java.util.stream.Stream;
 /**
  * @author Andreas Keefer
  */
-public class MigrationScriptReader {
+public class MigrationScriptReaderImpl implements MigrationScriptReader {
 
     private final List<String> locations;
     private final Charset encoding;
@@ -30,21 +31,17 @@ public class MigrationScriptReader {
      * @param esMigrationFilePrefix   File name prefix for ES migrations.
      * @param esMigrationFileSuffixes File name suffix for ES migrations.
      */
-    public MigrationScriptReader(List<String> locations,
-                                 Charset encoding,
-                                 String esMigrationFilePrefix,
-                                 List<String> esMigrationFileSuffixes) {
+    public MigrationScriptReaderImpl(List<String> locations,
+                                     Charset encoding,
+                                     String esMigrationFilePrefix,
+                                     List<String> esMigrationFileSuffixes) {
         this.locations = locations;
         this.encoding = encoding;
         this.esMigrationPrefix = esMigrationFilePrefix;
         this.esMigrationSuffixes = esMigrationFileSuffixes;
     }
 
-    /**
-     * Reads all migration scrips to {@link RawMigrationScript}'s objects.
-     *
-     * @return List of {@link RawMigrationScript}'s
-     */
+    @Override
     public List<RawMigrationScript> read() {
         List<RawMigrationScript> scriptList = new ArrayList<RawMigrationScript>();
         for (String location : this.locations) {

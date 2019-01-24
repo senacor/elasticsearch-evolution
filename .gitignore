@@ -41,6 +41,8 @@ nbdist/
 .classpath
 .settings
 target/
+**/target/
 derby.log
 .java-version
 !.mvn/wrapper/maven-wrapper.jar
+.attach_*
