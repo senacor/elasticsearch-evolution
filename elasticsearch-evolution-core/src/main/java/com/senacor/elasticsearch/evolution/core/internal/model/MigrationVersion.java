@@ -20,6 +20,7 @@ import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotBlank;
 
@@ -62,7 +63,9 @@ public final class MigrationVersion implements Comparable<MigrationVersion> {
         String normalizedVersion = requireNotBlank(version, "version must not be blank")
                 .replace('_', '.');
         this.versionParts = tokenize(normalizedVersion);
-        this.displayText = normalizedVersion;
+        this.displayText = versionParts.stream()
+                .map(Object::toString)
+                .collect(Collectors.joining("."));
     }
 
     /**

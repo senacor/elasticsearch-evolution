@@ -9,9 +9,12 @@ import com.senacor.elasticsearch.evolution.core.internal.utils.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireCondition;
 
@@ -37,6 +40,7 @@ public class MigrationServiceImpl implements MigrationService {
 
     @Override
     public List<MigrationScriptProtocol> executePendingScripts(Collection<ParsedMigrationScript> migrationScripts) {
+        List<MigrationScriptProtocol> executedScripts = new ArrayList<>();
         if (!migrationScripts.isEmpty()) {
             try {
                 waitUntilUnlocked();
@@ -48,27 +52,88 @@ public class MigrationServiceImpl implements MigrationService {
                 // get scripts which needs to be executed
                 List<ParsedMigrationScript> scriptsToExecute = getPendingScriptsToBeExecuted(migrationScripts);
 
-                // execute scripts
-                List<MigrationScriptProtocol> protocols = executeScriptsInOrder(scriptsToExecute);
-
-                // write protocols to history index
-                historyRepository.saveOrUpdate(protocols);
+                // now execute scripts and write protocols to history index
+                for (ParsedMigrationScript script : scriptsToExecute) {
+                    // execute scripts
+                    MigrationScriptProtocol protocol = executeScript(script);
+                    executedScripts.add(protocol);
+                    // write protocols to history index
+                    historyRepository.saveOrUpdate(protocol);
+                    if (!protocol.isSuccess()) {
+                        break;
+                    }
+                }
             } finally {
                 // release logical index lock
                 historyRepository.unlock();
             }
         }
-        return Collections.emptyList();
+        return executedScripts;
     }
 
-    private List<MigrationScriptProtocol> executeScriptsInOrder(List<ParsedMigrationScript> scriptsToExecute) {
+    /**
+     * executes the given script and returns a protocol ready to save in the history index
+     *
+     * @param scriptToExecute the script
+     * @return unsaved protocol
+     */
+    MigrationScriptProtocol executeScript(ParsedMigrationScript scriptToExecute) {
         // TODO (ak) impl
-        return Collections.emptyList();
+        return new MigrationScriptProtocol()
+                // TODO (ak) impl
+//                .setExecutionRuntimeInMillis()
+//                .setSuccess()
+                .setVersion(scriptToExecute.getFileNameInfo().getVersion())
+                .setScriptName(scriptToExecute.getFileNameInfo().getScriptName())
+                .setDescription(scriptToExecute.getFileNameInfo().getDescription())
+                .setChecksum(scriptToExecute.getChecksum())
+                .setExecutionTimestamp(ZonedDateTime.now())
+                .setLocked(true);
     }
 
+    /**
+     * This method returns only those scripts, which must be executed.
+     * Already executed scripts will be filtered out.
+     * the returned scripts must be executed in the returned order.
+     *
+     * @param migrationScripts all migration scripts that were potentially executed earlier.
+     * @return list of ordered scripts which must be executed
+     */
     List<ParsedMigrationScript> getPendingScriptsToBeExecuted(Collection<ParsedMigrationScript> migrationScripts) {
-        // TODO (ak) impl
-        return Collections.emptyList();
+        // order migrationScripts by version
+        List<ParsedMigrationScript> orderedScripts = new ArrayList<>(migrationScripts.stream()
+                .collect(Collectors.toMap(
+                        script -> script.getFileNameInfo().getVersion(),
+                        script -> script,
+                        (oldValue, newValue) -> newValue,
+                        TreeMap::new))
+                .values());
+
+        List<MigrationScriptProtocol> history = new ArrayList<>(historyRepository.findAll());
+        List<ParsedMigrationScript> res = new ArrayList<>(orderedScripts);
+        for (int i = 0; i < history.size(); i++) {
+            // do some checks
+            MigrationScriptProtocol protocol = history.get(i);
+            if (orderedScripts.size() <= i) {
+                logger.warn(String.format("there are less migration scripts than already executed history entries! " +
+                        "You should never delete migration scripts you have already executed. " +
+                        "Or maybe you have to cleanup the Elasticsearch-Evolution history index manually! " +
+                        "history version at position %s is %s", i, protocol.getVersion()));
+                break;
+            }
+            ParsedMigrationScript parsedMigrationScript = orderedScripts.get(i);
+            if (!protocol.getVersion().equals(parsedMigrationScript.getFileNameInfo().getVersion())) {
+                throw new MigrationException(String.format(
+                        "The logged execution in the Elasticsearch-Evolution history index at position %s is version %s and in the same position in the given migration scripts is version %s! Out of order execution is not supported. Or maybe you have added new migration scripts in between or have to cleanup the Elasticsearch-Evolution history index manually",
+                        i, protocol.getVersion(), parsedMigrationScript.getFileNameInfo().getVersion()));
+            }
+
+            if (protocol.isSuccess()) {
+                res.remove(parsedMigrationScript);
+            }
+        }
+
+        return res;
     }
 
     /**
