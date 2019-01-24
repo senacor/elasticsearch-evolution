@@ -6,6 +6,5 @@ jdk:
   - openjdk8
   - openjdk10
   - openjdk11
-install: "sh ./mvnw install -e"
-before_script: echo OK
-script: echo Done.
+install: echo do nothing
+script: ./mvnw verify -e
