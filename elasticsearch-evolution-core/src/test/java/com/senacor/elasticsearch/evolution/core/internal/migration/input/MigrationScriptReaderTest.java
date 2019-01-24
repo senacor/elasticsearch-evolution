@@ -21,7 +21,7 @@ class MigrationScriptReaderTest {
 
         @Test
         void fromClassPathResourcesDircetory() {
-            MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(Arrays.asList("scriptreader"),
+            MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(Arrays.asList("classpath:scriptreader"),
                     StandardCharsets.UTF_8,
                     "c",
                     Arrays.asList(".http"));
@@ -32,7 +32,7 @@ class MigrationScriptReaderTest {
 
         @Test
         void fromClassPathResourcesDirectoryAndMultipleSuffixes() {
-            MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(Arrays.asList("scriptreader"),
+            MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(Arrays.asList("classpath:scriptreader"),
                     StandardCharsets.UTF_8,
                     "c",
                     Arrays.asList(".http", ".other"));
@@ -77,6 +77,28 @@ class MigrationScriptReaderTest {
             });
 
         }
+
+        @Test
+        void fromFileSystemPath() {
+            MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(Arrays.asList("file:C:/Users/jjuppe/Documents/VSMS/test_data/scriptreader"),
+                    StandardCharsets.UTF_8,
+                    "c",
+                    Arrays.asList(".http"));
+            List<RawMigrationScript> actual = reader.read();
+            assertThat(actual).containsExactly(new RawMigrationScript().setFileName("content.http").setContent("content!"),
+                    new RawMigrationScript().setFileName("content_sub.http").setContent("sub content!"));
+        }
+
+        @Test
+        void fromInvalidFileSystemPath() {
+            MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(Arrays.asList("file:X:/snc/scripts"),
+                    StandardCharsets.UTF_8,
+                    "c",
+                    Arrays.asList(".http"));
+            List<RawMigrationScript> actual = reader.read();
+            assertThat(actual).isEmpty();
+        }
+
 
     }
 }

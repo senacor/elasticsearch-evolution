@@ -53,7 +53,6 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         List<RawMigrationScript> migrationScripts = new ArrayList<>();
 
         this.locations.stream()
-                .map(MigrationScriptReaderImpl::extractLocationString)
                 .map(location -> {
                     try {
                         return readFromLocation(location);
@@ -77,9 +76,24 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
      * @throws IOException
      */
     public List<RawMigrationScript> readFromLocation(String location) throws URISyntaxException, IOException {
-        URL url = resolveURL(location);
-        URI uri = url.toURI();
+        URL url;
+        URI uri;
 
+        if (location.startsWith("classpath:")) {
+            url = resolveURL(location.substring("classpath:".length()));
+            uri = (url != null) ? url.toURI() : null;
+        } else if (location.startsWith("file:")) {
+            uri = Paths.get(location.substring("file:".length())).toUri();
+        } else {
+            throw new MigrationException(String.format("could not read location path %s, " +
+                    "should look like this: classpath:es/migration or this: file:home/scripts/migration", location));
+        }
+
+        if (uri == null) {
+            return Collections.emptyList();
+        }
+
+        // TODO: have to catch here the FileNotFoundException
         return processResource(uri, path -> Files
                 .find(path, 10, (p, basicFileAttributes) ->
                         !basicFileAttributes.isDirectory()
@@ -105,18 +119,6 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         } else {
             return ClassLoader.getSystemResource(path);
         }
-    }
-
-    public static String extractLocationString(String location) throws MigrationException {
-        String parsedPath = "";
-        if (location.startsWith("classpath:")) {
-            parsedPath = location.substring("classpath:".length());
-            return parsedPath;
-        } else if (location.matches("^\\w*:.*")) {
-            throw new MigrationException(String.format("could not read location path %s, " +
-                    "should look like this: classpath:es/migration", location));
-        }
-        return parsedPath;
     }
 
 
@@ -145,7 +147,6 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
     @FunctionalInterface
     interface IOFunction<T, R> {
         R accept(T t) throws IOException;
-
     }
 
     public static <R> R processResource(URI uri, IOFunction<Path, R> action) throws IOException {
