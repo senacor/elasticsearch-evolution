@@ -8,6 +8,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotEmpty;
+import static java.util.Objects.requireNonNull;
+
 /**
  * Configuration Properties for ElasticsearchEvolution
  *
@@ -82,6 +85,30 @@ public class ElasticsearchEvolutionConfig {
      */
     public ElasticsearchEvolution load(RestHighLevelClient restHighLevelClient) {
         return new ElasticsearchEvolution(this, restHighLevelClient);
+    }
+
+    /**
+     * Validate this Configuration
+     *
+     * @return this instance, if validation was successful, otherwise a RuntimeException
+     * @throws IllegalStateException if validation failed
+     * @throws NullPointerException  if validation failed
+     */
+    public ElasticsearchEvolutionConfig validate() throws IllegalStateException, NullPointerException {
+        if (enabled) {
+            requireNotEmpty(locations, "locations must not be empty");
+            requireNonNull(encoding, "encoding must not be null");
+            requireNotEmpty(esMigrationPrefix, "esMigrationPrefix must not be empty");
+            requireNotEmpty(esMigrationSuffixes, "esMigrationSuffixes must not be empty");
+
+            if (placeholderReplacement) {
+                requireNonNull(placeholders, "placeholders must not be null");
+                requireNotEmpty(placeholderPrefix, "placeholderPrefix must not be empty");
+                requireNotEmpty(placeholderSuffix, "placeholderSuffix must not be empty");
+            }
+            requireNotEmpty(historyIndex, "historyIndex must not be empty");
+        }
+        return this;
     }
 
     public boolean isEnabled() {

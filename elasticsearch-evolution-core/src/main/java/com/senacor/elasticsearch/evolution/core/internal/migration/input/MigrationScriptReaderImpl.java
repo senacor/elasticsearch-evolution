@@ -1,6 +1,7 @@
 package com.senacor.elasticsearch.evolution.core.internal.migration.input;
 
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptReader;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 
 import java.io.BufferedReader;
@@ -18,7 +19,8 @@ import java.util.stream.Collectors;
 /**
  * @author Andreas Keefer
  */
-public class MigrationScriptReader {
+
+public class MigrationScriptReaderImpl implements MigrationScriptReader {
 
     private final List<String> locations;
     private final Charset encoding;
@@ -31,19 +33,21 @@ public class MigrationScriptReader {
      * @param esMigrationFilePrefix   File name prefix for ES migrations.
      * @param esMigrationFileSuffixes File name suffix for ES migrations.
      */
-    public MigrationScriptReader(List<String> locations,
-                                 Charset encoding,
-                                 String esMigrationFilePrefix,
-                                 List<String> esMigrationFileSuffixes) {
+
+    public MigrationScriptReaderImpl(List<String> locations,
+                                     Charset encoding,
+                                     String esMigrationFilePrefix,
+                                     List<String> esMigrationFileSuffixes) {
         for (int i = 0; i < locations.size(); i++) {
             String location = locations.get(i);
             if (location.startsWith("classpath:")) {
                 locations.set(i, location.substring("classpath:".length()));
-            } else if (location.matches("\\w*:.*")) {
+            } else if (location.matches("^\\w*:.*")) {
                 throw new MigrationException(String.format("could not read location path %s, " +
                         "should look like this: classpath:es/migration", location));
             }
         }
+
         this.locations = locations;
         this.encoding = encoding;
         this.esMigrationPrefix = esMigrationFilePrefix;
@@ -55,12 +59,12 @@ public class MigrationScriptReader {
      *
      * @return a list of {@link RawMigrationScript}
      */
-    public List<RawMigrationScript> readAllScripts() {
+    public List<RawMigrationScript> read() {
         List<RawMigrationScript> migrationScripts = new ArrayList<>();
         this.locations.stream()
                 .map(location -> {
                     try {
-                        return read(location);
+                        return readFromLocation(location);
                     } catch (URISyntaxException | IOException e) {
                         throw new MigrationException(
                                 String.format("couldn't read scripts from %s", location), e);
@@ -72,7 +76,6 @@ public class MigrationScriptReader {
         return migrationScripts;
     }
 
-
     /**
      * Reads migration scripts from a specific location
      *
@@ -81,7 +84,7 @@ public class MigrationScriptReader {
      * @throws URISyntaxException
      * @throws IOException
      */
-    public List<RawMigrationScript> read(String location) throws URISyntaxException, IOException {
+    public List<RawMigrationScript> readFromLocation(String location) throws URISyntaxException, IOException {
         URL url = resolveURL(location);
         URI uri = url.toURI();
 
