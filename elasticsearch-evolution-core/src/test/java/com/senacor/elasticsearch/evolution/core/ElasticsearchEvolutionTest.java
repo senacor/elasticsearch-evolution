@@ -43,8 +43,9 @@ class ElasticsearchEvolutionTest {
         assertThat(underTest.migrate())
                 .isEqualTo(0);
 
-        InOrder order = inOrder(restHighLevelClient);
-        order.verify(restHighLevelClient, times(2)).getLowLevelClient();
+        InOrder order = inOrder(restHighLevelClient, restClient);
+        order.verify(restHighLevelClient, times(3)).getLowLevelClient();
+        order.verify(restClient).getNodes();
         order.verifyNoMoreInteractions();
     }
 }

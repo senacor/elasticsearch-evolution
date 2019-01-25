@@ -6,10 +6,18 @@ import com.senacor.elasticsearch.evolution.core.api.migration.MigrationService;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.internal.utils.RandomUtils;
+import org.apache.http.entity.ContentType;
+import org.apache.http.nio.entity.NStringEntity;
+import org.elasticsearch.client.Request;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.Response;
+import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.ZonedDateTime;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -17,6 +25,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireCondition;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @author Andreas Keefer
@@ -28,9 +37,18 @@ public class MigrationServiceImpl implements MigrationService {
     private final HistoryRepository historyRepository;
     private final int waitUntilUnlockedMinTimeInMillis;
     private final int waitUntilUnlockedMaxTimeInMillis;
+    private final RestClient restClient;
+    private final ContentType defaultContentType;
+    private final Charset encoding;
 
-    public MigrationServiceImpl(HistoryRepository historyRepository, int waitUntilUnlockedMinTimeInMillis, int waitUntilUnlockedMaxTimeInMillis) {
-        this.historyRepository = historyRepository;
+    public MigrationServiceImpl(HistoryRepository historyRepository,
+                                int waitUntilUnlockedMinTimeInMillis,
+                                int waitUntilUnlockedMaxTimeInMillis,
+                                RestClient restClient, ContentType defaultContentType, Charset encoding) {
+        this.historyRepository = requireNonNull(historyRepository, "historyRepository must not be null");
+        this.restClient = requireNonNull(restClient, "restClient must not be null");
+        this.defaultContentType = requireNonNull(defaultContentType);
+        this.encoding = requireNonNull(encoding);
         this.waitUntilUnlockedMinTimeInMillis = requireCondition(waitUntilUnlockedMinTimeInMillis,
                 min -> min >= 0 && min <= waitUntilUnlockedMaxTimeInMillis,
                 "waitUntilUnlockedMinTimeInMillis (%s) must not be negative and must not be greater than waitUntilUnlockedMaxTimeInMillis (%s)",
@@ -78,16 +96,44 @@ public class MigrationServiceImpl implements MigrationService {
      * @return unsaved protocol
      */
     MigrationScriptProtocol executeScript(ParsedMigrationScript scriptToExecute) {
-        // TODO (ak) impl
+        boolean success = false;
+        long startTimeInMilis = System.currentTimeMillis();
+        try {
+            Request request = new Request(scriptToExecute.getMigrationScriptRequest().getHttpMethod().name(),
+                    scriptToExecute.getMigrationScriptRequest().getPath());
+            if (null != scriptToExecute.getMigrationScriptRequest().getBody()
+                    && !scriptToExecute.getMigrationScriptRequest().getBody().trim().isEmpty()) {
+                ContentType contentType = scriptToExecute.getMigrationScriptRequest().getContentType()
+                        .orElse(defaultContentType);
+                if (null == contentType.getCharset()) {
+                    logger.debug("no charset is defined for {}, setting to configured encoding {}", scriptToExecute.getFileNameInfo(), encoding);
+                    contentType = contentType.withCharset(encoding);
+                }
+                request.setEntity(new NStringEntity(scriptToExecute.getMigrationScriptRequest().getBody(), contentType));
+            }
+            RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
+            scriptToExecute.getMigrationScriptRequest().getHttpHeader()
+                    .forEach(builder::addHeader);
+            request.setOptions(builder);
+
+            Response response = restClient.performRequest(request);
+
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode >= 200 && statusCode < 300) {
+                success = true;
+            }
+        } catch (RuntimeException | IOException e) {
+            logger.error(String.format("execution of script '%s' failed", scriptToExecute.getFileNameInfo()), e);
+        }
+
         return new MigrationScriptProtocol()
-                // TODO (ak) impl
-//                .setExecutionRuntimeInMillis()
-//                .setSuccess()
+                .setExecutionRuntimeInMillis((int) (System.currentTimeMillis() - startTimeInMilis))
+                .setSuccess(success)
                 .setVersion(scriptToExecute.getFileNameInfo().getVersion())
                 .setScriptName(scriptToExecute.getFileNameInfo().getScriptName())
                 .setDescription(scriptToExecute.getFileNameInfo().getDescription())
                 .setChecksum(scriptToExecute.getChecksum())
-                .setExecutionTimestamp(ZonedDateTime.now())
+                .setExecutionTimestamp(OffsetDateTime.now())
                 .setLocked(true);
     }
 

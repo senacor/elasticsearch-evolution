@@ -1,11 +1,9 @@
 package com.senacor.elasticsearch.evolution.core.internal.model.migration;
 
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
+import org.apache.http.entity.ContentType;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static java.util.Objects.requireNonNull;
 
@@ -15,6 +13,8 @@ import static java.util.Objects.requireNonNull;
  * @author Andreas Keefer
  */
 public class MigrationScriptRequest {
+
+    private static final String HEADER_NAME_CONTENT_TYPE = "Content-Type";
 
     /**
      * http method,like POST, PUT or DELETE
@@ -121,6 +121,17 @@ public class MigrationScriptRequest {
 
     public boolean isBodyEmpty() {
         return body.length() == 0;
+    }
+
+    public Optional<ContentType> getContentType() {
+        if (null == httpHeader) {
+            return Optional.empty();
+        }
+        return httpHeader.entrySet()
+                .stream()
+                .filter(entry -> HEADER_NAME_CONTENT_TYPE.equalsIgnoreCase(entry.getKey()))
+                .map(entry -> ContentType.parse(entry.getValue()))
+                .findFirst();
     }
 
     public enum HttpMethod {
