@@ -307,9 +307,9 @@
                             </goals>
                         </execution>
                     </executions>
-                    <configuration>
-                        <keyname>050625D16E5D515601B4C00D7C830497D46F55CC</keyname>
-                    </configuration>
+                    <!--<configuration>-->
+                        <!--<keyname>050625D16E5D515601B4C00D7C830497D46F55CC</keyname>-->
+                    <!--</configuration>-->
                 </plugin>
             </plugins>
         </pluginManagement>

@@ -2,7 +2,7 @@ language: java
 jdk:
   - oraclejdk8
 #  - oraclejdk9
-#  - oraclejdk11
+  - oraclejdk11
 #  - openjdk8
 #  - openjdk10
 #  - openjdk11
@@ -12,12 +12,11 @@ cache:
     - $HOME/.m2/repository
 
 install: true
-script:
-  - ./mvnw --settings .travis.settings.xml verify -e -B -V
+script: ./mvnw --settings .travis.settings.xml verify -e -B -V
 
 jobs:
   include:
-    - stage: release
+    - stage: Maven and Github release
 #      if: (tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+((-.+)|($))/) AND (fork = false)
       jdk: openjdk11
       ## export GPG details
