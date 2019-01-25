@@ -6,6 +6,41 @@ jdk:
   - openjdk8
   - openjdk10
   - openjdk11
-install: echo nothing to install
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+
+install: true
 script:
-  - ./mvnw verify -e
+  - ./mvnw --settings .travis.settings.xml verify -e -B -V
+
+jobs:
+  include:
+    - stage: release
+      if: (tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+((-.+)|($))/) AND (branch = master) AND (fork = false)
+      jdk: openjdk11
+      ## export GPG details
+      before_install:
+        - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
+        - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+      install: true
+      script: ./mvnw --settings .travis.settings.xml deploy -DskipTests=true -Prelease -e -B -V -U
+
+      before_deploy:
+        - ./mvnw help:evaluate -N -Dexpression=project.version|grep -v '\['
+        - export project_version=$(./mvnw help:evaluate -N -Dexpression=project.version|grep -v '\[')
+
+      deploy:
+        - provider: releases
+          api_key:
+            secure: mwrHbQxvIIiUEnCFWT7M83fonGSWVh7SpH/w1g6Md6eeJ1u2WJRnxFppoB3mBonGemGh9NFc2Fox+5L7y2g8X+YOPJJq4XSQqE5aK9LEz6fWo4qYLif8o05/EFU9m8So4BJ+KEPIG/gQWPWookJAw6MTFo7GFCCIW3TJCAQ0buWqNPNMFbJznrGo/6mL1MPes1rL0ukfMAOiaHnCXHraFgJIelRTCjdzd9iNOTxCjdvoTwtVqrhnllDhEQ0foeQVbN2X60fcN/NyuR2g/L4cCfRnpjTpuDSclWY/fwD9GzQPz9Oxk5kCL3eL0dQDJXQJgo3s2oldNz8vov5TANM3/dELGj2W04vDahxioz0z7QcvzaTPldr7lI08b6hw+i5+774Yjkgt9fwJ5bX+Z23baERJVTA9vSLFY9T+hfTv6cxUflIbzxW1b+kj13fzjISwClhxieQ0YXgz+jPVUSMM3oxvTAJwFimo4bIyeuUo4ESpfWVExVhC6FgQkjq+f3o+dSDIJf5jshqVv3g22p1qawwg9xZ8gy4MMD3K5zamMRFW8EbodRlEvcdah6lE6sBaNl4SWFNMq8EQFUewqeMnW/r8BRITNLfQXKLRDUc21NxbfgAaLL0lxBRJkiMwuGyougTc12DUTLHRDgLVU10IMbk5vNXuaDoKwiyROO+Y32o=
+          file:
+            - spring-boot-starter-elasticsearch-evolution/target/spring-boot-starter-elasticsearch-evolution-$project_version.jar
+            - elasticsearch-evolution-core/target/elasticsearch-evolution-core-$project_version.jar
+          on:
+            repo: senacor/elasticsearch-evolution
+            tags: true
+          draft: true
+          name: $project_version
+          skip_cleanup: true
