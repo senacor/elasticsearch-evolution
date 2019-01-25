@@ -18,7 +18,7 @@ script:
 jobs:
   include:
     - stage: release
-      if: (tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+((-.+)|($))/) AND (branch = master) AND (fork = false)
+      if: (tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+((-.+)|($))/) AND (fork = false)
       jdk: openjdk11
       ## export GPG details
       before_install:
