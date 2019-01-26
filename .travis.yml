@@ -37,7 +37,7 @@ jobs:
       script: $MVN_CMD install -DskipTests=true -Prelease
 
       before_deploy:
-        - ./prepare_release.sh
+        - source prepare_release.sh
       deploy:
         - provider: script
           on:
@@ -56,5 +56,4 @@ jobs:
             - spring-boot-starter-elasticsearch-evolution/target/spring-boot-starter-elasticsearch-evolution-$PROJECT_VERSION.jar
             - elasticsearch-evolution-core/target/elasticsearch-evolution-core-$PROJECT_VERSION.jar
           draft: false
-#          results in 'invalid option "--name="'
-#          name: $PROJECT_VERSION
+          name: $PROJECT_VERSION
