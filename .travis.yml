@@ -43,12 +43,14 @@ jobs:
       deploy:
         - provider: script
           on:
+            branch: release
             repo: senacor/elasticsearch-evolution
 #            condition: "$IS_SNAPSHOT = false"
           skip_cleanup: true
           script: bash $MVN_CMD deploy -DskipTests=true -Prelease
         - provider: releases
           on:
+            branch: release
             repo: senacor/elasticsearch-evolution
 #            condition: "$IS_SNAPSHOT = false"
           skip_cleanup: true
