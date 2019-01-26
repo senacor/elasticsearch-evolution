@@ -1,5 +1,6 @@
 language: java
-dist: xenial
+# oraclejdk 8 and 9 is not working on xenial
+#dist: xenial
 env:
   global:
     - MVN_CMD="./mvnw --settings .travis.settings.xml -e -B -V"
