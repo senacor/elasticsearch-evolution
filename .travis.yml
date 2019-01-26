@@ -7,6 +7,10 @@ jdk:
   - openjdk10
   - openjdk11
 
+stages:
+  - test
+  - release
+
 cache:
   directories:
     - $HOME/.m2/repository
@@ -16,9 +20,9 @@ script: ./mvnw --settings .travis.settings.xml verify -e -B -V
 
 jobs:
   include:
-    - stage: Maven and Github release
+    - stage: release
 #      if: (tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+((-.+)|($))/) AND (fork = false)
-      if: fork = false AND branch = master
+      if: fork = false AND tag = true AND type = push
       jdk: openjdk11
       ## export GPG details
       before_install:
