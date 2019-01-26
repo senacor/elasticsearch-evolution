@@ -22,7 +22,7 @@ jobs:
   include:
     - stage: release
 #      if: (tag =~ /^v[0-9]+\.[0-9]+\.[0-9]+((-.+)|($))/) AND (fork = false)
-      if: fork = false AND tag IS present AND type = push
+      if: fork = false AND tag IS present AND type = push AND branch = master
       jdk: openjdk11
       ## export GPG details
       before_install:
