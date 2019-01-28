@@ -5,7 +5,10 @@ import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigr
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -80,8 +83,10 @@ class MigrationScriptReaderTest {
         }
 
         @Test
-        void fromFileSystemPath() {
-            MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(Arrays.asList("file:C:/Users/jjuppe/Documents/VSMS/test_data/scriptreader"),
+        void fromFileSystemPath() throws URISyntaxException {
+            URL resourceDirectory = MigrationScriptReaderImpl.resolveURL("scriptreader");
+            String absolutePathToScriptreader = Paths.get(resourceDirectory.toURI()).toFile().getAbsolutePath();
+            MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(Arrays.asList("file:" + absolutePathToScriptreader),
                     StandardCharsets.UTF_8,
                     "c",
                     Arrays.asList(".http"));
