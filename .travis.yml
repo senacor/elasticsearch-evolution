@@ -1,4 +1,9 @@
 language: java
+# oraclejdk 8 and 9 is not working on xenial
+#dist: xenial
+env:
+  global:
+    - MVN_CMD="./mvnw --settings .travis.settings.xml -e -B -V"
 jdk:
   - oraclejdk8
   - oraclejdk9
@@ -6,6 +11,49 @@ jdk:
   - openjdk8
   - openjdk10
   - openjdk11
-install: echo nothing to install
-script:
-  - ./mvnw verify -e
+
+stages:
+  - test
+  - release
+
+cache:
+  directories:
+    - $HOME/.m2/repository
+    - $HOME/.m2/wrapper
+
+install: true
+script: $MVN_CMD verify
+
+jobs:
+  include:
+    - stage: release
+      if: fork = false AND tag IS NOT present AND type = push AND branch = release
+      jdk: openjdk11
+      install: true
+      ## export GPG details
+      before_script:
+        - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
+        - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+      script: $MVN_CMD install -DskipTests=true -Prelease
+
+      before_deploy:
+        - source prepare_release.sh
+      deploy:
+        - provider: script
+          on:
+            branch: release
+            repo: senacor/elasticsearch-evolution
+          skip_cleanup: true
+          script: bash $MVN_CMD deploy -DskipTests=true -Prelease
+        - provider: releases
+          on:
+            branch: release
+            repo: senacor/elasticsearch-evolution
+          skip_cleanup: true
+          api_key:
+            secure: mwrHbQxvIIiUEnCFWT7M83fonGSWVh7SpH/w1g6Md6eeJ1u2WJRnxFppoB3mBonGemGh9NFc2Fox+5L7y2g8X+YOPJJq4XSQqE5aK9LEz6fWo4qYLif8o05/EFU9m8So4BJ+KEPIG/gQWPWookJAw6MTFo7GFCCIW3TJCAQ0buWqNPNMFbJznrGo/6mL1MPes1rL0ukfMAOiaHnCXHraFgJIelRTCjdzd9iNOTxCjdvoTwtVqrhnllDhEQ0foeQVbN2X60fcN/NyuR2g/L4cCfRnpjTpuDSclWY/fwD9GzQPz9Oxk5kCL3eL0dQDJXQJgo3s2oldNz8vov5TANM3/dELGj2W04vDahxioz0z7QcvzaTPldr7lI08b6hw+i5+774Yjkgt9fwJ5bX+Z23baERJVTA9vSLFY9T+hfTv6cxUflIbzxW1b+kj13fzjISwClhxieQ0YXgz+jPVUSMM3oxvTAJwFimo4bIyeuUo4ESpfWVExVhC6FgQkjq+f3o+dSDIJf5jshqVv3g22p1qawwg9xZ8gy4MMD3K5zamMRFW8EbodRlEvcdah6lE6sBaNl4SWFNMq8EQFUewqeMnW/r8BRITNLfQXKLRDUc21NxbfgAaLL0lxBRJkiMwuGyougTc12DUTLHRDgLVU10IMbk5vNXuaDoKwiyROO+Y32o=
+          file:
+            - spring-boot-starter-elasticsearch-evolution/target/spring-boot-starter-elasticsearch-evolution-$PROJECT_VERSION.jar
+            - elasticsearch-evolution-core/target/elasticsearch-evolution-core-$PROJECT_VERSION.jar
+          draft: false
+          name: $PROJECT_VERSION

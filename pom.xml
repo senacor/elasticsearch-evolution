@@ -26,6 +26,31 @@
         <url>https://github.com/senacor/elasticsearch-evolution</url>
     </scm>
 
+    <distributionManagement>
+        <site>
+            <id>readme</id>
+            <url>https://github.com/senacor/elasticsearch-evolution</url>
+        </site>
+
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
+    <developers>
+        <developer>
+            <name>Andreas Keefer</name>
+            <email>andreas.keefer@senacor.com</email>
+            <organizationUrl>https://senacor.com/</organizationUrl>
+        </developer>
+    </developers>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -38,10 +63,12 @@
         <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
         <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
         <maven-failsafe-plugin.version>2.22.1</maven-failsafe-plugin.version>
-        <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
+        <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <maven-jar-plugin.version>3.1.1</maven-jar-plugin.version>
         <maven-javadoc-plugin.version>3.0.1</maven-javadoc-plugin.version>
         <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
+        <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
+        <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
 
         <!-- Dependency Versions -->
         <apache.lucene.test.version>7.5.0</apache.lucene.test.version>
@@ -255,9 +282,76 @@
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>${maven-jar-plugin.version}</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.sonatype.plugins</groupId>
+                    <artifactId>nexus-staging-maven-plugin</artifactId>
+                    <version>${nexus-staging-maven-plugin.version}</version>
+                    <extensions>true</extensions>
+                    <configuration>
+                        <serverId>ossrh</serverId>
+                        <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                        <!--TODO change to true after impl is ready to deploy to maven central-->
+                        <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>${maven-gpg-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>sign-artifacts</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>sign</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <!--<configuration>-->
+                        <!--<keyname>050625D16E5D515601B4C00D7C830497D46F55CC</keyname>-->
+                    <!--</configuration>-->
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
+
+    <profiles>
+        <!-- Activate using the release property: mvn clean install -Prelease -->
+        <profile>
+            <id>release</id>
+            <activation>
+                <property>
+                    <name>release</name>
+                </property>
+            </activation>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                    </plugin>
+
+                    <!-- To release to Maven central -->
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                    </plugin>
+
+                    <!-- To sign the artifacts -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                    </plugin>
+                </plugins>
+
+            </build>
+        </profile>
+    </profiles>
 
     <modules>
         <module>elasticsearch-evolution-core</module>

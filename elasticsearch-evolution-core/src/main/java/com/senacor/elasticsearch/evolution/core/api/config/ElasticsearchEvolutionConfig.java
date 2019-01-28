@@ -8,6 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotBlank;
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotEmpty;
 import static java.util.Objects.requireNonNull;
 
@@ -34,6 +35,12 @@ public class ElasticsearchEvolutionConfig {
      * Encoding of migration files.
      */
     private Charset encoding = StandardCharsets.UTF_8;
+
+    /**
+     * This content type will be used as default if no contentType header is specified in the header section of a migration script.
+     * If no charset is defined, the {@link #encoding} charset is used.
+     */
+    private String defaultContentType = "application/json; charset=UTF-8";
 
     /**
      * File name prefix for ES migrations.
@@ -98,15 +105,15 @@ public class ElasticsearchEvolutionConfig {
         if (enabled) {
             requireNotEmpty(locations, "locations must not be empty");
             requireNonNull(encoding, "encoding must not be null");
-            requireNotEmpty(esMigrationPrefix, "esMigrationPrefix must not be empty");
+            requireNotBlank(esMigrationPrefix, "esMigrationPrefix must not be empty");
             requireNotEmpty(esMigrationSuffixes, "esMigrationSuffixes must not be empty");
-
+            requireNotBlank(defaultContentType, "defaultContentType must not be empty");
             if (placeholderReplacement) {
                 requireNonNull(placeholders, "placeholders must not be null");
-                requireNotEmpty(placeholderPrefix, "placeholderPrefix must not be empty");
-                requireNotEmpty(placeholderSuffix, "placeholderSuffix must not be empty");
+                requireNotBlank(placeholderPrefix, "placeholderPrefix must not be empty");
+                requireNotBlank(placeholderSuffix, "placeholderSuffix must not be empty");
             }
-            requireNotEmpty(historyIndex, "historyIndex must not be empty");
+            requireNotBlank(historyIndex, "historyIndex must not be empty");
         }
         return this;
     }
@@ -135,6 +142,15 @@ public class ElasticsearchEvolutionConfig {
 
     public ElasticsearchEvolutionConfig setEncoding(Charset encoding) {
         this.encoding = encoding;
+        return this;
+    }
+
+    public String getDefaultContentType() {
+        return defaultContentType;
+    }
+
+    public ElasticsearchEvolutionConfig setDefaultContentType(String defaultContentType) {
+        this.defaultContentType = defaultContentType;
         return this;
     }
 
@@ -203,17 +219,18 @@ public class ElasticsearchEvolutionConfig {
 
     @Override
     public String toString() {
-        return "ElasticsearchEvolutionProperties{" +
+        return "ElasticsearchEvolutionConfig{" +
                 "enabled=" + enabled +
                 ", locations=" + locations +
                 ", encoding=" + encoding +
-                ", historyIndex='" + historyIndex + '\'' +
+                ", defaultContentType='" + defaultContentType + '\'' +
+                ", esMigrationPrefix='" + esMigrationPrefix + '\'' +
+                ", esMigrationSuffixes=" + esMigrationSuffixes +
                 ", placeholders=" + placeholders +
                 ", placeholderPrefix='" + placeholderPrefix + '\'' +
                 ", placeholderSuffix='" + placeholderSuffix + '\'' +
                 ", placeholderReplacement=" + placeholderReplacement +
-                ", esMigrationPrefix='" + esMigrationPrefix + '\'' +
-                ", esMigrationSuffixes=" + esMigrationSuffixes +
+                ", historyIndex='" + historyIndex + '\'' +
                 '}';
     }
 }

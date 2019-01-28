@@ -13,6 +13,7 @@ import com.senacor.elasticsearch.evolution.core.internal.migration.input.Migrati
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
+import org.apache.http.entity.ContentType;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,6 +136,11 @@ public class ElasticsearchEvolution {
     }
 
     protected MigrationService createMigrationService() {
-        return new MigrationServiceImpl(createHistoryRepository(), 1_000, 10_000);
+        return new MigrationServiceImpl(createHistoryRepository(),
+                1_000,
+                10_000,
+                getRestHighLevelClient().getLowLevelClient(),
+                ContentType.parse(getConfig().getDefaultContentType()),
+                getConfig().getEncoding());
     }
 }

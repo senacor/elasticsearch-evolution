@@ -157,13 +157,23 @@ class MigrationVersionTest {
         }
 
         @Test
-        void removeUnnecessaryVersionParts() {
+        void removeUnnecessaryVersionParts_removeEndingZero() {
             MigrationVersion migrationVersion = MigrationVersion.fromVersion("2.0");
 
             assertThat(migrationVersion.hashCode())
                     .isEqualTo(Arrays.asList(2).hashCode());
             assertThat(migrationVersion.toString())
-                    .isEqualTo("2.0");
+                    .isEqualTo("2");
+        }
+
+        @Test
+        void removeUnnecessaryVersionParts_middleZeroIsNotRemoved() {
+            MigrationVersion migrationVersion = MigrationVersion.fromVersion("2.0.1.0");
+
+            assertThat(migrationVersion.hashCode())
+                    .isEqualTo(Arrays.asList(2, 0, 1).hashCode());
+            assertThat(migrationVersion.toString())
+                    .isEqualTo("2.0.1");
         }
 
         @Test

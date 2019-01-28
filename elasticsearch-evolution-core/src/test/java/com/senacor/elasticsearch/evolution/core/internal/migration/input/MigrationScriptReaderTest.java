@@ -26,7 +26,7 @@ class MigrationScriptReaderTest {
                     "c",
                     Arrays.asList(".http"));
             List<RawMigrationScript> actual = reader.read();
-            assertThat(actual).containsExactly(new RawMigrationScript().setFileName("content.http").setContent("content!"),
+            assertThat(actual).containsExactlyInAnyOrder(new RawMigrationScript().setFileName("content.http").setContent("content!"),
                     new RawMigrationScript().setFileName("content_sub.http").setContent("sub content!"));
         }
 
@@ -86,7 +86,7 @@ class MigrationScriptReaderTest {
                     "c",
                     Arrays.asList(".http"));
             List<RawMigrationScript> actual = reader.read();
-            assertThat(actual).containsExactly(new RawMigrationScript().setFileName("content.http").setContent("content!"),
+            assertThat(actual).containsExactlyInAnyOrder(new RawMigrationScript().setFileName("content.http").setContent("content!"),
                     new RawMigrationScript().setFileName("content_sub.http").setContent("sub content!"));
         }
 
@@ -111,6 +111,5 @@ class MigrationScriptReaderTest {
             assertThat(actual).containsExactlyInAnyOrder(new RawMigrationScript().setFileName("content.http").setContent("content!"),
                     new RawMigrationScript().setFileName("content_sub.http").setContent("sub content!"));
         }
-
     }
 }
