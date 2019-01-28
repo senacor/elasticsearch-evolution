@@ -3,7 +3,7 @@ package com.senacor.elasticsearch.evolution.core.internal.model.dbhistory;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,7 +27,7 @@ class MigrationScriptProtocolTest {
                     .setExecutionRuntimeInMillis(1)
                     .setIndexName("asd")
                     .setScriptName("asd")
-                    .setExecutionTimestamp(ZonedDateTime.now())
+                    .setExecutionTimestamp(OffsetDateTime.now())
                     .setSuccess(true)
                     .setLocked(false);
 
@@ -51,7 +51,7 @@ class MigrationScriptProtocolTest {
                     .setExecutionRuntimeInMillis(1)
                     .setIndexName("asd")
                     .setScriptName("asd")
-                    .setExecutionTimestamp(ZonedDateTime.now())
+                    .setExecutionTimestamp(OffsetDateTime.now())
                     .setSuccess(true)
                     .setLocked(false);
 

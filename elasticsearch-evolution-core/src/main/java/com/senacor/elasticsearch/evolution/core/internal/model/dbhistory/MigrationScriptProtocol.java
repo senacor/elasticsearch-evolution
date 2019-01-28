@@ -3,7 +3,7 @@ package com.senacor.elasticsearch.evolution.core.internal.model.dbhistory;
 import com.senacor.elasticsearch.evolution.core.internal.model.FileNameInfo;
 import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
 import java.util.Objects;
 
 /**
@@ -46,7 +46,7 @@ public class MigrationScriptProtocol implements FileNameInfo, Comparable<Migrati
      * The timestamp when this migration was applied/executed.
      * not-null
      */
-    private ZonedDateTime executionTimestamp;
+    private OffsetDateTime executionTimestamp;
 
     /**
      * The the runtime in millis of this migration.
@@ -129,11 +129,11 @@ public class MigrationScriptProtocol implements FileNameInfo, Comparable<Migrati
         return this;
     }
 
-    public ZonedDateTime getExecutionTimestamp() {
+    public OffsetDateTime getExecutionTimestamp() {
         return executionTimestamp;
     }
 
-    public MigrationScriptProtocol setExecutionTimestamp(ZonedDateTime executionTimestamp) {
+    public MigrationScriptProtocol setExecutionTimestamp(OffsetDateTime executionTimestamp) {
         this.executionTimestamp = executionTimestamp;
         return this;
     }
@@ -188,5 +188,20 @@ public class MigrationScriptProtocol implements FileNameInfo, Comparable<Migrati
             return 1;
         }
         return version.compareTo(o.version);
+    }
+
+    @Override
+    public String toString() {
+        return "MigrationScriptProtocol{" +
+                "version=" + version +
+                ", indexName='" + indexName + '\'' +
+                ", description='" + description + '\'' +
+                ", scriptName='" + scriptName + '\'' +
+                ", checksum=" + checksum +
+                ", executionTimestamp=" + executionTimestamp +
+                ", executionRuntimeInMillis=" + executionRuntimeInMillis +
+                ", success=" + success +
+                ", locked=" + locked +
+                '}';
     }
 }
