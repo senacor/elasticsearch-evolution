@@ -92,24 +92,30 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         if (uri == null) {
             return Collections.emptyList();
         }
+        List<RawMigrationScript> migrationScripts;
+        try {
+            migrationScripts = processResource(uri, path -> Files
+                    .find(path, 10, (p, basicFileAttributes) ->
+                            !basicFileAttributes.isDirectory()
+                                    && this.esMigrationSuffixes.contains(p.toString().substring(p.toString().lastIndexOf(".")))
+                                    && basicFileAttributes.size() > 0
+                                    && p.getFileName().toString().startsWith(this.esMigrationPrefix))
+                    .map(file -> {
+                        String filename = file.getFileName().toString();
+                        try (BufferedReader reader = Files.newBufferedReader(file, this.encoding)) {
+                            String content = reader.lines()
+                                    .collect(Collectors.joining(System.lineSeparator()));
+                            return new RawMigrationScript().setFileName(filename).setContent(content);
+                        } catch (IOException e) {
+                            throw new IllegalStateException("can't read file: " + file.getFileName().toString(), e);
+                        }
+                    }).collect(Collectors.toList()));
+        } catch (NoSuchFileException e) {
+            System.out.println(String.format("The location %s is not a valid location!", location));
+            migrationScripts = Collections.emptyList();
+        }
 
-        // TODO: have to catch here the FileNotFoundException
-        return processResource(uri, path -> Files
-                .find(path, 10, (p, basicFileAttributes) ->
-                        !basicFileAttributes.isDirectory()
-                                && this.esMigrationSuffixes.contains(p.toString().substring(p.toString().lastIndexOf(".")))
-                                && basicFileAttributes.size() > 0
-                                && p.getFileName().toString().startsWith(this.esMigrationPrefix))
-                .map(file -> {
-                    String filename = file.getFileName().toString();
-                    try (BufferedReader reader = Files.newBufferedReader(file, this.encoding)) {
-                        String content = reader.lines()
-                                .collect(Collectors.joining(System.lineSeparator()));
-                        return new RawMigrationScript().setFileName(filename).setContent(content);
-                    } catch (IOException e) {
-                        throw new IllegalStateException("can't read file: " + file.getFileName().toString(), e);
-                    }
-                }).collect(Collectors.toList()));
+        return migrationScripts;
     }
 
     public static URL resolveURL(String path) {

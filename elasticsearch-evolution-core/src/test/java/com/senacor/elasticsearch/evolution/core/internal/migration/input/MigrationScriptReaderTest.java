@@ -69,6 +69,7 @@ class MigrationScriptReaderTest {
 
         @Test()
         void fromClasspathResourcesDirectoryWithWrongProtocol() {
+            // http is not a valid prefix
             assertThrows(MigrationException.class, () -> {
                 new MigrationScriptReaderImpl(Arrays.asList("classpath:scriptreader", "http:scriptreader"),
                         StandardCharsets.UTF_8,
@@ -99,6 +100,17 @@ class MigrationScriptReaderTest {
             assertThat(actual).isEmpty();
         }
 
+        @Test
+        void fromInvalidAndValidFileSystemPath() {
+            MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(Arrays.asList("file:X:/snc/scripts",
+                    "classpath:scriptreader"),
+                    StandardCharsets.UTF_8,
+                    "c",
+                    Arrays.asList(".http"));
+            List<RawMigrationScript> actual = reader.read();
+            assertThat(actual).containsExactlyInAnyOrder(new RawMigrationScript().setFileName("content.http").setContent("content!"),
+                    new RawMigrationScript().setFileName("content_sub.http").setContent("sub content!"));
+        }
 
     }
 }
