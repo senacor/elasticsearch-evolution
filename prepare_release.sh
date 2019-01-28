@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
+# fail this script if a command fails
 set -e
+
 #set project version from maven version
 ./mvnw help:evaluate -N -Dexpression=project.version|grep -v '\['
 export PROJECT_VERSION=$(./mvnw help:evaluate -N -Dexpression=project.version|grep -v '\[')

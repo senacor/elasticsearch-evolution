@@ -83,7 +83,9 @@ public class MigrationServiceImpl implements MigrationService {
                 }
             } finally {
                 // release logical index lock
-                historyRepository.unlock();
+                if (!historyRepository.unlock()) {
+                    throw new MigrationException("could not release the elasticsearch-evolution history index lock! Maybe you have to release it manually.");
+                }
             }
         }
         return executedScripts;

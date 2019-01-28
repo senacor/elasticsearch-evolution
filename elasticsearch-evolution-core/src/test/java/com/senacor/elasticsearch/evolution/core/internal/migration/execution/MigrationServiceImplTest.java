@@ -2,6 +2,7 @@ package com.senacor.elasticsearch.evolution.core.internal.migration.execution;
 
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
+import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.FileNameInfoImpl;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest;
@@ -21,7 +22,6 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -29,7 +29,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.stream.IntStream;
@@ -37,11 +36,14 @@ import java.util.stream.Stream;
 
 import static com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion.fromVersion;
 import static com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest.HttpMethod.DELETE;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -97,7 +99,7 @@ class MigrationServiceImplTest {
                     0, 0, restClient, defaultContentType, encoding);
             ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
             ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
-            List<ParsedMigrationScript> parsedMigrationScripts = Arrays.asList(
+            List<ParsedMigrationScript> parsedMigrationScripts = asList(
                     parsedMigrationScript1_1,
                     parsedMigrationScript1_0);
 
@@ -113,14 +115,14 @@ class MigrationServiceImplTest {
 
         @Test
         void scriptsAndHistoryInSync_noScriptsWillBeReturned() {
-            doReturn(new TreeSet<>(Arrays.asList(
+            doReturn(new TreeSet<>(asList(
                     createMigrationScriptProtocol("1.0", true),
                     createMigrationScriptProtocol("1.1", true)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding);
 
-            List<ParsedMigrationScript> parsedMigrationScripts = Arrays.asList(
+            List<ParsedMigrationScript> parsedMigrationScripts = asList(
                     createParsedMigrationScript("1.1"),
                     createParsedMigrationScript("1.0"));
 
@@ -134,7 +136,7 @@ class MigrationServiceImplTest {
 
         @Test
         void lastHistoryVersionWasFailing_AllScriptsInclFailedWillBeReturned() {
-            doReturn(new TreeSet<>(Arrays.asList(
+            doReturn(new TreeSet<>(asList(
                     createMigrationScriptProtocol("1.0", true),
                     createMigrationScriptProtocol("1.1", false)
             ))).when(historyRepository).findAll();
@@ -143,7 +145,7 @@ class MigrationServiceImplTest {
 
             ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
             ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
-            List<ParsedMigrationScript> parsedMigrationScripts = Arrays.asList(
+            List<ParsedMigrationScript> parsedMigrationScripts = asList(
                     parsedMigrationScript1_1,
                     parsedMigrationScript1_0);
 
@@ -158,7 +160,7 @@ class MigrationServiceImplTest {
 
         @Test
         void moreHistoryVersionsThanScripts_warningIsShownAnNoScriptsWillBeReturned() {
-            doReturn(new TreeSet<>(Arrays.asList(
+            doReturn(new TreeSet<>(asList(
                     createMigrationScriptProtocol("1.0", true),
                     createMigrationScriptProtocol("1.1", true),
                     createMigrationScriptProtocol("1.2", false)
@@ -168,7 +170,7 @@ class MigrationServiceImplTest {
 
             ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
             ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
-            List<ParsedMigrationScript> parsedMigrationScripts = Arrays.asList(
+            List<ParsedMigrationScript> parsedMigrationScripts = asList(
                     parsedMigrationScript1_1,
                     parsedMigrationScript1_0);
 
@@ -182,7 +184,7 @@ class MigrationServiceImplTest {
 
         @Test
         void outOfOrderExecutionIsNotSupported() {
-            doReturn(new TreeSet<>(Arrays.asList(
+            doReturn(new TreeSet<>(asList(
                     createMigrationScriptProtocol("1.0", true),
                     createMigrationScriptProtocol("1.1", true)
             ))).when(historyRepository).findAll();
@@ -192,7 +194,7 @@ class MigrationServiceImplTest {
             ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
             ParsedMigrationScript parsedMigrationScript1_0_1 = createParsedMigrationScript("1.0.1");
             ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
-            List<ParsedMigrationScript> parsedMigrationScripts = Arrays.asList(
+            List<ParsedMigrationScript> parsedMigrationScripts = asList(
                     parsedMigrationScript1_1,
                     parsedMigrationScript1_0_1,
                     parsedMigrationScript1_0);
@@ -241,7 +243,7 @@ class MigrationServiceImplTest {
             });
 
             InOrder order = inOrder(historyRepository, restClient);
-            order.verify(restClient).performRequest(Mockito.argThat(argument -> {
+            order.verify(restClient).performRequest(argThat(argument -> {
                 assertSoftly(softly -> {
                     softly.assertThat(argument.getMethod())
                             .isEqualToIgnoringCase(script.getMigrationScriptRequest().getHttpMethod().name())
@@ -275,7 +277,7 @@ class MigrationServiceImplTest {
             assertThat(res.isSuccess()).isTrue();
 
             InOrder order = inOrder(historyRepository, restClient);
-            order.verify(restClient).performRequest(Mockito.argThat(argument -> {
+            order.verify(restClient).performRequest(argThat(argument -> {
                 assertSoftly(softly -> {
                     softly.assertThat(argument.getMethod())
                             .isEqualToIgnoringCase(script.getMigrationScriptRequest().getHttpMethod().name())
@@ -315,7 +317,7 @@ class MigrationServiceImplTest {
             assertThat(res.isSuccess()).isTrue();
 
             InOrder order = inOrder(historyRepository, restClient);
-            order.verify(restClient).performRequest(Mockito.argThat(argument -> {
+            order.verify(restClient).performRequest(argThat(argument -> {
                 assertSoftly(softly -> {
                     softly.assertThat(argument.getMethod())
                             .isEqualToIgnoringCase(script.getMigrationScriptRequest().getHttpMethod().name())
@@ -354,7 +356,7 @@ class MigrationServiceImplTest {
             assertThat(res.isSuccess()).isTrue();
 
             InOrder order = inOrder(historyRepository, restClient);
-            order.verify(restClient).performRequest(Mockito.argThat(argument -> {
+            order.verify(restClient).performRequest(argThat(argument -> {
                 assertSoftly(softly -> {
                     softly.assertThat(argument.getMethod())
                             .isEqualToIgnoringCase(script.getMigrationScriptRequest().getHttpMethod().name())
@@ -394,7 +396,7 @@ class MigrationServiceImplTest {
             assertThat(res.isSuccess()).isTrue();
 
             InOrder order = inOrder(historyRepository, restClient);
-            order.verify(restClient).performRequest(Mockito.argThat(argument -> {
+            order.verify(restClient).performRequest(argThat(argument -> {
                 assertSoftly(softly -> {
                     softly.assertThat(argument.getMethod())
                             .isEqualToIgnoringCase(script.getMigrationScriptRequest().getHttpMethod().name())
@@ -458,6 +460,137 @@ class MigrationServiceImplTest {
             MigrationScriptProtocol res = underTest.executeScript(script);
 
             assertThat(res.isSuccess()).isTrue();
+        }
+    }
+
+    @Nested
+    class executePendingScripts {
+        @Test
+        void allOK() throws IOException {
+            List<ParsedMigrationScript> scripts = asList(
+                    createParsedMigrationScript("1.0"),
+                    createParsedMigrationScript("1.1"));
+            doReturn(false).when(historyRepository).isLocked();
+            doReturn(true).when(historyRepository).lock();
+            doReturn(true).when(historyRepository).unlock();
+            doReturn(new TreeSet<>()).when(historyRepository).findAll();
+
+            Response responseMock = createResponseMock(200);
+            doReturn(responseMock).when(restClient).performRequest(any());
+            MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
+                    0, 0, restClient, defaultContentType, encoding);
+
+            List<MigrationScriptProtocol> res = underTest.executePendingScripts(scripts);
+
+            assertThat(res).hasSize(2)
+                    .allMatch(MigrationScriptProtocol::isSuccess);
+            InOrder order = inOrder(historyRepository, restClient);
+            order.verify(historyRepository).isLocked();
+            order.verify(historyRepository).lock();
+            order.verify(historyRepository).findAll();
+            order.verify(restClient).performRequest(any());
+            order.verify(historyRepository).saveOrUpdate(any());
+            order.verify(restClient).performRequest(any());
+            order.verify(historyRepository).saveOrUpdate(any());
+            order.verify(historyRepository).unlock();
+            order.verifyNoMoreInteractions();
+        }
+
+        @Test
+        void firstExecutionFailed() throws IOException {
+            List<ParsedMigrationScript> scripts = asList(
+                    createParsedMigrationScript("1.0"),
+                    createParsedMigrationScript("1.1"));
+            doReturn(false).when(historyRepository).isLocked();
+            doReturn(true).when(historyRepository).lock();
+            doReturn(true).when(historyRepository).unlock();
+            doReturn(new TreeSet<>()).when(historyRepository).findAll();
+
+            Response responseMock = createResponseMock(500);
+            doReturn(responseMock).when(restClient).performRequest(any());
+            MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
+                    0, 0, restClient, defaultContentType, encoding);
+
+            List<MigrationScriptProtocol> res = underTest.executePendingScripts(scripts);
+
+            assertThat(res).hasSize(1)
+                    .allMatch(migrationScriptProtocol -> !migrationScriptProtocol.isSuccess());
+            assertThat(res.get(0).getVersion()).isEqualTo(MigrationVersion.fromVersion("1.0"));
+            InOrder order = inOrder(historyRepository, restClient);
+            order.verify(historyRepository).isLocked();
+            order.verify(historyRepository).lock();
+            order.verify(historyRepository).findAll();
+            order.verify(restClient).performRequest(any());
+            order.verify(historyRepository).saveOrUpdate(any());
+            order.verify(historyRepository).unlock();
+            order.verifyNoMoreInteractions();
+        }
+
+        @Test
+        void error_unlockWasNotSuccessful() throws IOException {
+            List<ParsedMigrationScript> scripts = asList(
+                    createParsedMigrationScript("1.0"),
+                    createParsedMigrationScript("1.1"));
+            doReturn(false).when(historyRepository).isLocked();
+            doReturn(true).when(historyRepository).lock();
+            doReturn(false).when(historyRepository).unlock();
+            doReturn(new TreeSet<>()).when(historyRepository).findAll();
+
+            Response responseMock = createResponseMock(200);
+            doReturn(responseMock).when(restClient).performRequest(any());
+            MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
+                    0, 0, restClient, defaultContentType, encoding);
+
+            assertThatThrownBy(() -> underTest.executePendingScripts(scripts))
+                    .isInstanceOf(MigrationException.class)
+                    .hasMessage("could not release the elasticsearch-evolution history index lock! Maybe you have to release it manually.");
+
+            InOrder order = inOrder(historyRepository, restClient);
+            order.verify(historyRepository).isLocked();
+            order.verify(historyRepository).lock();
+            order.verify(historyRepository).findAll();
+            order.verify(restClient).performRequest(any());
+            order.verify(historyRepository).saveOrUpdate(any());
+            order.verify(restClient).performRequest(any());
+            order.verify(historyRepository).saveOrUpdate(any());
+            order.verify(historyRepository).unlock();
+            order.verifyNoMoreInteractions();
+        }
+
+        @Test
+        void error_lockWasNotSuccessful() {
+            List<ParsedMigrationScript> scripts = asList(
+                    createParsedMigrationScript("1.0"),
+                    createParsedMigrationScript("1.1"));
+            doReturn(false).when(historyRepository).isLocked();
+            doReturn(false).when(historyRepository).lock();
+            doReturn(true).when(historyRepository).unlock();
+
+            MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
+                    0, 0, restClient, defaultContentType, encoding);
+
+            assertThatThrownBy(() -> underTest.executePendingScripts(scripts))
+                    .isInstanceOf(MigrationException.class)
+                    .hasMessage("could not lock the elasticsearch-evolution history index");
+
+
+            InOrder order = inOrder(historyRepository, restClient);
+            order.verify(historyRepository).isLocked();
+            order.verify(historyRepository).lock();
+            order.verify(historyRepository).unlock();
+            order.verifyNoMoreInteractions();
+        }
+
+        @Test
+        void emptyScriptsCollection() {
+            MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
+                    0, 0, restClient, defaultContentType, encoding);
+
+            List<MigrationScriptProtocol> res = underTest.executePendingScripts(emptyList());
+
+            assertThat(res).hasSize(0);
+            InOrder order = inOrder(historyRepository, restClient);
+            order.verifyNoMoreInteractions();
         }
     }
 
