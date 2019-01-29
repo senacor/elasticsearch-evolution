@@ -23,7 +23,7 @@ cache:
     - /tmp/embedded-elasticsearch-temp-dir
 
 install: true
-script: $MVN_CMD verify
+script: $MVN_CMD install
 
 jobs:
   include:

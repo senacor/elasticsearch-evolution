@@ -8,9 +8,7 @@ import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedM
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.ElasticsearchArgumentsProvider;
 import com.senacor.elasticsearch.evolution.core.test.MockitoExtension;
-import org.apache.http.StatusLine;
 import org.apache.http.entity.ContentType;
-import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,12 +22,12 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import static com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion.fromVersion;
-import static com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest.HttpMethod.GET;
+import static com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest.HttpMethod.PUT;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
-import static org.mockito.Answers.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.*;
 
 /**
  * Integration Test with embedded elasticsearch
@@ -53,9 +51,9 @@ class MigrationServiceImplIT {
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void OK_resultIsSetCorrect(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws IOException {
-            // TODO (ak) do a write operation to ES
-            ParsedMigrationScript script = createParsedMigrationScript("1.1");
+        void OK_indexDocumentIsWrittenToElasticsearch(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws IOException {
+            String index = "myindex";
+            ParsedMigrationScript script = createParsedMigrationScript("1.1", index);
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepositoryMock,
                     0, 0, restHighLevelClient.getLowLevelClient(),
@@ -82,30 +80,30 @@ class MigrationServiceImplIT {
                 softly.assertThat(res.isLocked())
                         .isTrue();
                 softly.assertThat(res.getExecutionRuntimeInMillis())
-                        .isBetween(0, 200);
+                        .isBetween(1, 2000);
                 softly.assertThat(res.getExecutionTimestamp())
-                        .isBetween(afterExecution.minus(200, ChronoUnit.MILLIS), afterExecution);
+                        .isBetween(afterExecution.minus(2000, ChronoUnit.MILLIS), afterExecution);
             });
 
-            // TODO (ak) verify content in elasticsearch
+            // wait until all documents are indexed
+            embeddedElastic.refreshIndices();
+
+            List<String> allDocuments = embeddedElastic.fetchAllDocuments(index);
+            assertThat(allDocuments)
+                    .hasSize(1)
+                    .contains(script.getMigrationScriptRequest().getBody());
         }
     }
 
-    private Response createResponseMock(int statusCode) {
-        Response restResponse = mock(Response.class, withSettings().defaultAnswer(RETURNS_DEEP_STUBS));
-        StatusLine statusLine = restResponse.getStatusLine();
-        doReturn(statusCode).when(statusLine).getStatusCode();
-        return restResponse;
-    }
-
-    private ParsedMigrationScript createParsedMigrationScript(String version) {
+    private ParsedMigrationScript createParsedMigrationScript(String version, String index) {
         return new ParsedMigrationScript()
                 .setFileNameInfo(
                         new FileNameInfoImpl(fromVersion(version), version, createDefaultScriptName(version)))
                 .setChecksum(1)
                 .setMigrationScriptRequest(new MigrationScriptRequest()
-                        .setHttpMethod(GET)
-                        .setPath("/"));
+                        .setHttpMethod(PUT)
+                        .setPath(index + "/doc/1")
+                        .setBody("{\"user\":\"kimchy\",\"post_date\":\"2009-11-15T14:12:12\"}"));
     }
 
     private String createDefaultScriptName(String version) {

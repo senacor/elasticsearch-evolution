@@ -4,13 +4,13 @@ import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.junit.jupiter.api.extension.AfterAllCallback;
-import org.junit.jupiter.api.extension.BeforeAllCallback;
-import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
+import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
 import pl.allegro.tech.embeddedelasticsearch.PopularProperties;
 
@@ -22,12 +22,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 /**
- * Extension to test with multiple Embedded Elasticsearch versions
+ * Extension to test with multiple Embedded Elasticsearch versions.
+ * Use in combination with {@link ElasticsearchArgumentsProvider} for {@link org.junit.jupiter.params.ParameterizedTest}
  *
  * @author akeefer
  */
-public class EmbeddedElasticsearchExtension implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
+public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor {
 
+    private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
+    private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
     private static final Set<String> SUPPORTED_ES_VERSIONS = new HashSet<>(Arrays.asList(
             "6.5.4",
             "6.4.3",
@@ -38,53 +41,55 @@ public class EmbeddedElasticsearchExtension implements BeforeAllCallback, AfterA
             "5.6.14"
     ));
 
-    private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
-
     @Override
-    public void beforeAll(ExtensionContext context) throws Exception {
-        // startup all EmbeddedElasticsearch's
+    public void postProcessTestInstance(Object testInstance, ExtensionContext context) throws Exception {
         SUPPORTED_ES_VERSIONS.parallelStream()
-                .forEach(esVersion -> {
-                    try {
-                        EmbeddedElastic embeddedElastic = EmbeddedElastic.builder()
-                                .withElasticVersion(esVersion)
-                                .withStartTimeout(5, TimeUnit.MINUTES)
-                                .withSetting(PopularProperties.CLUSTER_NAME, esVersion)
-                                .build()
-                                .start();
-                        context.getStore(NAMESPACE).put(esVersion, embeddedElastic);
-                    } catch (IOException | InterruptedException e) {
-                        throw new IllegalStateException("could not start embedded elasticsearch", e);
-                    }
-                });
+                .forEach(esVersion -> getStore(context)
+                        .getOrComputeIfAbsent(esVersion, EmbeddedElasticsearchExtension::createEmbeddedElastic, EmbeddedElastic.class));
     }
 
-
-    @Override
-    public void afterAll(ExtensionContext context) throws Exception {
-        // shutdown all EmbeddedElasticsearch's
-        SUPPORTED_ES_VERSIONS.parallelStream()
-                .forEach(esVersion ->
-                        context.getStore(NAMESPACE).get(esVersion, EmbeddedElastic.class).stop());
-    }
-
-    @Override
-    public void beforeEach(ExtensionContext context) throws Exception {
-        // cleanup Indices and Templates
-        SUPPORTED_ES_VERSIONS.parallelStream()
-                .forEach(esVersion -> {
-                    EmbeddedElastic embeddedElastic = context.getStore(NAMESPACE).get(esVersion, EmbeddedElastic.class);
-                    embeddedElastic.deleteTemplates();
-                    embeddedElastic.deleteIndices();
-                });
-    }
-
-    public static RestHighLevelClient createRestHighLevelClient(EmbeddedElastic embeddedElastic) {
-        HttpHost host = new HttpHost("127.0.0.1", embeddedElastic.getHttpPort(), "http");
+    private static RestHighLevelClient createRestHighLevelClient(String esVersion, EmbeddedElastic embeddedElastic) {
+        HttpHost host = new HttpHost("localhost", embeddedElastic.getHttpPort(), "http");
+        logger.debug("create RestHighLevelClient for ES {} at {}", esVersion, host);
         RestClientBuilder builder = RestClient.builder(host);
         return new RestHighLevelClient(builder);
     }
 
+    private static EmbeddedElastic createEmbeddedElastic(String esVersion) {
+        logger.info("creating EmbeddedElastic {} ...", esVersion);
+        EmbeddedElastic embeddedElastic = EmbeddedElastic.builder()
+                .withElasticVersion(esVersion)
+                .withStartTimeout(5, TimeUnit.MINUTES)
+                .withSetting(PopularProperties.CLUSTER_NAME, esVersion)
+                .withEsJavaOpts("-Xms128m -Xmx128m")
+                .build();
+        start(embeddedElastic, esVersion);
+        logger.info("EmbeddedElastic {} started with HttpPort={} and TransportTcpPort={}!",
+                esVersion,
+                embeddedElastic.getHttpPort(),
+                embeddedElastic.getTransportTcpPort());
+        return embeddedElastic;
+    }
+
+    private static void start(EmbeddedElastic embeddedElastic, String esVersion) {
+        try {
+            logger.debug("starting EmbeddedElastic {}", esVersion);
+            embeddedElastic.start();
+        } catch (IOException | InterruptedException e) {
+            throw new IllegalStateException("could not start embedded elasticsearch " + esVersion, e);
+        }
+    }
+
+    private static void cleanup(EmbeddedElastic embeddedElastic, String esVersion) {
+        logger.debug("cleanup EmbeddedElastic {}", esVersion);
+        embeddedElastic.deleteTemplates();
+        embeddedElastic.deleteIndices();
+        embeddedElastic.refreshIndices();
+    }
+
+    private static ExtensionContext.Store getStore(ExtensionContext context) {
+        return context.getRoot().getStore(NAMESPACE);
+    }
 
     /**
      * provides
@@ -96,8 +101,11 @@ public class EmbeddedElasticsearchExtension implements BeforeAllCallback, AfterA
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
             return SUPPORTED_ES_VERSIONS.stream()
                     .map(esVersion -> {
-                        EmbeddedElastic embeddedElastic = context.getStore(NAMESPACE).get(esVersion, EmbeddedElastic.class);
-                        return Arguments.of(esVersion, embeddedElastic, createRestHighLevelClient(embeddedElastic));
+                        EmbeddedElastic embeddedElastic = getStore(context)
+                                .getOrComputeIfAbsent(esVersion, EmbeddedElasticsearchExtension::createEmbeddedElastic, EmbeddedElastic.class);
+                        start(embeddedElastic, esVersion);
+                        cleanup(embeddedElastic, esVersion);
+                        return Arguments.of(esVersion, embeddedElastic, createRestHighLevelClient(esVersion, embeddedElastic));
                     });
         }
     }
