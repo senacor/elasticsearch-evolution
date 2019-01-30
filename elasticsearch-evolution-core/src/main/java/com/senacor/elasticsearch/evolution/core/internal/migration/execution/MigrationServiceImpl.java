@@ -61,6 +61,7 @@ public class MigrationServiceImpl implements MigrationService {
         List<MigrationScriptProtocol> executedScripts = new ArrayList<>();
         if (!migrationScripts.isEmpty()) {
             try {
+                historyRepository.createIndexIfAbsent();
                 waitUntilUnlocked();
                 // set an logical index lock
                 if (!historyRepository.lock()) {

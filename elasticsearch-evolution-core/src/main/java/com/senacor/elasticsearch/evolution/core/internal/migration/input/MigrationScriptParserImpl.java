@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireCondition;
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotBlank;
 import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
@@ -176,7 +177,12 @@ public class MigrationScriptParserImpl implements MigrationScriptParser {
                         + "' (It must contain a version and should look like this: "
                         + prefix + "1.2" + separator + description + suffixes.get(0) + ")");
 
-        return new FileNameInfoImpl(MigrationVersion.fromVersion(version), description, migrationName);
+        MigrationVersion migrationVersion = MigrationVersion.fromVersion(version);
+        requireCondition(migrationVersion,
+                vers -> vers.isMajorNewerThan("0"),
+                "used version '%s' in migration file '%s' is not allowed. Major version must be greater than 0",
+                migrationVersion, migrationName);
+        return new FileNameInfoImpl(migrationVersion, description, migrationName);
     }
 
     /**

@@ -7,11 +7,13 @@ import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.Migrati
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.FileNameInfoImpl;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
+import com.senacor.elasticsearch.evolution.core.test.ArgumentProviders;
 import com.senacor.elasticsearch.evolution.core.test.MockitoExtension;
 import org.apache.http.StatusLine;
 import org.apache.http.entity.ContentType;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
+import org.elasticsearch.rest.RestStatus;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +33,6 @@ import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion.fromVersion;
@@ -433,10 +434,10 @@ class MigrationServiceImplTest {
         }
 
         @ParameterizedTest
-        @ArgumentsSource(FailingHttpCodesProvider.class)
-        void executeScript_failed_status(int status) throws IOException {
+        @ArgumentsSource(ArgumentProviders.FailingHttpCodesProvider.class)
+        void executeScript_failed_status(RestStatus status) throws IOException {
             ParsedMigrationScript script = createParsedMigrationScript("1.1");
-            Response responseMock = createResponseMock(status);
+            Response responseMock = createResponseMock(status.getStatus());
             doReturn(responseMock).when(restClient).performRequest(any());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
@@ -448,10 +449,10 @@ class MigrationServiceImplTest {
         }
 
         @ParameterizedTest
-        @ArgumentsSource(SuccessHttpCodesProvider.class)
-        void executeScript_OK_status(int status) throws IOException {
+        @ArgumentsSource(ArgumentProviders.SuccessHttpCodesProvider.class)
+        void executeScript_OK_status(RestStatus status) throws IOException {
             ParsedMigrationScript script = createParsedMigrationScript("1.1");
-            Response responseMock = createResponseMock(status);
+            Response responseMock = createResponseMock(status.getStatus());
             doReturn(responseMock).when(restClient).performRequest(any());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
@@ -485,6 +486,7 @@ class MigrationServiceImplTest {
             assertThat(res).hasSize(2)
                     .allMatch(MigrationScriptProtocol::isSuccess);
             InOrder order = inOrder(historyRepository, restClient);
+            order.verify(historyRepository).createIndexIfAbsent();
             order.verify(historyRepository).isLocked();
             order.verify(historyRepository).lock();
             order.verify(historyRepository).findAll();
@@ -517,6 +519,7 @@ class MigrationServiceImplTest {
                     .allMatch(migrationScriptProtocol -> !migrationScriptProtocol.isSuccess());
             assertThat(res.get(0).getVersion()).isEqualTo(MigrationVersion.fromVersion("1.0"));
             InOrder order = inOrder(historyRepository, restClient);
+            order.verify(historyRepository).createIndexIfAbsent();
             order.verify(historyRepository).isLocked();
             order.verify(historyRepository).lock();
             order.verify(historyRepository).findAll();
@@ -546,6 +549,7 @@ class MigrationServiceImplTest {
                     .hasMessage("could not release the elasticsearch-evolution history index lock! Maybe you have to release it manually.");
 
             InOrder order = inOrder(historyRepository, restClient);
+            order.verify(historyRepository).createIndexIfAbsent();
             order.verify(historyRepository).isLocked();
             order.verify(historyRepository).lock();
             order.verify(historyRepository).findAll();
@@ -575,6 +579,7 @@ class MigrationServiceImplTest {
 
 
             InOrder order = inOrder(historyRepository, restClient);
+            order.verify(historyRepository).createIndexIfAbsent();
             order.verify(historyRepository).isLocked();
             order.verify(historyRepository).lock();
             order.verify(historyRepository).unlock();
@@ -630,23 +635,6 @@ class MigrationServiceImplTest {
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
             return Stream.of(Arguments.of(new NullPointerException("test-error")),
                     Arguments.of(new IOException("test-error")));
-        }
-    }
-
-    static class SuccessHttpCodesProvider implements ArgumentsProvider {
-        @Override
-        public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
-            return IntStream.range(200, 300).boxed()
-                    .map(Arguments::of);
-        }
-    }
-
-    static class FailingHttpCodesProvider implements ArgumentsProvider {
-        @Override
-        public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
-            Stream<Integer> status1xx = IntStream.range(100, 200).boxed();
-            return Stream.concat(status1xx, IntStream.range(300, 600).boxed())
-                    .map(Arguments::of);
         }
     }
 

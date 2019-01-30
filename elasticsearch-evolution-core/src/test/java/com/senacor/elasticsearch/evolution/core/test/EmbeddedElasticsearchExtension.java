@@ -1,9 +1,8 @@
 package com.senacor.elasticsearch.evolution.core.test;
 
 import org.apache.http.HttpHost;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.client.*;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
 import org.junit.jupiter.api.extension.TestInstancePostProcessor;
@@ -21,6 +20,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static org.elasticsearch.client.RequestOptions.DEFAULT;
+
 /**
  * Extension to test with multiple Embedded Elasticsearch versions.
  * Use in combination with {@link ElasticsearchArgumentsProvider} for {@link org.junit.jupiter.params.ParameterizedTest}
@@ -32,13 +33,12 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
     private static final Set<String> SUPPORTED_ES_VERSIONS = new HashSet<>(Arrays.asList(
+            "6.6.0",
             "6.5.4",
             "6.4.3",
             "6.3.2",
             "6.2.4",
-            "6.1.4",
-            "6.0.1",
-            "5.6.14"
+            "6.2.0"
     ));
 
     @Override
@@ -80,10 +80,15 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
         }
     }
 
-    private static void cleanup(EmbeddedElastic embeddedElastic, String esVersion) {
+    private static void cleanup(EmbeddedElastic embeddedElastic, String esVersion, RestHighLevelClient restHighLevelClient) {
         logger.debug("cleanup EmbeddedElastic {}", esVersion);
-        embeddedElastic.deleteTemplates();
-        embeddedElastic.deleteIndices();
+        try {
+            restHighLevelClient.indices().delete(new DeleteIndexRequest("*"), DEFAULT);
+            Response deleteRes = restHighLevelClient.getLowLevelClient().performRequest(new Request("DELETE", "/_template/*"));
+            logger.debug("deleted all templates: {}", deleteRes);
+        } catch (IOException e) {
+            throw new IllegalStateException("EmbeddedElastic cleanup failed", e);
+        }
         embeddedElastic.refreshIndices();
     }
 
@@ -104,8 +109,9 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
                         EmbeddedElastic embeddedElastic = getStore(context)
                                 .getOrComputeIfAbsent(esVersion, EmbeddedElasticsearchExtension::createEmbeddedElastic, EmbeddedElastic.class);
                         start(embeddedElastic, esVersion);
-                        cleanup(embeddedElastic, esVersion);
-                        return Arguments.of(esVersion, embeddedElastic, createRestHighLevelClient(esVersion, embeddedElastic));
+                        RestHighLevelClient restHighLevelClient = createRestHighLevelClient(esVersion, embeddedElastic);
+                        cleanup(embeddedElastic, esVersion, restHighLevelClient);
+                        return Arguments.of(esVersion, embeddedElastic, restHighLevelClient);
                     });
         }
     }

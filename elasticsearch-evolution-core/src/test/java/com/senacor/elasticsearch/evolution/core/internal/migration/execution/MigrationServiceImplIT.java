@@ -102,7 +102,7 @@ class MigrationServiceImplIT {
                 .setChecksum(1)
                 .setMigrationScriptRequest(new MigrationScriptRequest()
                         .setHttpMethod(PUT)
-                        .setPath(index + "/doc/1")
+                        .setPath(index + "/" + HistoryRepositoryImpl.INDEX_TYPE_DOC + "/1")
                         .setBody("{\"user\":\"kimchy\",\"post_date\":\"2009-11-15T14:12:12\"}"));
     }
 
