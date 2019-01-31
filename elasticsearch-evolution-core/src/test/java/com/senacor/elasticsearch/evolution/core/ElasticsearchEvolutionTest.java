@@ -2,9 +2,12 @@ package com.senacor.elasticsearch.evolution.core;
 
 import com.senacor.elasticsearch.evolution.core.test.MockitoExtension;
 import org.apache.http.HttpHost;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Node;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.search.SearchHit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +18,7 @@ import java.io.IOException;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.elasticsearch.client.RequestOptions.DEFAULT;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.*;
 
@@ -41,6 +45,17 @@ class ElasticsearchEvolutionTest {
         ElasticsearchEvolution underTest = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate"))
                 .load(restHighLevelClient);
+        when(restHighLevelClient.indices().refresh(any(), eq(DEFAULT)).getStatus())
+                .thenReturn(RestStatus.OK);
+        when(restHighLevelClient.count(any(), eq(DEFAULT)).status())
+                .thenReturn(RestStatus.OK);
+        when(restHighLevelClient.index(any(), eq(DEFAULT)).status())
+                .thenReturn(RestStatus.OK);
+        SearchResponse searchResponse = restHighLevelClient.search(any(), eq(DEFAULT));
+        when(searchResponse.getHits().getHits())
+                .thenReturn(new SearchHit[0]);
+        when(searchResponse.status())
+                .thenReturn(RestStatus.OK);
 
         assertThat(underTest.migrate())
                 .isEqualTo(1);
@@ -49,6 +64,9 @@ class ElasticsearchEvolutionTest {
         order.verify(restHighLevelClient, times(3)).getLowLevelClient();
         order.verify(restClient).getNodes();
         order.verify(restClient).performRequest(any());
+        order.verify(restHighLevelClient).index(any(), eq(DEFAULT));
+        order.verify(restHighLevelClient).indices();
+        order.verify(restHighLevelClient, times(2)).updateByQuery(any(), eq(DEFAULT));
         order.verifyNoMoreInteractions();
     }
 }
