@@ -308,11 +308,16 @@
                         </execution>
                     </executions>
                     <!--<configuration>-->
-                        <!--<keyname>050625D16E5D515601B4C00D7C830497D46F55CC</keyname>-->
+                    <!--<keyname>050625D16E5D515601B4C00D7C830497D46F55CC</keyname>-->
                     <!--</configuration>-->
                 </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+            </plugin>
+        </plugins>
     </build>
 
     <profiles>

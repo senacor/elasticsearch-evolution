@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration>
+<configuration packagingData="false">
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{46} - %msg%n
             </pattern>
         </encoder>
     </appender>
+
+    <logger name="com.senacor.elasticsearch.evolution" level="DEBUG"/>
+    <logger name="pl.allegro.tech.embeddedelasticsearch.ElasticServer" level="WARN"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>

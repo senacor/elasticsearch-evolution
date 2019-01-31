@@ -20,9 +20,10 @@ cache:
   directories:
     - $HOME/.m2/repository
     - $HOME/.m2/wrapper
+    - /tmp/embedded-elasticsearch-temp-dir
 
 install: true
-script: $MVN_CMD verify
+script: $MVN_CMD install
 
 jobs:
   include:
