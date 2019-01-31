@@ -88,7 +88,7 @@ class HistoryRepositoryImplTest {
     @Nested
     class lock {
         @Test
-        void lock() throws IOException {
+        void failed() throws IOException {
             when(restHighLevelClient.count(any(), eq(RequestOptions.DEFAULT)))
                     .thenThrow(new IOException("test error"));
 

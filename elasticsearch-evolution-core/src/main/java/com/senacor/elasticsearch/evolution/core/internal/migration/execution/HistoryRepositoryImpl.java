@@ -41,9 +41,9 @@ import static org.elasticsearch.client.RequestOptions.DEFAULT;
 public class HistoryRepositoryImpl implements HistoryRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(HistoryRepositoryImpl.class);
-    public static final String INTERNAL_LOCK_VERSION = "0.1";
-    public static final String INDEX_TYPE_DOC = "_doc";
-    public static final MigrationVersion INTERNAL_VERSIONS = MigrationVersion.fromVersion("0");
+    private static final String INTERNAL_LOCK_VERSION = "0.1";
+    private static final MigrationVersion INTERNAL_VERSIONS = MigrationVersion.fromVersion("0");
+    static final String INDEX_TYPE_DOC = "_doc";
 
     private final RestHighLevelClient restHighLevelClient;
     private final String historyIndex;

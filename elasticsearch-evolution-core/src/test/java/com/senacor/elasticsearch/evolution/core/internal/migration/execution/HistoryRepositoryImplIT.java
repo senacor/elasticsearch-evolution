@@ -173,10 +173,9 @@ class HistoryRepositoryImplIT {
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void UpdateDocument(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws IOException {
+        void updateDocument(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws IOException {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
-            OffsetDateTime now = OffsetDateTime.now();
             underTest.saveOrUpdate(new MigrationScriptProtocol()
                     .setVersion("1.1")
                     .setDescription("d"));

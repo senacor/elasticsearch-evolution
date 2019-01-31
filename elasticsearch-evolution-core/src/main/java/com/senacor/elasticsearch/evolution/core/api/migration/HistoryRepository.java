@@ -45,7 +45,7 @@ public interface HistoryRepository {
     boolean unlock();
 
     /**
-     * Creates the internal elasticsearch-evolution history index in Elasticsearch is necessary.
+     * Creates the internal elasticsearch-evolution history index in Elasticsearch if necessary.
      *
      * @return true, if the index was created, false if it's already present in Elasticsearch
      * @throws MigrationException in case the operation failed
