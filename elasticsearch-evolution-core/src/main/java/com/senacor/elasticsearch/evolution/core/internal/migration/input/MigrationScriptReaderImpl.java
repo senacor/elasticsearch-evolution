@@ -10,7 +10,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.*;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.io.IOException;
@@ -50,21 +49,17 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
      * @return a list of {@link RawMigrationScript}
      */
     public List<RawMigrationScript> read() {
-        List<RawMigrationScript> migrationScripts = new ArrayList<>();
-
-        this.locations.stream()
-                .map(location -> {
+        return this.locations.stream()
+                .flatMap(location -> {
                     try {
-                        return readFromLocation(location);
+                        return readFromLocation(location).stream();
                     } catch (URISyntaxException | IOException e) {
                         throw new MigrationException(
                                 String.format("couldn't read scripts from %s", location), e);
                     }
-                }).forEach((migrationList) -> {
-            migrationScripts.removeAll(migrationList);
-            migrationScripts.addAll(migrationList);
-        });
-        return migrationScripts;
+                })
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     /**
@@ -75,12 +70,11 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
      * @throws URISyntaxException
      * @throws IOException
      */
-    public List<RawMigrationScript> readFromLocation(String location) throws URISyntaxException, IOException {
-        URL url;
-        URI uri;
+    protected List<RawMigrationScript> readFromLocation(String location) throws URISyntaxException, IOException {
+        final URI uri;
 
         if (location.startsWith("classpath:")) {
-            url = resolveURL(location.substring("classpath:".length()));
+            URL url = resolveURL(location.substring("classpath:".length()));
             uri = (url != null) ? url.toURI() : null;
         } else if (location.startsWith("file:")) {
             uri = Paths.get(location.substring("file:".length())).toUri();
@@ -95,11 +89,11 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         List<RawMigrationScript> migrationScripts;
         try {
             migrationScripts = processResource(uri, path -> Files
-                    .find(path, 10, (p, basicFileAttributes) ->
+                    .find(path, 10, (pathToCheck, basicFileAttributes) ->
                             !basicFileAttributes.isDirectory()
-                                    && this.esMigrationSuffixes.contains(p.toString().substring(p.toString().lastIndexOf(".")))
+                                    && hasValidSuffix(pathToCheck)
                                     && basicFileAttributes.size() > 0
-                                    && p.getFileName().toString().startsWith(this.esMigrationPrefix))
+                                    && pathToCheck.getFileName().toString().startsWith(this.esMigrationPrefix))
                     .map(file -> {
                         String filename = file.getFileName().toString();
                         try (BufferedReader reader = Files.newBufferedReader(file, this.encoding)) {
@@ -111,10 +105,8 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
                         }
                     }).collect(Collectors.toList()));
         } catch (NoSuchFileException e) {
-            System.out.println(String.format("The location %s is not a valid location!", location));
-            migrationScripts = Collections.emptyList();
+            throw new MigrationException(String.format("The location %s is not a valid location!", location), e);
         }
-
         return migrationScripts;
     }
 
@@ -127,8 +119,14 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         }
     }
 
+    private boolean hasValidSuffix(Path pathToCheck) {
+        return this.esMigrationSuffixes
+                .stream()
+                .anyMatch(suffix -> pathToCheck.toString().toLowerCase().endsWith(suffix.toLowerCase()));
+    }
 
-    public static ClassLoader getDefaultClassLoader() {
+
+    private static ClassLoader getDefaultClassLoader() {
         ClassLoader cl = null;
         try {
             cl = Thread.currentThread().getContextClassLoader();
@@ -155,7 +153,7 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         R accept(T t) throws IOException;
     }
 
-    public static <R> R processResource(URI uri, IOFunction<Path, R> action) throws IOException {
+    private static <R> R processResource(URI uri, IOFunction<Path, R> action) throws IOException {
         try {
             Path p = Paths.get(uri);
             return action.accept(p);

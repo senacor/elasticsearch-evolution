@@ -1,5 +1,7 @@
 package com.senacor.elasticsearch.evolution.core.internal.model.migration;
 
+import java.util.Objects;
+
 /**
  * Represents a Migration Script
  *
@@ -46,4 +48,10 @@ public class RawMigrationScript {
         return fileName.equals(script.getFileName()) &&
                 content.equals(script.getContent());
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getFileName(), getContent());
+    }
+
 }
