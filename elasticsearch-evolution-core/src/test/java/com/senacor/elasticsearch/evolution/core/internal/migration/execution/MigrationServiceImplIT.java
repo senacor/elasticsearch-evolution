@@ -80,9 +80,9 @@ class MigrationServiceImplIT {
                 softly.assertThat(res.isLocked())
                         .isTrue();
                 softly.assertThat(res.getExecutionRuntimeInMillis())
-                        .isBetween(1, 2000);
+                        .isBetween(1, 4000);
                 softly.assertThat(res.getExecutionTimestamp())
-                        .isBetween(afterExecution.minus(2000, ChronoUnit.MILLIS), afterExecution);
+                        .isBetween(afterExecution.minus(4000, ChronoUnit.MILLIS), afterExecution);
             });
 
             // wait until all documents are indexed
@@ -102,7 +102,7 @@ class MigrationServiceImplIT {
                 .setChecksum(1)
                 .setMigrationScriptRequest(new MigrationScriptRequest()
                         .setHttpMethod(PUT)
-                        .setPath(index + "/doc/1")
+                        .setPath(index + "/" + HistoryRepositoryImpl.INDEX_TYPE_DOC + "/1")
                         .setBody("{\"user\":\"kimchy\",\"post_date\":\"2009-11-15T14:12:12\"}"));
     }
 

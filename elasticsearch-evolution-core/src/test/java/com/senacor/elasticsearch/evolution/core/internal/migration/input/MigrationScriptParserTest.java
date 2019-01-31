@@ -100,6 +100,16 @@ class MigrationScriptParserTest {
         }
 
         @Test
+        void notMatching_MajorVersionMustBeGreaterThan0() {
+            String fileName = "V0.1__my_description text.http";
+
+            assertThatThrownBy(() -> underTest.parseFileName(fileName))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("used version '0.1' in migration file '%s' is not allowed. Major version must be greater than 0"
+                            , fileName);
+        }
+
+        @Test
         void notMatching_otherFileEnding() {
             String fileName = "V0123.01_0002__my_description text.https";
 

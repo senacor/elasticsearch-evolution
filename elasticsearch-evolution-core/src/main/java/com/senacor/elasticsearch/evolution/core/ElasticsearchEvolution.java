@@ -7,6 +7,7 @@ import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptPar
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptReader;
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationService;
 import com.senacor.elasticsearch.evolution.core.internal.migration.execution.HistoryRepositoryImpl;
+import com.senacor.elasticsearch.evolution.core.internal.migration.execution.MigrationScriptProtocolMapper;
 import com.senacor.elasticsearch.evolution.core.internal.migration.execution.MigrationServiceImpl;
 import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptParserImpl;
 import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptReaderImpl;
@@ -132,11 +133,15 @@ public class ElasticsearchEvolution {
     }
 
     protected HistoryRepository createHistoryRepository() {
-        return new HistoryRepositoryImpl(getRestHighLevelClient());
+        return new HistoryRepositoryImpl(
+                getRestHighLevelClient(),
+                getConfig().getHistoryIndex(),
+                new MigrationScriptProtocolMapper());
     }
 
     protected MigrationService createMigrationService() {
-        return new MigrationServiceImpl(createHistoryRepository(),
+        return new MigrationServiceImpl(
+                createHistoryRepository(),
                 1_000,
                 10_000,
                 getRestHighLevelClient().getLowLevelClient(),
