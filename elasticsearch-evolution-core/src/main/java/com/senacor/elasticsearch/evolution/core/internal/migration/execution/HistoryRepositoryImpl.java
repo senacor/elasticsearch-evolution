@@ -2,12 +2,15 @@ package com.senacor.elasticsearch.evolution.core.internal.migration.execution;
 
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
+import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -19,16 +22,14 @@ import org.elasticsearch.index.reindex.UpdateByQueryRequest;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.NavigableSet;
-import java.util.TreeSet;
+import java.util.*;
 
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotBlank;
 import static java.util.Objects.requireNonNull;
@@ -42,6 +43,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     private static final Logger logger = LoggerFactory.getLogger(HistoryRepositoryImpl.class);
     public static final String INTERNAL_LOCK_VERSION = "0.1";
     public static final String INDEX_TYPE_DOC = "_doc";
+    public static final MigrationVersion INTERNAL_VERSIONS = MigrationVersion.fromVersion("0");
 
     private final RestHighLevelClient restHighLevelClient;
     private final String historyIndex;
@@ -55,10 +57,28 @@ public class HistoryRepositoryImpl implements HistoryRepository {
 
     @Override
     public NavigableSet<MigrationScriptProtocol> findAll() throws MigrationException {
-        // TODO (ak) impl
-        // filter all versions with major=0 because they are used internal
-        TreeSet<MigrationScriptProtocol> res = new TreeSet<>();
-        return res;
+        try {
+            SearchResponse searchResponse = restHighLevelClient.search(
+                    new SearchRequest(historyIndex)
+                            .source(new SearchSourceBuilder()
+                                    .query(QueryBuilders.matchAllQuery()))
+                            .indicesOptions(IndicesOptions.lenientExpandOpen()),
+                    DEFAULT);
+            logger.debug("findAll res: {}", searchResponse);
+            validateHttpStatus2xxOK(searchResponse.status(), "findAll");
+
+            // map and order
+            TreeSet<MigrationScriptProtocol> res = new TreeSet<>();
+            Arrays.stream(searchResponse.getHits().getHits())
+                    .map(SearchHit::getSourceAsMap)
+                    .map(migrationScriptProtocolMapper::mapFromMap)
+                    // filter protocols with 0 major version, because they are used internal
+                    .filter(protocol -> protocol.getVersion().isMajorNewerThan(INTERNAL_VERSIONS))
+                    .forEach(res::add);
+            return res;
+        } catch (IOException e) {
+            throw new MigrationException("findAll failed!", e);
+        }
     }
 
     @Override

@@ -46,8 +46,13 @@ class HistoryRepositoryImplTest {
     @Nested
     class findAll {
         @Test
-        void findAll() {
-            // TODO
+        void failed() throws IOException {
+            when(restHighLevelClient.search(any(), eq(RequestOptions.DEFAULT)))
+                    .thenThrow(new IOException("test error"));
+
+            assertThatThrownBy(() -> underTest.findAll())
+                    .isInstanceOf(MigrationException.class)
+                    .hasMessage("findAll failed!");
         }
     }
 

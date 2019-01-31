@@ -1,5 +1,6 @@
 package com.senacor.elasticsearch.evolution.core.internal.migration.execution;
 
+import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.ElasticsearchArgumentsProvider;
@@ -18,13 +19,16 @@ import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
+import java.util.NavigableSet;
 
 import static com.senacor.elasticsearch.evolution.core.internal.migration.execution.HistoryRepositoryImpl.INDEX_TYPE_DOC;
 import static com.senacor.elasticsearch.evolution.core.internal.migration.execution.MigrationScriptProtocolMapper.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
 
 /**
@@ -40,9 +44,66 @@ class HistoryRepositoryImplIT {
     class findAll {
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void findAll(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
+        void doesNotReturnProtocolsWithMajorVersion0(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
-            // TODO
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("0.1"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.0"));
+            underTest.refresh(INDEX);
+
+            NavigableSet<MigrationScriptProtocol> all = underTest.findAll();
+
+            assertThat(all).hasSize(1);
+            assertThat(all.first().getVersion()).isEqualTo(MigrationVersion.fromVersion("1.0"));
+        }
+
+        @ParameterizedTest
+        @ArgumentsSource(ElasticsearchArgumentsProvider.class)
+        void returnsProtocolsInVersionOrder(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
+            HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.1"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("2.0"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.0"));
+            underTest.refresh(INDEX);
+
+            NavigableSet<MigrationScriptProtocol> all = underTest.findAll();
+
+            assertThat(all).hasSize(3);
+            assertThat(all.first().getVersion()).isEqualTo(MigrationVersion.fromVersion("1.0"));
+            assertThat(all.last().getVersion()).isEqualTo(MigrationVersion.fromVersion("2.0"));
+        }
+
+        @ParameterizedTest
+        @ArgumentsSource(ElasticsearchArgumentsProvider.class)
+        void returnsFullProtocol(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
+            HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
+            OffsetDateTime executionTimestamp = OffsetDateTime.of(2019, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+            MigrationScriptProtocol protocol = new MigrationScriptProtocol()
+                    .setVersion("1")
+                    .setChecksum(1)
+                    .setDescription("des")
+                    .setLocked(false)
+                    .setSuccess(true)
+                    .setExecutionRuntimeInMillis(2)
+                    .setExecutionTimestamp(executionTimestamp)
+                    .setIndexName(INDEX)
+                    .setScriptName("foo.http");
+            underTest.saveOrUpdate(protocol);
+            underTest.refresh(INDEX);
+
+            NavigableSet<MigrationScriptProtocol> all = underTest.findAll();
+
+            assertSoftly(softly -> {
+                softly.assertThat(all).hasSize(1);
+                softly.assertThat(all.first().getChecksum()).isEqualTo(1);
+                softly.assertThat(all.first().getDescription()).isEqualTo("des");
+                softly.assertThat(all.first().getExecutionRuntimeInMillis()).isEqualTo(2);
+                softly.assertThat(all.first().getExecutionTimestamp()).isEqualTo(executionTimestamp);
+                softly.assertThat(all.first().getIndexName()).isEqualTo(INDEX);
+                softly.assertThat(all.first().getScriptName()).isEqualTo("foo.http");
+                softly.assertThat(all.first().isLocked()).isEqualTo(false);
+                softly.assertThat(all.first().isSuccess()).isEqualTo(true);
+                softly.assertThat(all.first().getVersion()).isEqualTo(MigrationVersion.fromVersion("1"));
+            });
         }
     }
 

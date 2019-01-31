@@ -2,8 +2,11 @@ package com.senacor.elasticsearch.evolution.core.internal.migration.execution;
 
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Andreas Keefer
@@ -36,5 +39,37 @@ public class MigrationScriptProtocolMapper {
         res.put(INDEX_NAME_FIELD_NAME, migrationScriptProtocol.getIndexName());
         res.put(SCRIPT_NAME_FIELD_NAME, migrationScriptProtocol.getScriptName());
         return res;
+    }
+
+    public MigrationScriptProtocol mapFromMap(Map<String, Object> mapData) {
+        MigrationScriptProtocol protocol = new MigrationScriptProtocol();
+        Optional.ofNullable(mapData.get(LOCKED_FIELD_NAME))
+                .map(data -> protocol.setLocked((Boolean) data));
+
+        Optional.ofNullable(mapData.get(CHECKSUM_FIELD_NAME))
+                .map(data -> protocol.setChecksum((Integer) data));
+
+        Optional.ofNullable(mapData.get(DESCRIPTION_FIELD_NAME))
+                .map(data -> protocol.setDescription((String) data));
+
+        Optional.ofNullable(mapData.get(EXECUTION_RUNTIME_IN_MILLIS_FIELD_NAME))
+                .map(data -> protocol.setExecutionRuntimeInMillis((Integer) data));
+
+        Optional.ofNullable(mapData.get(EXECUTION_TIMESTAMP_FIELD_NAME))
+                .map(data -> protocol.setExecutionTimestamp(OffsetDateTime.parse((CharSequence) data, DateTimeFormatter.ISO_OFFSET_DATE_TIME)));
+
+        Optional.ofNullable(mapData.get(SUCCESS_FIELD_NAME))
+                .map(data -> protocol.setSuccess((Boolean) data));
+
+        Optional.ofNullable(mapData.get(VERSION_FIELD_NAME))
+                .map(data -> protocol.setVersion((String) data));
+
+        Optional.ofNullable(mapData.get(INDEX_NAME_FIELD_NAME))
+                .map(data -> protocol.setIndexName((String) data));
+
+        Optional.ofNullable(mapData.get(SCRIPT_NAME_FIELD_NAME))
+                .map(data -> protocol.setScriptName((String) data));
+
+        return protocol;
     }
 }
