@@ -51,7 +51,7 @@ public class RawMigrationScript {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getFileName(), getContent());
+        return Objects.hash(fileName, content);
     }
 
 }
