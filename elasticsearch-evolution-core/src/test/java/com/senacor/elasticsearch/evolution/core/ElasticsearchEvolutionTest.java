@@ -1,5 +1,6 @@
 package com.senacor.elasticsearch.evolution.core;
 
+import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.test.MockitoExtension;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.search.SearchResponse;
@@ -17,7 +18,7 @@ import org.mockito.Mock;
 import java.io.IOException;
 
 import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.*;
@@ -43,7 +44,7 @@ class ElasticsearchEvolutionTest {
     @Test
     void migrate_Failed() throws IOException {
         ElasticsearchEvolution underTest = ElasticsearchEvolution.configure()
-                .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate"))
+                .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_OK"))
                 .load(restHighLevelClient);
         when(restHighLevelClient.indices().refresh(any(), eq(DEFAULT)).getStatus())
                 .thenReturn(RestStatus.OK);
@@ -57,8 +58,9 @@ class ElasticsearchEvolutionTest {
         when(searchResponse.status())
                 .thenReturn(RestStatus.OK);
 
-        assertThat(underTest.migrate())
-                .isEqualTo(1);
+        assertThatThrownBy(underTest::migrate)
+                .isInstanceOf(MigrationException.class)
+                .hasMessage("execution of script 'FileNameInfoImpl{version=1, description='createTemplateWithIndexMapping', scriptName='V001.00__createTemplateWithIndexMapping.http'}' failed with HTTP status 0: null");
 
         InOrder order = inOrder(restHighLevelClient, restClient);
         order.verify(restHighLevelClient, times(3)).getLowLevelClient();

@@ -18,10 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireCondition;
@@ -57,7 +54,7 @@ public class MigrationServiceImpl implements MigrationService {
     }
 
     @Override
-    public List<MigrationScriptProtocol> executePendingScripts(Collection<ParsedMigrationScript> migrationScripts) {
+    public List<MigrationScriptProtocol> executePendingScripts(Collection<ParsedMigrationScript> migrationScripts) throws MigrationException {
         List<MigrationScriptProtocol> executedScripts = new ArrayList<>();
         if (!migrationScripts.isEmpty()) {
             try {
@@ -74,12 +71,12 @@ public class MigrationServiceImpl implements MigrationService {
                 // now execute scripts and write protocols to history index
                 for (ParsedMigrationScript script : scriptsToExecute) {
                     // execute scripts
-                    MigrationScriptProtocol protocol = executeScript(script);
-                    executedScripts.add(protocol);
+                    ExecutionResult res = executeScript(script);
+                    executedScripts.add(res.getProtocol());
                     // write protocols to history index
-                    historyRepository.saveOrUpdate(protocol);
-                    if (!protocol.isSuccess()) {
-                        break;
+                    historyRepository.saveOrUpdate(res.getProtocol());
+                    if (res.error.isPresent()) {
+                        throw res.error.get();
                     }
                 }
             } finally {
@@ -98,9 +95,11 @@ public class MigrationServiceImpl implements MigrationService {
      * @param scriptToExecute the script
      * @return unsaved protocol
      */
-    MigrationScriptProtocol executeScript(ParsedMigrationScript scriptToExecute) {
+    ExecutionResult executeScript(ParsedMigrationScript scriptToExecute) {
+        logger.info("executing script {}", scriptToExecute.getFileNameInfo().getScriptName());
         boolean success = false;
-        long startTimeInMilis = System.currentTimeMillis();
+        long startTimeInMillis = System.currentTimeMillis();
+        Optional error = Optional.empty();
         try {
             Request request = new Request(scriptToExecute.getMigrationScriptRequest().getHttpMethod().name(),
                     scriptToExecute.getMigrationScriptRequest().getPath());
@@ -124,20 +123,28 @@ public class MigrationServiceImpl implements MigrationService {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode >= 200 && statusCode < 300) {
                 success = true;
+            } else {
+                error = Optional.of(new MigrationException(String.format(
+                        "execution of script '%s' failed with HTTP status %s: %s",
+                        scriptToExecute.getFileNameInfo(),
+                        statusCode,
+                        response.toString())));
             }
         } catch (RuntimeException | IOException e) {
-            logger.error(String.format("execution of script '%s' failed", scriptToExecute.getFileNameInfo()), e);
+            error = Optional.of(new MigrationException(String.format("execution of script '%s' failed", scriptToExecute.getFileNameInfo()), e));
         }
 
-        return new MigrationScriptProtocol()
-                .setExecutionRuntimeInMillis((int) (System.currentTimeMillis() - startTimeInMilis))
-                .setSuccess(success)
-                .setVersion(scriptToExecute.getFileNameInfo().getVersion())
-                .setScriptName(scriptToExecute.getFileNameInfo().getScriptName())
-                .setDescription(scriptToExecute.getFileNameInfo().getDescription())
-                .setChecksum(scriptToExecute.getChecksum())
-                .setExecutionTimestamp(OffsetDateTime.now())
-                .setLocked(true);
+        return new ExecutionResult(
+                new MigrationScriptProtocol()
+                        .setExecutionRuntimeInMillis((int) (System.currentTimeMillis() - startTimeInMillis))
+                        .setSuccess(success)
+                        .setVersion(scriptToExecute.getFileNameInfo().getVersion())
+                        .setScriptName(scriptToExecute.getFileNameInfo().getScriptName())
+                        .setDescription(scriptToExecute.getFileNameInfo().getDescription())
+                        .setChecksum(scriptToExecute.getChecksum())
+                        .setExecutionTimestamp(OffsetDateTime.now())
+                        .setLocked(true),
+                error);
     }
 
     /**
@@ -197,6 +204,24 @@ public class MigrationServiceImpl implements MigrationService {
             } catch (InterruptedException e) {
                 logger.warn("waitUntilUnlocked was interrupted!", e);
             }
+        }
+    }
+
+    static class ExecutionResult {
+        private final MigrationScriptProtocol protocol;
+        private final Optional<RuntimeException> error;
+
+        private ExecutionResult(MigrationScriptProtocol protocol, Optional<RuntimeException> error) {
+            this.protocol = protocol;
+            this.error = error;
+        }
+
+        public MigrationScriptProtocol getProtocol() {
+            return protocol;
+        }
+
+        public Optional<RuntimeException> getError() {
+            return error;
         }
     }
 }

@@ -1,0 +1,9 @@
+POST test_*/_update_by_query?refresh
+Content-Type: application/json
+
+{
+  "script": {
+    "source": "ctx._source.searchable.success = ctx._source.doc.success",
+    "lang": "painless"
+  }
+}

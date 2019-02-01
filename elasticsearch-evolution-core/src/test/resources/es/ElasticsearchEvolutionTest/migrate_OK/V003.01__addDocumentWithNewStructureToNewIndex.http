@@ -1,0 +1,18 @@
+PUT /test_2/_doc/1?refresh
+Content-Type: application/json
+
+{
+  "searchable": {
+    "version": "1",
+    "locked": false,
+    "success": true
+  },
+  "doc": {
+    "version": "1",
+    "locked": false,
+    "success": true,
+    "a": "a a a",
+    "b": true,
+    "c": "c"
+  }
+}

@@ -5,6 +5,7 @@ import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptRea
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -12,7 +13,6 @@ import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.Collections;
 import java.util.List;
-import java.io.IOException;
 import java.util.stream.Collectors;
 
 /**

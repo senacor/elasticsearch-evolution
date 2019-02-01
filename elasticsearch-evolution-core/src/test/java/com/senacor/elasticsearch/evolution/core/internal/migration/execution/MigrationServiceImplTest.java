@@ -2,12 +2,13 @@ package com.senacor.elasticsearch.evolution.core.internal.migration.execution;
 
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
-import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
+import com.senacor.elasticsearch.evolution.core.internal.migration.execution.MigrationServiceImpl.ExecutionResult;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.FileNameInfoImpl;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.test.ArgumentProviders;
+import com.senacor.elasticsearch.evolution.core.test.ArgumentProviders.FailingHttpCodesProvider;
 import com.senacor.elasticsearch.evolution.core.test.MockitoExtension;
 import org.apache.http.StatusLine;
 import org.apache.http.entity.ContentType;
@@ -217,7 +218,7 @@ class MigrationServiceImplTest {
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding);
 
-            MigrationScriptProtocol res = underTest.executeScript(script);
+            MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
 
             OffsetDateTime afterExecution = OffsetDateTime.now();
             assertSoftly(softly -> {
@@ -273,7 +274,7 @@ class MigrationServiceImplTest {
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding);
 
-            MigrationScriptProtocol res = underTest.executeScript(script);
+            MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
 
             assertThat(res.isSuccess()).isTrue();
 
@@ -313,7 +314,7 @@ class MigrationServiceImplTest {
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding);
 
-            MigrationScriptProtocol res = underTest.executeScript(script);
+            MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
 
             assertThat(res.isSuccess()).isTrue();
 
@@ -352,7 +353,7 @@ class MigrationServiceImplTest {
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding);
 
-            MigrationScriptProtocol res = underTest.executeScript(script);
+            MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
 
             assertThat(res.isSuccess()).isTrue();
 
@@ -392,7 +393,7 @@ class MigrationServiceImplTest {
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding);
 
-            MigrationScriptProtocol res = underTest.executeScript(script);
+            MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
 
             assertThat(res.isSuccess()).isTrue();
 
@@ -428,13 +429,17 @@ class MigrationServiceImplTest {
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding);
 
-            MigrationScriptProtocol res = underTest.executeScript(script);
+            ExecutionResult res = underTest.executeScript(script);
 
-            assertThat(res.isSuccess()).isFalse();
+            assertThat(res.getProtocol().isSuccess()).isFalse();
+            assertThat(res.getError()).isNotEmpty();
+            assertThat(res.getError().get())
+                    .isInstanceOf(MigrationException.class)
+                    .hasMessage("execution of script '%s' failed", script.getFileNameInfo());
         }
 
         @ParameterizedTest
-        @ArgumentsSource(ArgumentProviders.FailingHttpCodesProvider.class)
+        @ArgumentsSource(FailingHttpCodesProvider.class)
         void executeScript_failed_status(RestStatus status) throws IOException {
             ParsedMigrationScript script = createParsedMigrationScript("1.1");
             Response responseMock = createResponseMock(status.getStatus());
@@ -443,9 +448,13 @@ class MigrationServiceImplTest {
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding);
 
-            MigrationScriptProtocol res = underTest.executeScript(script);
+            ExecutionResult res = underTest.executeScript(script);
 
-            assertThat(res.isSuccess()).isFalse();
+            assertThat(res.getProtocol().isSuccess()).isFalse();
+            assertThat(res.getError()).isNotEmpty();
+            assertThat(res.getError().get())
+                    .isInstanceOf(MigrationException.class)
+                    .hasMessage("execution of script '%s' failed with HTTP status %s: null", script.getFileNameInfo(), status.getStatus());
         }
 
         @ParameterizedTest
@@ -458,7 +467,7 @@ class MigrationServiceImplTest {
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding);
 
-            MigrationScriptProtocol res = underTest.executeScript(script);
+            MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
 
             assertThat(res.isSuccess()).isTrue();
         }
@@ -508,16 +517,18 @@ class MigrationServiceImplTest {
             doReturn(true).when(historyRepository).unlock();
             doReturn(new TreeSet<>()).when(historyRepository).findAll();
 
-            Response responseMock = createResponseMock(500);
+            int statusCode = 500;
+            Response responseMock = createResponseMock(statusCode);
             doReturn(responseMock).when(restClient).performRequest(any());
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding);
 
-            List<MigrationScriptProtocol> res = underTest.executePendingScripts(scripts);
+            assertThatThrownBy(() -> underTest.executePendingScripts(scripts))
+                    .isInstanceOf(MigrationException.class)
+                    .hasMessage("execution of script '%s' failed with HTTP status %s: null",
+                            scripts.get(0).getFileNameInfo(),
+                            statusCode);
 
-            assertThat(res).hasSize(1)
-                    .allMatch(migrationScriptProtocol -> !migrationScriptProtocol.isSuccess());
-            assertThat(res.get(0).getVersion()).isEqualTo(MigrationVersion.fromVersion("1.0"));
             InOrder order = inOrder(historyRepository, restClient);
             order.verify(historyRepository).createIndexIfAbsent();
             order.verify(historyRepository).isLocked();

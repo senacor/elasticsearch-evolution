@@ -14,8 +14,13 @@ import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
 import pl.allegro.tech.embeddedelasticsearch.PopularProperties;
 
 import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -104,7 +109,17 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     public static class ElasticsearchArgumentsProvider implements ArgumentsProvider {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
+            Optional<String> versionFilterPattern = context.getTestMethod()
+                    .map(method -> method.getDeclaredAnnotation(IgnoreEsVersion.class))
+                    .map(IgnoreEsVersion::value);
+
+
             return SUPPORTED_ES_VERSIONS.stream()
+                    .filter(version -> versionFilterPattern
+                            .map(filterPattern -> !version.matches(filterPattern))
+                            .orElse(true)
+                    )
+                    .sorted()
                     .map(esVersion -> {
                         EmbeddedElastic embeddedElastic = getStore(context)
                                 .getOrComputeIfAbsent(esVersion, EmbeddedElasticsearchExtension::createEmbeddedElastic, EmbeddedElastic.class);
@@ -114,5 +129,15 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
                         return Arguments.of(esVersion, embeddedElastic, restHighLevelClient);
                     });
         }
+    }
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface IgnoreEsVersion {
+
+        /**
+         * The version pattern (regex) to ignore
+         */
+        String value();
     }
 }

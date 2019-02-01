@@ -102,7 +102,9 @@ public class ElasticsearchEvolution {
         Collection<ParsedMigrationScript> parsedMigrationScripts = migrationScriptParser.parse(rawMigrationScripts);
         logger.info("execute migration scripts...");
         List<MigrationScriptProtocol> executedScripts = migrationService.executePendingScripts(parsedMigrationScripts);
-        return executedScripts.size();
+        return (int) executedScripts.stream()
+                .filter(MigrationScriptProtocol::isSuccess)
+                .count();
     }
 
     protected ElasticsearchEvolutionConfig getConfig() {

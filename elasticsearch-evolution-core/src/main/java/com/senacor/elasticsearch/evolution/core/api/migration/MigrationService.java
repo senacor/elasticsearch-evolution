@@ -1,5 +1,6 @@
 package com.senacor.elasticsearch.evolution.core.api.migration;
 
+import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 
@@ -17,6 +18,7 @@ public interface MigrationService {
      *
      * @param migrationScripts all parsed migration scripts which should be executed.
      * @return executed Scripts
+     * @throws MigrationException if execution failed
      */
-    List<MigrationScriptProtocol> executePendingScripts(Collection<ParsedMigrationScript> migrationScripts);
+    List<MigrationScriptProtocol> executePendingScripts(Collection<ParsedMigrationScript> migrationScripts) throws MigrationException;
 }

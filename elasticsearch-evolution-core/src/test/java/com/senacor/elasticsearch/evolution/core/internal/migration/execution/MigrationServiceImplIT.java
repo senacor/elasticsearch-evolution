@@ -59,7 +59,7 @@ class MigrationServiceImplIT {
                     0, 0, restHighLevelClient.getLowLevelClient(),
                     defaultContentType, encoding);
 
-            MigrationScriptProtocol res = underTest.executeScript(script);
+            MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
 
             OffsetDateTime afterExecution = OffsetDateTime.now();
             assertSoftly(softly -> {

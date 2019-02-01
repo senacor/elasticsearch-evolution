@@ -1,14 +1,9 @@
-PUT /_template/test_2
+PUT test_*/_mappings/_doc
 Content-Type: application/json
 
 {
-  "index_patterns": [
-    "test_*"
-  ],
-  "order": 2,
-  "version": 2,
-  "mappings": {
-    "_doc": {
+  "properties": {
+    "searchable": {
       "properties": {
         "success": {
           "type": "boolean"
