@@ -80,7 +80,7 @@
         <logback.version>1.2.3</logback.version>
         <mockito.version>2.23.4</mockito.version>
         <slf4j.version>1.7.25</slf4j.version>
-        <spring-boot.version>2.1.1.RELEASE</spring-boot.version>
+        <spring-boot.version>2.1.2.RELEASE</spring-boot.version>
     </properties>
 
     <dependencyManagement>
@@ -365,6 +365,18 @@
                 </plugins>
 
             </build>
+        </profile>
+        <profile>
+            <id>external-test</id>
+            <activation>
+                <property>
+                    <name>!release</name>
+                </property>
+            </activation>
+
+            <modules>
+                <module>tests</module>
+            </modules>
         </profile>
     </profiles>
 

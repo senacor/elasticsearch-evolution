@@ -45,7 +45,7 @@ jobs:
             branch: release
             repo: senacor/elasticsearch-evolution
           skip_cleanup: true
-          script: bash $MVN_CMD deploy -DskipTests=true -Prelease
+          script: bash $MVN_CMD deploy -DskipTests=true -Drelease
         - provider: releases
           on:
             branch: release

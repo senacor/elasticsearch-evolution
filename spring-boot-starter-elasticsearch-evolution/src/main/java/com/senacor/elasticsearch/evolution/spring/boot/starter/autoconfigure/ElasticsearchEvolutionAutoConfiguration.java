@@ -6,7 +6,9 @@ import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -17,6 +19,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Arrays;
+
 /**
  * {@link EnableAutoConfiguration Auto-configuration} for ElasticsearchEvolution
  *
@@ -26,7 +30,12 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnProperty(prefix = "spring.elasticsearch.evolution", name = "enabled", havingValue = "true", matchIfMissing = true)
 @ConditionalOnClass(ElasticsearchEvolution.class)
 @EnableConfigurationProperties({ElasticsearchEvolutionConfig.class})
-@AutoConfigureAfter(RestClientAutoConfiguration.class)
+@AutoConfigureBefore(name = {
+        "org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration" // since spring-boot 1.5
+})
+@AutoConfigureAfter(name = {
+        "org.springframework.boot.autoconfigure.elasticsearch.rest.RestClientAutoConfiguration" // since spring-boot 2.1
+})
 public class ElasticsearchEvolutionAutoConfiguration {
 
     @Bean
@@ -53,8 +62,11 @@ public class ElasticsearchEvolutionAutoConfiguration {
          */
         @Bean
         @ConditionalOnMissingBean
-        public RestHighLevelClient restHighLevelClient() {
-            RestClientBuilder builder = RestClient.builder(HttpHost.create("http://localhost:9200"));
+        public RestHighLevelClient restHighLevelClient(@Value("${spring.elasticsearch.rest.uris:http://localhost:9200}") String... uris) {
+            HttpHost[] httpHosts = Arrays.stream(uris)
+                    .map(HttpHost::create)
+                    .toArray(HttpHost[]::new);
+            RestClientBuilder builder = RestClient.builder(httpHosts);
             return new RestHighLevelClient(builder);
         }
 
