@@ -29,9 +29,6 @@ public class ParsedMigrationScript {
      */
     private MigrationScriptRequest migrationScriptRequest;
 
-    public ParsedMigrationScript() {
-    }
-
     public FileNameInfo getFileNameInfo() {
         return fileNameInfo;
     }

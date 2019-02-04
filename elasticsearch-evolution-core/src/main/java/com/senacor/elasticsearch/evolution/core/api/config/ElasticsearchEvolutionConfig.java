@@ -79,12 +79,6 @@ public class ElasticsearchEvolutionConfig {
     private String historyIndex = "es_evolution";
 
     /**
-     * Default Constructor
-     */
-    public ElasticsearchEvolutionConfig() {
-    }
-
-    /**
      * Loads this configuration into a new ElasticsearchEvolution instance.
      *
      * @param restHighLevelClient REST client to interact with Elasticsearch

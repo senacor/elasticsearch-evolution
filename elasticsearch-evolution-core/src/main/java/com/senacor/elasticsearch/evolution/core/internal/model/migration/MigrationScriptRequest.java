@@ -40,9 +40,6 @@ public class MigrationScriptRequest {
      */
     private StringBuilder body = new StringBuilder();
 
-    public MigrationScriptRequest() {
-    }
-
     public HttpMethod getHttpMethod() {
         return httpMethod;
     }

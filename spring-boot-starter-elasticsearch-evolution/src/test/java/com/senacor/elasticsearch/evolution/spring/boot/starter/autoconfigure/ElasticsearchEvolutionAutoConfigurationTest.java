@@ -14,6 +14,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Andreas Keefer
@@ -29,6 +30,7 @@ class ElasticsearchEvolutionAutoConfigurationTest {
 
     @Test
     void whenSpringContextIsBootstrapped_thenNoExceptions() {
+        assertTrue(true);
     }
 
     @Test

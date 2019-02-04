@@ -66,12 +66,6 @@ public class MigrationScriptProtocol implements FileNameInfo, Comparable<Migrati
      */
     private boolean locked = true;
 
-    /**
-     * Default Constructor
-     */
-    public MigrationScriptProtocol() {
-    }
-
     public MigrationScriptProtocol setVersion(String version) {
         this.version = MigrationVersion.fromVersion(version);
         return this;

@@ -222,7 +222,7 @@ class MigrationScriptParserTest {
                         .hasSize(1);
                 softly.assertThat(res.getMigrationScriptRequest().getBody())
                         .as("body")
-                        .isEqualTo("{" + System.lineSeparator() + "\"body\":\"value\"" + System.lineSeparator() + "}");
+                        .isEqualTo("{" + lineSeparator() + "\"body\":\"value\"" + lineSeparator() + "}");
             });
         }
 
@@ -261,7 +261,7 @@ class MigrationScriptParserTest {
                         .isEmpty();
                 softly.assertThat(res.getMigrationScriptRequest().getBody())
                         .as("body")
-                        .isEqualTo("{" + System.lineSeparator() + "\"body\":\"value\"" + System.lineSeparator() + "}");
+                        .isEqualTo("{" + lineSeparator() + "\"body\":\"value\"" + lineSeparator() + "}");
             });
         }
 
@@ -387,7 +387,7 @@ class MigrationScriptParserTest {
                         .containsEntry("Authorization", "my-auth-key");
                 softly.assertThat(res.getMigrationScriptRequest().getBody())
                         .as("body")
-                        .isEqualTo("{" + System.lineSeparator() + "\"index\":\"my-index\"" + System.lineSeparator() + "}");
+                        .isEqualTo("{" + lineSeparator() + "\"index\":\"my-index\"" + lineSeparator() + "}");
             });
         }
 
