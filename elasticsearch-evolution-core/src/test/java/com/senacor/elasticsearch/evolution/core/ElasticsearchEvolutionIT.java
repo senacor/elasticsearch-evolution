@@ -9,7 +9,6 @@ import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.Migrati
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.ElasticsearchArgumentsProvider;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.IgnoreEsVersion;
-import org.assertj.core.api.Assertions;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -81,8 +80,7 @@ class ElasticsearchEvolutionIT {
                     .isEqualTo(getIndexResponse.getMappings().get("test_2"));
         });
 
-
-
+        // search for indexed documents:
         SearchResponse search = restHighLevelClient.search(
                 new SearchRequest(testIndex)
                         .source(new SearchSourceBuilder()
@@ -90,7 +88,7 @@ class ElasticsearchEvolutionIT {
                                         .must(QueryBuilders.termsQuery("searchable.version", "1", "2")))),
                 DEFAULT);
         assertThat(search.getHits().totalHits)
-                .as("search res by keyword: %s", search.toString())
+                .as("search res by version: %s", search)
                 .isEqualTo(3);
 
         search = restHighLevelClient.search(
@@ -100,7 +98,7 @@ class ElasticsearchEvolutionIT {
                                         .must(QueryBuilders.termsQuery("searchable.version.text", "1", "2")))),
                 DEFAULT);
         assertThat(search.getHits().totalHits)
-                .as("search res by text(boolean): %s", search.toString())
+                .as("search res by version.text: %s", search)
                 .isEqualTo(3);
 
         search = restHighLevelClient.search(
@@ -110,7 +108,7 @@ class ElasticsearchEvolutionIT {
                                         .must(QueryBuilders.termsQuery("searchable.version.bm25", "1", "2")))),
                 DEFAULT);
         assertThat(search.getHits().totalHits)
-                .as("search res by text(bm25): %s", search.toString())
+                .as("search res by version.bm25: %s", search)
                 .isEqualTo(3);
     }
 
