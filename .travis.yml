@@ -24,6 +24,8 @@ cache:
 
 install: true
 script: $MVN_CMD install
+after_success:
+  - $MVN_CMD coveralls:report
 
 jobs:
   include:
