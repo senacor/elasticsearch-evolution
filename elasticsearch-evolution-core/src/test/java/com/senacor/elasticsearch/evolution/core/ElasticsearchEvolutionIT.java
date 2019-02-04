@@ -9,18 +9,26 @@ import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.Migrati
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.ElasticsearchArgumentsProvider;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.IgnoreEsVersion;
+import org.assertj.core.api.Assertions;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
 
 import java.io.IOException;
 import java.util.NavigableSet;
 
 import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
 
@@ -29,6 +37,8 @@ import static org.elasticsearch.client.RequestOptions.DEFAULT;
  */
 @ExtendWith(EmbeddedElasticsearchExtension.class)
 class ElasticsearchEvolutionIT {
+
+    private static final Logger logger = LoggerFactory.getLogger(ElasticsearchEvolutionIT.class);
 
     private HistoryRepository historyRepository;
 
@@ -54,11 +64,15 @@ class ElasticsearchEvolutionIT {
                     .allMatch(MigrationScriptProtocol::isSuccess);
         });
 
+        embeddedElastic.refreshIndices();
+
+        String testIndex = "test_*";
         GetIndexResponse getIndexResponse = restHighLevelClient.indices().get(
                 new GetIndexRequest()
-                        .indices("test_*")
+                        .indices(testIndex)
                         .masterNodeTimeout((String) null)
                 , DEFAULT);
+        logger.debug("GetIndexResponse: {}", getIndexResponse);
         assertSoftly(softly -> {
             softly.assertThat(getIndexResponse.getMappings()).hasSize(2);
             softly.assertThat(getIndexResponse.getMappings().get("test_1"))
@@ -66,6 +80,38 @@ class ElasticsearchEvolutionIT {
                     .isNotNull()
                     .isEqualTo(getIndexResponse.getMappings().get("test_2"));
         });
+
+
+
+        SearchResponse search = restHighLevelClient.search(
+                new SearchRequest(testIndex)
+                        .source(new SearchSourceBuilder()
+                                .query(QueryBuilders.boolQuery()
+                                        .must(QueryBuilders.termsQuery("searchable.version", "1", "2")))),
+                DEFAULT);
+        assertThat(search.getHits().totalHits)
+                .as("search res by keyword: %s", search.toString())
+                .isEqualTo(3);
+
+        search = restHighLevelClient.search(
+                new SearchRequest(testIndex)
+                        .source(new SearchSourceBuilder()
+                                .query(QueryBuilders.boolQuery()
+                                        .must(QueryBuilders.termsQuery("searchable.version.text", "1", "2")))),
+                DEFAULT);
+        assertThat(search.getHits().totalHits)
+                .as("search res by text(boolean): %s", search.toString())
+                .isEqualTo(3);
+
+        search = restHighLevelClient.search(
+                new SearchRequest(testIndex)
+                        .source(new SearchSourceBuilder()
+                                .query(QueryBuilders.boolQuery()
+                                        .must(QueryBuilders.termsQuery("searchable.version.bm25", "1", "2")))),
+                DEFAULT);
+        assertThat(search.getHits().totalHits)
+                .as("search res by text(bm25): %s", search.toString())
+                .isEqualTo(3);
     }
 
     @ParameterizedTest

@@ -81,29 +81,32 @@ public class MigrationScriptParserImpl implements MigrationScriptParser {
 
         try (BufferedReader reader = new BufferedReader(new StringReader(contentReplaced))) {
             final AtomicReference<ParseState> state = new AtomicReference<>(ParseState.METHOD_PATH);
-            reader.lines().forEachOrdered(line -> {
-                switch (state.get()) {
-                    case METHOD_PATH:
-                        parseMethodWithPath(res, line);
-                        state.set(ParseState.HEADER);
-                        break;
-                    case HEADER:
-                        if (line.trim().isEmpty()) {
-                            state.set(ParseState.CONTENT);
-                        } else {
-                            parseHeader(res, line);
+            reader.lines()
+                    // filter out comment lines
+                    .filter(line -> !line.trim().startsWith("#") && !line.trim().startsWith("//"))
+                    .forEachOrdered(line -> {
+                        switch (state.get()) {
+                            case METHOD_PATH:
+                                parseMethodWithPath(res, line);
+                                state.set(ParseState.HEADER);
+                                break;
+                            case HEADER:
+                                if (line.trim().isEmpty()) {
+                                    state.set(ParseState.CONTENT);
+                                } else {
+                                    parseHeader(res, line);
+                                }
+                                break;
+                            case CONTENT:
+                                if (!res.isBodyEmpty()) {
+                                    res.addToBody(lineSeparator());
+                                }
+                                res.addToBody(line);
+                                break;
+                            default:
+                                throw new UnsupportedOperationException("state '" + state + "' not supportet");
                         }
-                        break;
-                    case CONTENT:
-                        if (!res.isBodyEmpty()) {
-                            res.addToBody(lineSeparator());
-                        }
-                        res.addToBody(line);
-                        break;
-                    default:
-                        throw new UnsupportedOperationException("state '" + state + "' not supportet");
-                }
-            });
+                    });
         } catch (IOException e) {
             throw new MigrationException("failed parsing content of " + script.getFileName(), e);
         }

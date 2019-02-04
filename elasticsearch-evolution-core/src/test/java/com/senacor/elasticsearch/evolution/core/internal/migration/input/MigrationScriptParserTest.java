@@ -434,7 +434,9 @@ class MigrationScriptParserTest {
 
     private String createDefaultContent() {
         return "PUT /" + lineSeparator() +
+                " # some # comment " + lineSeparator() +
                 "Header: value" + lineSeparator() +
+                " // some // comment " + lineSeparator() +
                 lineSeparator() +
                 "{" + lineSeparator() + "\"body\":\"value\"" + lineSeparator() + "}";
     }

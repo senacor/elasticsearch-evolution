@@ -12,8 +12,25 @@ Content-Type: application/json
       "properties": {
         "searchable": {
           "properties": {
+//          new field
             "success": {
               "type": "boolean"
+            },
+//          Multi-index: additional index with type text to already existing keyword index
+            "version": {
+              "type": "keyword",
+              "ignore_above": 20,
+              "similarity": "boolean",
+              "fields": {
+                "text": {
+                  "type": "text",
+                  "similarity": "boolean"
+                },
+                "bm25": {
+                  "type": "text",
+                  "similarity": "BM25"
+                }
+              }
             }
           }
         }
