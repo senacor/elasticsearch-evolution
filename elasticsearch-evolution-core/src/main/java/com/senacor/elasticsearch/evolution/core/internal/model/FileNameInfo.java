@@ -11,11 +11,6 @@ public interface FileNameInfo {
     MigrationVersion getVersion();
 
     /**
-     * @return non-null
-     */
-    String getVersionAsString();
-
-    /**
      * @return migration description, not-null
      */
     String getDescription();

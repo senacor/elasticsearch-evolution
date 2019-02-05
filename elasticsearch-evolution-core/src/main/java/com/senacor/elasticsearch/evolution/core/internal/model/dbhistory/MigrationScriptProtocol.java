@@ -71,10 +71,6 @@ public class MigrationScriptProtocol implements FileNameInfo, Comparable<Migrati
         return this;
     }
 
-    public String getVersionAsString() {
-        return version.getVersion();
-    }
-
     @Override
     public MigrationVersion getVersion() {
         return version;

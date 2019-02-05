@@ -36,7 +36,7 @@ public class ApplicationTests {
 
     @TestConfiguration
     static class Config {
-        @Bean(destroyMethod = "stop")
+        @Bean
         public EmbeddedElastic embeddedElastic() throws Exception {
             EmbeddedElastic.Builder builder = EmbeddedElastic.builder()
                     .withElasticVersion("6.6.0")

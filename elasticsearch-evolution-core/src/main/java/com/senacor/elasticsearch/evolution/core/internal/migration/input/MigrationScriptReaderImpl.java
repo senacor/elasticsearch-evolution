@@ -105,7 +105,7 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
                                     .collect(Collectors.joining(System.lineSeparator()));
                             return new RawMigrationScript().setFileName(filename).setContent(content);
                         } catch (IOException e) {
-                            throw new IllegalStateException("can't read file: " + file.getFileName().toString(), e);
+                            throw new IllegalStateException("can't read file: " + file.getFileName(), e);
                         }
                     }).collect(Collectors.toList()));
         } catch (NoSuchFileException e) {

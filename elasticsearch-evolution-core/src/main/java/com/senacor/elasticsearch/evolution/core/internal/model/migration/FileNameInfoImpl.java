@@ -41,11 +41,6 @@ public class FileNameInfoImpl implements FileNameInfo {
     }
 
     @Override
-    public String getVersionAsString() {
-        return version.getVersion();
-    }
-
-    @Override
     public String getDescription() {
         return description;
     }
