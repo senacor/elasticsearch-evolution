@@ -21,9 +21,9 @@ Successful executed migration scripts will not be executed again!
 -   runs on Java 8, 9, 10 and 11
 -   runs on Spring-Boot 1.5, 2.0 and 2.1
 -   highly configurable (e.g. location(s) of your migration files, migration files format pattern)
--   placeholder substitution in migration files
+-   placeholder substitution in migration scripts
 -   easily extendable to your needs
--   supports microservices / multiple parallel running instances via logical Database locks
+-   supports microservices / multiple parallel running instances via logical database locks
 -   ready to use default configuration
 -   line comments in migration files
 
@@ -51,7 +51,7 @@ Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and require
 
 Place your migration scripts in your application classpath at `es/evolution`
 
-That's it. Elasticsearch-Evolution runs at application startup and expects you Elasticsearch at http://localhost:9200
+That's it. Elasticsearch-Evolution runs at application startup and expects you Elasticsearch at <http://localhost:9200>
 
 ### with core library
 
@@ -122,12 +122,12 @@ After a blank line the HTTP body is defined.
 
 The pattern is strongly oriented in ordinary HTTP requests and consist of 4 parts:
 
-1.   **The HTTP method (required)**. Supported HTTP methods are `GET`, `HEAD`, `POST`, `PUT`, `DELETE`, `OPTIONS` and `PATCH`. 
-     The First non-comment line must always start with a HTTP method.
-2.   **The path to the Elasticsearch endpoint to call (required)**. The path is separated by a _blank_ from the HTTP method. 
-     You can provide any query parameters like in a ordinary browser like this `/my_index_1/_doc/1?refresh=true&op_type=create`
-3.   **HTTP Header(s) (optional)**. All non-comment lines after the _HTTP method_ line will be interpreted as HTTP headers. Header name and content are separated by `:`.
-4.   **HTTP Body (optional)**. The HTTP Body is separated by a blank line and can contain any content you want to sent to Elasticsearch.
+1.  **The HTTP method (required)**. Supported HTTP methods are `GET`, `HEAD`, `POST`, `PUT`, `DELETE`, `OPTIONS` and `PATCH`. 
+    The First non-comment line must always start with a HTTP method.
+2.  **The path to the Elasticsearch endpoint to call (required)**. The path is separated by a _blank_ from the HTTP method. 
+    You can provide any query parameters like in a ordinary browser like this `/my_index_1/_doc/1?refresh=true&op_type=create`
+3.  **HTTP Header(s) (optional)**. All non-comment lines after the _HTTP method_ line will be interpreted as HTTP headers. Header name and content are separated by `:`.
+4.  **HTTP Body (optional)**. The HTTP Body is separated by a blank line and can contain any content you want to sent to Elasticsearch.
 
 #### Comments
 
@@ -142,11 +142,13 @@ Elasticsearch-Evolution supports named placeholder substitution. Placeholders ar
 -   followed by the `placeholder name` which can be any string, but must not contain `placeholderPrefix` or `placeholderSuffix`  
 -   ends with `placeholderSuffix` which is by default `}` and is configurable.
      
+
 ### Migration script file name
 
 Here is an example filename: `V1.0__my-description.http`
 
 The filename has to follow a pattern:
+
 -   starts with `esMigrationPrefix` which is by default `V` and is configurable.
 -   followed by a version, which have to be numeric and can be structured by separating the version parts with `.`
 -   followed by the `versionDescriptionSeparator`: `__`
@@ -156,7 +158,7 @@ The filename has to follow a pattern:
 Elasticsearch-Evolution uses the version for ordering your scripts and enforces strict ordered execution of your scripts. Out-of-Order execution is not supported.
 Elasticsearch-Evolution interprets the version parts as Integers, so each version part must be between 1 (inclusive) and 2,147,483,647 (inclusive).
 
-Here is and example which indicates the ordering: `1.0.1` < `1.1` < `1.2.1` < (`2.0.0` == `2`).
+Here is and example which indicates the ordering: `1.0.1` &lt; `1.1` &lt; `1.2.1` &lt; (`2.0.0` == `2`).
 In this example version `1.0.1` is the smallest version and is executed first, after that version `1.1`, `1.2.1` and in the end `2`. 
 `2` is the same as `2.0` or `2.0.0` - so leading zeros will be trimed.
 
@@ -167,13 +169,95 @@ In this example version `1.0.1` is the smallest version and is executed first, a
 Elasticsearch-Evolution can be configured to your needs:
 
 -   **enabled** (default=true): Whether to enable or disable Elasticsearch-Evolution.
--   **locations** (default=[classpath:es/migration]): List of locations of migrations scripts. Supported is classpath:some/path and file:/some/path. The location is scanned recursive, but only to a depth of 10.
+-   **locations** (default=\[classpath:es/migration]): List of locations of migrations scripts. Supported is classpath:some/path and file:/some/path. The location is scanned recursive, but only to a depth of 10. **NOTE**: all scripts in all locations / subdirectories will be flatted and only the version number will be used to order them.
 -   **encoding** (default=UTF-8): Encoding of migration files.
 -   **defaultContentType** (default=application/json; charset=UTF-8): This content type will be used as default if no contentType header is specified in the header section of a migration script. If no charset is defined, the `encoding` charset is used.
 -   **esMigrationPrefix** (default=V): File name prefix for migration files.
--   **esMigrationSuffixes** (default=[.http]): List of file name suffixes for migration files. The suffix is checked case-insensitive. 
+-   **esMigrationSuffixes** (default=\[.http]): List of file name suffixes for migration files. The suffix is checked case-insensitive. 
 -   **placeholderReplacement** (default=true): Whether to enable or disable placeholder replacement in migration scripts.
--   **placeholders** (default=[]): Map of placeholders and their replacements to apply to migration scripts.
+-   **placeholders** (default=\[]): Map of placeholders and their replacements to apply to migration scripts.
 -   **placeholderPrefix** (default=${): Prefix of placeholders in migration scripts.
 -   **placeholderSuffix** (default=}): Suffix of placeholders in migration scripts.
 -   **historyIndex** (default=es_evolution): Name of the history index that will be used by Elasticsearch-Evolution. In this index Elasticsearch-Evolution will persist his internal state and tracks which migration script has already been executed.
+
+### Spring Boot
+
+You can set the above configurations via Spring Boots default configuration way. Just use the prefix `spring.elasticsearch.evolution`. Here is a example `application.properties`:
+
+```properties
+spring.elasticsearch.evolution.locations[0]=classpath:es/migration
+spring.elasticsearch.evolution.locations[1]=classpath:es/more_migration_scripts
+spring.elasticsearch.evolution.placeholderReplacement=true
+spring.elasticsearch.evolution.placeholders.indexname=myIndexReplacement
+spring.elasticsearch.evolution.placeholders.docType=_doc
+spring.elasticsearch.evolution.placeholders.foo=bar
+spring.elasticsearch.evolution.historyIndex=es_evolution
+```
+
+#### Elasticsearch AutoConfiguration (since spring boot 2.1)
+
+Since spring boot 2.1 AutoConfiguration for Elasticsearchs REST client is provided (see org.springframework.boot.autoconfigure.elasticsearch.rest.RestClientAutoConfiguration).
+You can configure the RestHighLevelClient, required for Elasticsearch-Evolution, just like that in your `application.properties`:
+
+```properties
+spring.elasticsearch.rest.uris[0]=https://example.com:9200
+spring.elasticsearch.rest.username=my-user-name
+spring.elasticsearch.rest.password=my-secret-pw
+```
+
+#### Customize Elasticsearch-Evolutions AutoConfiguration
+
+##### Custom RestHighLevelClient
+
+Elasticsearch-Evolutions just needs a `RestHighLevelClient` as spring bean. 
+If you don't have spring boot 2.1 or later or you need a special `RestHighLevelClient` configuration e.g. to accept self signed certificates or disable hostname validation, you can provide a custom `RestHighLevelClient` like this:   
+
+```java
+@Bean
+public RestHighLevelClient restHighLevelClient() {
+    RestClientBuilder builder = RestClient.builder(HttpHost.create("https://localhost:9200"))
+            .setHttpClientConfigCallback(httpClientBuilder -> {
+                        CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("my-user-name", "my-secret-pw"));
+                        httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                        try {
+                            httpClientBuilder
+                                    .setSSLContext(new SSLContextBuilder().loadTrustMaterial(null, TrustAllStrategy.INSTANCE).build())
+                                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+                        } catch (GeneralSecurityException e) {
+                            throw new IllegalStateException("could not configure http client to accept all certificates", e);
+                        }
+                        return httpClientBuilder;
+                    }
+            );
+    return new RestHighLevelClient(builder);
+}
+```
+
+##### Custom ElasticsearchEvolutionInitializer
+
+Maybe you want to provide a customised Initializer for Elasticsearch-Evolution e.g with another Order:
+
+```java
+@Bean
+public ElasticsearchEvolutionInitializer customElasticsearchEvolutionInitializer(ElasticsearchEvolution elasticsearchEvolution) {
+    return new ElasticsearchEvolutionInitializer(elasticsearchEvolution) {
+        @Override
+        public int getOrder() {
+            return Ordered.LOWEST_PRECEDENCE;
+        }
+    };
+}
+```
+
+### core library
+
+You can set the above configurations via the `ElasticsearchEvolutionConfig` fluent builder like this:
+
+```java
+ElasticsearchEvolution.configure()
+    .setLocations(Collections.singletonList("classpath:es/migration"))
+    .setPlaceholderReplacement(true)
+    .setPlaceholders(Collections.singletonMap("indexname", "myIndexReplacement"))
+    .setHistoryIndex("es_evolution");
+```
