@@ -69,5 +69,41 @@ class ElasticsearchEvolutionConfigTest {
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("placeholderSuffix must not be empty");
         }
+
+        @Test
+        void placeholderNameMustNotContainPlaceholderSuffix() {
+            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate()
+                    .setPlaceholders(Collections.singletonMap("x}x", "x"))
+                    .validate())
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("placeholder name 'x}x' must not contain placeholderSuffix '}'");
+        }
+
+        @Test
+        void placeholderNameMustNotContainPlaceholderPrefix() {
+            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate()
+                    .setPlaceholders(Collections.singletonMap("x${x", "x"))
+                    .validate())
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("placeholder name 'x${x' must not contain placeholderPrefix '${'");
+        }
+
+        @Test
+        void placeholderValueMustNotContainPlaceholderSuffix() {
+            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate()
+                    .setPlaceholders(Collections.singletonMap("x", "x}x"))
+                    .validate())
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("placeholder value 'x}x' must not contain placeholderSuffix '}'");
+        }
+
+        @Test
+        void placeholderValueMustNotContainPlaceholderPrefix() {
+            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate()
+                    .setPlaceholders(Collections.singletonMap("x", "x${x"))
+                    .validate())
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("placeholder value 'x${x' must not contain placeholderPrefix '${'");
+        }
     }
 }

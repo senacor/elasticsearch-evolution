@@ -8,8 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotBlank;
-import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotEmpty;
+import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.*;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -26,7 +25,7 @@ public class ElasticsearchEvolutionConfig {
     private boolean enabled = true;
 
     /**
-     * Locations of migrations scripts.
+     * Locations of migrations scripts. Supported is classpath:some/path and file:/some/path
      */
     private List<String> locations = new ArrayList<>(
             Collections.singletonList("classpath:es/migration"));
@@ -48,7 +47,7 @@ public class ElasticsearchEvolutionConfig {
     private String esMigrationPrefix = "V";
 
     /**
-     * File name suffix for ES migrations.
+     * File name suffix(es) for ES migrations.
      */
     private List<String> esMigrationSuffixes = new ArrayList<>(
             Collections.singleton(".http"));
@@ -74,7 +73,7 @@ public class ElasticsearchEvolutionConfig {
     private boolean placeholderReplacement = true;
 
     /**
-     * Name of the schema schema history index that will be used by elasticsearch-evolution.
+     * Name of the history index that will be used by elasticsearch-evolution.
      */
     private String historyIndex = "es_evolution";
 
@@ -106,6 +105,16 @@ public class ElasticsearchEvolutionConfig {
                 requireNonNull(placeholders, "placeholders must not be null");
                 requireNotBlank(placeholderPrefix, "placeholderPrefix must not be empty");
                 requireNotBlank(placeholderSuffix, "placeholderSuffix must not be empty");
+                placeholders.forEach((name, value) -> {
+                    requireCondition(name, s -> !s.contains(placeholderPrefix),
+                            "placeholder name '%s' must not contain placeholderPrefix '%s'", name, placeholderPrefix);
+                    requireCondition(name, s -> !s.contains(placeholderSuffix),
+                            "placeholder name '%s' must not contain placeholderSuffix '%s'", name, placeholderSuffix);
+                    requireCondition(value, s -> !s.contains(placeholderPrefix),
+                            "placeholder value '%s' must not contain placeholderPrefix '%s'", value, placeholderPrefix);
+                    requireCondition(value, s -> !s.contains(placeholderSuffix),
+                            "placeholder value '%s' must not contain placeholderSuffix '%s'", value, placeholderSuffix);
+                });
             }
             requireNotBlank(historyIndex, "historyIndex must not be empty");
         }

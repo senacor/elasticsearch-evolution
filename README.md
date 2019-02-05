@@ -1,12 +1,179 @@
 # Elasticsearch-Evolution
 
-> A library to migrate elasticsearch mappings. Inspired by flyway.
+> A library to migrate Elasticsearch mappings. Inspired by flyway.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://raw.githubusercontent.com/senacor/elasticsearch-evolution/master/LICENSE)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core)
 [![Javadocs](https://www.javadoc.io/badge/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core.svg)](https://www.javadoc.io/doc/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core)
 [![Build Status](https://travis-ci.org/senacor/elasticsearch-evolution.svg?branch=master)](https://travis-ci.org/senacor/elasticsearch-evolution)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a629ba3201104ecc81c6af7671b29b05)](https://www.codacy.com/app/xtermi2/elasticsearch-evolution?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=senacor/elasticsearch-evolution&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a629ba3201104ecc81c6af7671b29b05)](https://www.codacy.com/app/xtermi2/elasticsearch-evolution?utm_source=github.com&utm_medium=referral&utm_content=senacor/elasticsearch-evolution&utm_campaign=Badge_Grade)
 [![Coverage Status](https://coveralls.io/repos/github/senacor/elasticsearch-evolution/badge.svg?branch=master)](https://coveralls.io/github/senacor/elasticsearch-evolution?branch=master)
 
 ###### Work in progress ... first release is coming soon
+
+## Evolve your Elasticsearch mapping easily and reliable across all your instances
+
+Elasticsearch-Evolution executes versioned migration scripts reliable and persists the execution state in an internal Elasticsearch index.
+Successful executed migration scripts will not be executed again! 
+
+## Features
+
+-   runs on Java 8, 9, 10 and 11
+-   runs on Spring-Boot 1.5, 2.0 and 2.1
+-   highly configurable (e.g. location(s) of your migration files, migration files format pattern)
+-   placeholder substitution in migration files
+-   easily extendable to your needs
+-   supports microservices / multiple parallel running instances via logical Database locks
+-   ready to use default configuration
+-   line comments in migration files
+
+## Quickstart
+
+### with Spring-Boot starter
+
+First add the latest version of Elasticsearch-Evolution spring boot starter as a dependency in your maven pom.xml:
+
+```xml
+<dependency>
+    <groupId>com.senacor.elasticsearch.evolution</groupId>
+    <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+</dependency>
+```
+
+Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and requires at minimum version 6.6.0. Spring boot uses a older version, so update it in your pom.xml:
+
+```xml
+<properties>
+    <elasticsearch.version>6.6.0</elasticsearch.version>
+</properties>
+```
+
+Place your migration scripts in your application classpath at `es/evolution`
+
+That's it. Elasticsearch-Evolution runs at application startup and expects you Elasticsearch at http://localhost:9200
+
+### with core library
+
+First add the latest version of Elasticsearch-Evolution core as a dependency:
+
+```xml
+<dependency>
+    <groupId>com.senacor.elasticsearch.evolution</groupId>
+    <artifactId>elasticsearch-evolution-core</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+</dependency>
+```
+
+Place your migration scripts in your application classpath at `es/evolution`
+
+Create a `ElasticsearchEvolution` instance and execute the migration.
+
+```java
+// first create a Elastic RestHighLevelClient
+RestHighLevelClient restHighLevelClient = new RestHighLevelClient(
+        RestClient.builder(HttpHost.create("http://localhost:9200")));
+// then create a ElasticsearchEvolution configuration and create a instance of ElasticsearchEvolution with that configuration
+ElasticsearchEvolution elasticsearchEvolution = ElasticsearchEvolution.configure()
+        .load(restHighLevelClient);
+// execute the migration
+elasticsearchEvolution.migrate();
+```
+
+## Migration script format
+
+### Migration script file content
+
+A Elasticsearch-Evolutions migration script represents just a rest call. Here is an Example:
+
+```http request
+PUT _template/my_template
+Content-Type: application/json
+
+{
+  "index_patterns": [
+    "my_index_*"
+  ],
+  "order": 1,
+  "version": 1,
+  "settings": {
+    "number_of_shards": 1
+  },
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "version": {
+          "type": "keyword",
+          "ignore_above": 20,
+          "similarity": "boolean"
+        },
+        "locked": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
+```
+
+The first line defines the HTTP method `PUT` and the relative path to the Elasticsearch endpoint `_template/my_template` to create a new mapping template.
+Followed by a HTTP Header `Content-Type: application/json`.
+After a blank line the HTTP body is defined.
+
+The pattern is strongly oriented in ordinary HTTP requests and consist of 4 parts:
+
+1.   **The HTTP method (required)**. Supported HTTP methods are `GET`, `HEAD`, `POST`, `PUT`, `DELETE`, `OPTIONS` and `PATCH`. 
+     The First non-comment line must always start with a HTTP method.
+2.   **The path to the Elasticsearch endpoint to call (required)**. The path is separated by a _blank_ from the HTTP method. 
+     You can provide any query parameters like in a ordinary browser like this `/my_index_1/_doc/1?refresh=true&op_type=create`
+3.   **HTTP Header(s) (optional)**. All non-comment lines after the _HTTP method_ line will be interpreted as HTTP headers. Header name and content are separated by `:`.
+4.   **HTTP Body (optional)**. The HTTP Body is separated by a blank line and can contain any content you want to sent to Elasticsearch.
+
+#### Comments
+
+Elasticsearch-Evolution supports line-comments in its migration scripts. Every line starting with `#` or `//` will be interpreted as a comment-line.
+Comment-lines are not send to Elasticsearch, they will be filtered by Elasticsearch-Evolution.
+
+#### Placeholders
+
+Elasticsearch-Evolution supports named placeholder substitution. Placeholders are marked in your migration script like this: `${my-placeholder}`
+
+-   starts with `placeholderPrefix` which is by default `${` and is configurable.
+-   followed by the `placeholder name` which can be any string, but must not contain `placeholderPrefix` or `placeholderSuffix`  
+-   ends with `placeholderSuffix` which is by default `}` and is configurable.
+     
+### Migration script file name
+
+Here is an example filename: `V1.0__my-description.http`
+
+The filename has to follow a pattern:
+-   starts with `esMigrationPrefix` which is by default `V` and is configurable.
+-   followed by a version, which have to be numeric and can be structured by separating the version parts with `.`
+-   followed by the `versionDescriptionSeparator`: `__`
+-   followed ba a description which can be any text your filesystem supports
+-   ended with `esMigrationSuffixes` which is by default `.http` and is configurable and case-insensitive.
+
+Elasticsearch-Evolution uses the version for ordering your scripts and enforces strict ordered execution of your scripts. Out-of-Order execution is not supported.
+Elasticsearch-Evolution interprets the version parts as Integers, so each version part must be between 1 (inclusive) and 2,147,483,647 (inclusive).
+
+Here is and example which indicates the ordering: `1.0.1` < `1.1` < `1.2.1` < (`2.0.0` == `2`).
+In this example version `1.0.1` is the smallest version and is executed first, after that version `1.1`, `1.2.1` and in the end `2`. 
+`2` is the same as `2.0` or `2.0.0` - so leading zeros will be trimed.
+
+**NOTE:** Versions with major version `0` are reserved for internal usage, so the smallest version you can define is `1`
+
+## Configuration options
+
+Elasticsearch-Evolution can be configured to your needs:
+
+-   **enabled** (default=true): Whether to enable or disable Elasticsearch-Evolution.
+-   **locations** (default=[classpath:es/migration]): List of locations of migrations scripts. Supported is classpath:some/path and file:/some/path. The location is scanned recursive, but only to a depth of 10.
+-   **encoding** (default=UTF-8): Encoding of migration files.
+-   **defaultContentType** (default=application/json; charset=UTF-8): This content type will be used as default if no contentType header is specified in the header section of a migration script. If no charset is defined, the `encoding` charset is used.
+-   **esMigrationPrefix** (default=V): File name prefix for migration files.
+-   **esMigrationSuffixes** (default=[.http]): List of file name suffixes for migration files. The suffix is checked case-insensitive. 
+-   **placeholderReplacement** (default=true): Whether to enable or disable placeholder replacement in migration scripts.
+-   **placeholders** (default=[]): Map of placeholders and their replacements to apply to migration scripts.
+-   **placeholderPrefix** (default=${): Prefix of placeholders in migration scripts.
+-   **placeholderSuffix** (default=}): Suffix of placeholders in migration scripts.
+-   **historyIndex** (default=es_evolution): Name of the history index that will be used by Elasticsearch-Evolution. In this index Elasticsearch-Evolution will persist his internal state and tracks which migration script has already been executed.

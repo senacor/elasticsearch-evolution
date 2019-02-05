@@ -95,16 +95,21 @@ public class ElasticsearchEvolution {
      * @throws MigrationException when the migration failed.
      */
     public int migrate() throws MigrationException {
-        logger.info("start elasticsearch migration...");
-        logger.info("reading migration scripts...");
-        Collection<RawMigrationScript> rawMigrationScripts = migrationScriptReader.read();
-        logger.info("parsing migration scripts...");
-        Collection<ParsedMigrationScript> parsedMigrationScripts = migrationScriptParser.parse(rawMigrationScripts);
-        logger.info("execute migration scripts...");
-        List<MigrationScriptProtocol> executedScripts = migrationService.executePendingScripts(parsedMigrationScripts);
-        return (int) executedScripts.stream()
-                .filter(MigrationScriptProtocol::isSuccess)
-                .count();
+        if (getConfig().isEnabled()) {
+            logger.info("start elasticsearch migration...");
+            logger.info("reading migration scripts...");
+            Collection<RawMigrationScript> rawMigrationScripts = migrationScriptReader.read();
+            logger.info("parsing migration scripts...");
+            Collection<ParsedMigrationScript> parsedMigrationScripts = migrationScriptParser.parse(rawMigrationScripts);
+            logger.info("execute migration scripts...");
+            List<MigrationScriptProtocol> executedScripts = migrationService.executePendingScripts(parsedMigrationScripts);
+            return (int) executedScripts.stream()
+                    .filter(MigrationScriptProtocol::isSuccess)
+                    .count();
+        } else {
+            logger.debug("elasticsearch-evolution is not enabled");
+            return 0;
+        }
     }
 
     protected ElasticsearchEvolutionConfig getConfig() {

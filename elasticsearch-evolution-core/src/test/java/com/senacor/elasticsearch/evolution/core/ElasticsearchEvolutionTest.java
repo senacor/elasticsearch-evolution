@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import java.io.IOException;
 
 import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
@@ -71,4 +72,20 @@ class ElasticsearchEvolutionTest {
         order.verify(restHighLevelClient, times(2)).updateByQuery(any(), eq(DEFAULT));
         order.verifyNoMoreInteractions();
     }
+
+    @Test
+    void elasticsearchEvolutionIsNotEnabled() {
+        int migrations = ElasticsearchEvolution.configure()
+                .setEnabled(false)
+                .load(restHighLevelClient)
+                .migrate();
+
+        assertThat(migrations).isEqualTo(0);
+
+        InOrder order = inOrder(restHighLevelClient, restClient);
+        order.verify(restHighLevelClient, times(3)).getLowLevelClient();
+        order.verify(restClient).getNodes();
+        order.verifyNoMoreInteractions();
+    }
+
 }

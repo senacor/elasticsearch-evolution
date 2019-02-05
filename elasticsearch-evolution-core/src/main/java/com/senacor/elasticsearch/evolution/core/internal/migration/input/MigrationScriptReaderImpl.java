@@ -21,13 +21,16 @@ import java.util.stream.Collectors;
 
 public class MigrationScriptReaderImpl implements MigrationScriptReader {
 
+    private static final String CLASSPATH_PREFIX = "classpath:";
+    private static final String FILE_PREFIX = "file:";
+
     private final List<String> locations;
     private final Charset encoding;
     private final String esMigrationPrefix;
     private final List<String> esMigrationSuffixes;
 
     /**
-     * @param locations               Locations of migrations scripts, e.g classpath:es/migration
+     * @param locations               Locations of migrations scripts, e.g classpath:es/migration or file:/home/migration
      * @param encoding                migrations scripts encoding
      * @param esMigrationFilePrefix   File name prefix for ES migrations.
      * @param esMigrationFileSuffixes File name suffix for ES migrations.
@@ -67,20 +70,21 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
      *
      * @param location path where to look for migration scripts
      * @return a list of {@link RawMigrationScript}
-     * @throws URISyntaxException
-     * @throws IOException
+     * @throws URISyntaxException if the location is not formatted strictly according to RFC2396 and cannot be converted to a URI.
+     * @throws IOException        if an I/O error is thrown when accessing the files at the location(s).
      */
     protected List<RawMigrationScript> readFromLocation(String location) throws URISyntaxException, IOException {
         final URI uri;
 
-        if (location.startsWith("classpath:")) {
-            URL url = resolveURL(location.substring("classpath:".length()));
+        if (location.startsWith(CLASSPATH_PREFIX)) {
+            URL url = resolveURL(location.substring(CLASSPATH_PREFIX.length()));
             uri = (url != null) ? url.toURI() : null;
-        } else if (location.startsWith("file:")) {
-            uri = Paths.get(location.substring("file:".length())).toUri();
+        } else if (location.startsWith(FILE_PREFIX)) {
+            uri = Paths.get(location.substring(FILE_PREFIX.length())).toUri();
         } else {
             throw new MigrationException(String.format("could not read location path %s, " +
-                    "should look like this: classpath:es/migration or this: file:home/scripts/migration", location));
+                            "should look like this: %ses/migration or this: %s/home/scripts/migration",
+                    location, CLASSPATH_PREFIX, FILE_PREFIX));
         }
 
         if (uri == null) {
