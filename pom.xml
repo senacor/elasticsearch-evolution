@@ -69,7 +69,6 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <!-- Plugin Versions -->
-        <codacy-maven-plugin.version>1.1.0</codacy-maven-plugin.version>
         <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.3</jacoco-maven-plugin.version>
         <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
@@ -233,19 +232,6 @@
                     <version>${coveralls-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
-                    <groupId>com.gavinmogan</groupId>
-                    <artifactId>codacy-maven-plugin</artifactId>
-                    <version>${codacy-maven-plugin.version}</version>
-                    <configuration>
-                        <apiToken>${env.CODACY_API_TOKEN}</apiToken>
-                        <projectToken>${env.CODACY_PROJECT_TOKEN}</projectToken>
-                        <coverageReportFile>${project.reporting.outputDirectory}/jacoco/jacoco.xml</coverageReportFile>
-                        <commit>${env.TRAVIS_COMMIT}</commit>
-                        <codacyApiBaseUrl>https://api.codacy.com</codacyApiBaseUrl>
-                        <failOnMissingReportFile>false</failOnMissingReportFile>
-                    </configuration>
-                </plugin>
-                <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler-plugin.version}</version>
                     <configuration>
@@ -358,10 +344,6 @@
             <plugin>
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>com.gavinmogan</groupId>
-                <artifactId>codacy-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
