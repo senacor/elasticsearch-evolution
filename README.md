@@ -9,12 +9,12 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a629ba3201104ecc81c6af7671b29b05)](https://www.codacy.com/app/xtermi2/elasticsearch-evolution?utm_source=github.com&utm_medium=referral&utm_content=senacor/elasticsearch-evolution&utm_campaign=Badge_Grade)
 [![Coverage Status](https://coveralls.io/repos/github/senacor/elasticsearch-evolution/badge.svg?branch=master)](https://coveralls.io/github/senacor/elasticsearch-evolution?branch=master)
 
-## Evolve your Elasticsearch mapping easily and reliable across all your instances
+## 1 Evolve your Elasticsearch mapping easily and reliable across all your instances
 
 Elasticsearch-Evolution executes versioned migration scripts reliable and persists the execution state in an internal Elasticsearch index.
 Successful executed migration scripts will not be executed again! 
 
-## Features
+## 2 Features
 
 -   runs on Java 8, 9, 10 and 11
 -   runs on Spring-Boot 1.5, 2.0 and 2.1
@@ -26,9 +26,9 @@ Successful executed migration scripts will not be executed again!
 -   ready to use default configuration
 -   line comments in migration files
 
-## Quickstart
+## 3 Quickstart
 
-### with Spring-Boot starter
+### 3.1 Quickstart with Spring-Boot starter
 
 First add the latest version of Elasticsearch-Evolution spring boot starter as a dependency in your maven pom.xml:
 
@@ -52,7 +52,7 @@ Place your migration scripts in your application classpath at `es/evolution`
 
 That's it. Elasticsearch-Evolution runs at application startup and expects you Elasticsearch at <http://localhost:9200>
 
-### with core library
+### 3.2 Quickstart with core library
 
 First add the latest version of Elasticsearch-Evolution core as a dependency:
 
@@ -79,9 +79,9 @@ ElasticsearchEvolution elasticsearchEvolution = ElasticsearchEvolution.configure
 elasticsearchEvolution.migrate();
 ```
 
-## Migration script format
+## 4 Migration script format
 
-### Migration script file content
+### 4.1 Migration script file content
 
 A Elasticsearch-Evolutions migration script represents just a rest call. Here is an Example:
 
@@ -128,12 +128,12 @@ The pattern is strongly oriented in ordinary HTTP requests and consist of 4 part
 3.  **HTTP Header(s) (optional)**. All non-comment lines after the _HTTP method_ line will be interpreted as HTTP headers. Header name and content are separated by `:`.
 4.  **HTTP Body (optional)**. The HTTP Body is separated by a blank line and can contain any content you want to sent to Elasticsearch.
 
-#### Comments
+#### 4.1.1 Comments
 
 Elasticsearch-Evolution supports line-comments in its migration scripts. Every line starting with `#` or `//` will be interpreted as a comment-line.
 Comment-lines are not send to Elasticsearch, they will be filtered by Elasticsearch-Evolution.
 
-#### Placeholders
+#### 4.1.2 Placeholders
 
 Elasticsearch-Evolution supports named placeholder substitution. Placeholders are marked in your migration script like this: `${my-placeholder}`
 
@@ -142,7 +142,7 @@ Elasticsearch-Evolution supports named placeholder substitution. Placeholders ar
 -   ends with `placeholderSuffix` which is by default `}` and is configurable.
      
 
-### Migration script file name
+### 4.2 Migration script file name
 
 Here is an example filename: `V1.0__my-description.http`
 
@@ -163,7 +163,7 @@ In this example version `1.0.1` is the smallest version and is executed first, a
 
 **NOTE:** Versions with major version `0` are reserved for internal usage, so the smallest version you can define is `1`
 
-## Configuration options
+## 5 Configuration options
 
 Elasticsearch-Evolution can be configured to your needs:
 
@@ -179,7 +179,7 @@ Elasticsearch-Evolution can be configured to your needs:
 -   **placeholderSuffix** (default=}): Suffix of placeholders in migration scripts.
 -   **historyIndex** (default=es_evolution): Name of the history index that will be used by Elasticsearch-Evolution. In this index Elasticsearch-Evolution will persist his internal state and tracks which migration script has already been executed.
 
-### Spring Boot
+### 5.1 Spring Boot
 
 You can set the above configurations via Spring Boots default configuration way. Just use the prefix `spring.elasticsearch.evolution`. Here is a example `application.properties`:
 
@@ -193,7 +193,7 @@ spring.elasticsearch.evolution.placeholders.foo=bar
 spring.elasticsearch.evolution.historyIndex=es_evolution
 ```
 
-#### Elasticsearch AutoConfiguration (since spring boot 2.1)
+#### 5.1.1 Elasticsearch AutoConfiguration (since spring boot 2.1)
 
 Since spring boot 2.1 AutoConfiguration for Elasticsearchs REST client is provided (see org.springframework.boot.autoconfigure.elasticsearch.rest.RestClientAutoConfiguration).
 You can configure the RestHighLevelClient, required for Elasticsearch-Evolution, just like that in your `application.properties`:
@@ -204,9 +204,9 @@ spring.elasticsearch.rest.username=my-user-name
 spring.elasticsearch.rest.password=my-secret-pw
 ```
 
-#### Customize Elasticsearch-Evolutions AutoConfiguration
+#### 5.1.2 Customize Elasticsearch-Evolutions AutoConfiguration
 
-##### Custom RestHighLevelClient
+##### 5.1.2.1 Custom RestHighLevelClient
 
 Elasticsearch-Evolutions just needs a `RestHighLevelClient` as spring bean. 
 If you don't have spring boot 2.1 or later or you need a special `RestHighLevelClient` configuration e.g. to accept self signed certificates or disable hostname validation, you can provide a custom `RestHighLevelClient` like this:   
@@ -233,7 +233,7 @@ public RestHighLevelClient restHighLevelClient() {
 }
 ```
 
-##### Custom ElasticsearchEvolutionInitializer
+##### 5.1.2.2 Custom ElasticsearchEvolutionInitializer
 
 Maybe you want to provide a customised Initializer for Elasticsearch-Evolution e.g with another Order:
 
@@ -249,7 +249,7 @@ public ElasticsearchEvolutionInitializer customElasticsearchEvolutionInitializer
 }
 ```
 
-### core library
+### 5.2 core library
 
 You can set the above configurations via the `ElasticsearchEvolutionConfig` fluent builder like this:
 
