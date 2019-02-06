@@ -51,6 +51,16 @@
         </developer>
     </developers>
 
+    <issueManagement>
+        <system>github</system>
+        <url>https://github.com/senacor/elasticsearch-evolution/issues</url>
+    </issueManagement>
+
+    <ciManagement>
+        <system>travisci</system>
+        <url>https://travis-ci.org/senacor/elasticsearch-evolution</url>
+    </ciManagement>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -59,8 +69,9 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <!-- Plugin Versions -->
+        <codacy-maven-plugin.version>1.1.0</codacy-maven-plugin.version>
         <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
-        <jacoco-maven-plugin.version>0.8.2</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.3</jacoco-maven-plugin.version>
         <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
         <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
         <maven-failsafe-plugin.version>2.22.1</maven-failsafe-plugin.version>
@@ -222,6 +233,19 @@
                     <version>${coveralls-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
+                    <groupId>com.gavinmogan</groupId>
+                    <artifactId>codacy-maven-plugin</artifactId>
+                    <version>${codacy-maven-plugin.version}</version>
+                    <configuration>
+                        <apiToken>${env.CODACY_API_TOKEN}</apiToken>
+                        <projectToken>${env.CODACY_PROJECT_TOKEN}</projectToken>
+                        <coverageReportFile>${project.reporting.outputDirectory}/jacoco/jacoco.xml</coverageReportFile>
+                        <commit>${env.TRAVIS_COMMIT}</commit>
+                        <codacyApiBaseUrl>https://api.codacy.com</codacyApiBaseUrl>
+                        <failOnMissingReportFile>false</failOnMissingReportFile>
+                    </configuration>
+                </plugin>
+                <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler-plugin.version}</version>
                     <configuration>
@@ -250,13 +274,14 @@
                     <version>${jacoco-maven-plugin.version}</version>
                     <executions>
                         <execution>
+                            <id>prepare-agent</id>
                             <goals>
                                 <goal>prepare-agent</goal>
                             </goals>
                         </execution>
                         <execution>
                             <id>report</id>
-                            <phase>prepare-package</phase>
+                            <phase>post-integration-test</phase>
                             <goals>
                                 <goal>report</goal>
                             </goals>
@@ -333,6 +358,10 @@
             <plugin>
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>com.gavinmogan</groupId>
+                <artifactId>codacy-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

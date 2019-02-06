@@ -25,7 +25,7 @@ cache:
 install: true
 script: $MVN_CMD install
 after_success:
-  - $MVN_CMD coveralls:report
+  - $MVN_CMD coveralls:report com.gavinmogan:codacy-maven-plugin:coverage -Dcommit=$TRAVIS_COMMIT -DfailOnMissingReportFile=false
 
 jobs:
   include:
