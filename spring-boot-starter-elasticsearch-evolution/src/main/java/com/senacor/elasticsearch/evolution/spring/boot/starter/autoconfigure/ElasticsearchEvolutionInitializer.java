@@ -1,6 +1,8 @@
 package com.senacor.elasticsearch.evolution.spring.boot.starter.autoconfigure;
 
 import com.senacor.elasticsearch.evolution.core.ElasticsearchEvolution;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.Ordered;
 
@@ -13,6 +15,8 @@ import static java.util.Objects.requireNonNull;
  */
 public class ElasticsearchEvolutionInitializer implements InitializingBean, Ordered {
 
+    private static final Logger logger = LoggerFactory.getLogger(ElasticsearchEvolutionInitializer.class);
+
     private final ElasticsearchEvolution elasticsearchEvolution;
 
     public ElasticsearchEvolutionInitializer(ElasticsearchEvolution elasticsearchEvolution) {
@@ -21,7 +25,8 @@ public class ElasticsearchEvolutionInitializer implements InitializingBean, Orde
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        elasticsearchEvolution.migrate();
+        int sucessfullExecutedScriots = elasticsearchEvolution.migrate();
+        logger.info("ElasticsearchEvolution executed successfully {} migration scripts", sucessfullExecutedScriots);
     }
 
     @Override
