@@ -22,15 +22,15 @@ cache:
     - $HOME/.m2/wrapper
     - /tmp/embedded-elasticsearch-temp-dir
 before_install:
-  - sudo apt-get install -y jq
-  - wget -O ~/codacy-coverage-reporter-assembly-latest.jar $(curl https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest | jq -r '.assets[0].browser_download_url')
+
+  - wget -O ~/codacy-coverage-reporter.jar https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.5/codacy-coverage-reporter-4.0.5-assembly.jar
 install: true
 script: $MVN_CMD install
 after_success:
   - $MVN_CMD coveralls:report
-  - java -jar ~/codacy-coverage-reporter-assembly-latest.jar report -l Java -r elasticsearch-evolution-core/target/site/jacoco/jacoco.xml --partial
-  - java -jar ~/codacy-coverage-reporter-assembly-latest.jar report -l Java -r spring-boot-starter-elasticsearch-evolution/target/site/jacoco/jacoco.xml --partial
-  - java -jar ~/codacy-coverage-reporter-assembly-latest.jar final
+  - java -jar ~/codacy-coverage-reporter.jar report -l Java -r elasticsearch-evolution-core/target/site/jacoco/jacoco.xml --partial
+  - java -jar ~/codacy-coverage-reporter.jar report -l Java -r spring-boot-starter-elasticsearch-evolution/target/site/jacoco/jacoco.xml --partial
+  - java -jar ~/codacy-coverage-reporter.jar final
 
 jobs:
   include:
