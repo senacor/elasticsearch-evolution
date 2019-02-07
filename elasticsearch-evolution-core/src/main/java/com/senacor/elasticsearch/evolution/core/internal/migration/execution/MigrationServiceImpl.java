@@ -41,7 +41,9 @@ public class MigrationServiceImpl implements MigrationService {
     public MigrationServiceImpl(HistoryRepository historyRepository,
                                 int waitUntilUnlockedMinTimeInMillis,
                                 int waitUntilUnlockedMaxTimeInMillis,
-                                RestClient restClient, ContentType defaultContentType, Charset encoding) {
+                                RestClient restClient,
+                                ContentType defaultContentType,
+                                Charset encoding) {
         this.historyRepository = requireNonNull(historyRepository, "historyRepository must not be null");
         this.restClient = requireNonNull(restClient, "restClient must not be null");
         this.defaultContentType = requireNonNull(defaultContentType);

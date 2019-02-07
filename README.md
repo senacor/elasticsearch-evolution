@@ -7,6 +7,7 @@
 [![Javadocs](https://www.javadoc.io/badge/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core.svg)](https://www.javadoc.io/doc/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core)
 [![Build Status](https://travis-ci.org/senacor/elasticsearch-evolution.svg?branch=master)](https://travis-ci.org/senacor/elasticsearch-evolution)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a629ba3201104ecc81c6af7671b29b05)](https://www.codacy.com/app/xtermi2/elasticsearch-evolution?utm_source=github.com&utm_medium=referral&utm_content=senacor/elasticsearch-evolution&utm_campaign=Badge_Grade)
+[![codebeat badge](https://codebeat.co/badges/29dc74db-88e2-4b26-963b-14eb340ae275)](https://codebeat.co/projects/github-com-senacor-elasticsearch-evolution-master)
 [![Coverage Status](https://coveralls.io/repos/github/senacor/elasticsearch-evolution/badge.svg?branch=master)](https://coveralls.io/github/senacor/elasticsearch-evolution?branch=master)
 
 ## 1 Evolve your Elasticsearch mapping easily and reliable across all your instances
