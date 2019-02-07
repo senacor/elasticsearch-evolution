@@ -22,7 +22,7 @@ cache:
     - $HOME/.m2/wrapper
     - /tmp/embedded-elasticsearch-temp-dir
 before_install:
-  - wget -N -O $HOME/.m2/repository/codacy-coverage-reporter-4.0.5-assembly.jar https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.5/codacy-coverage-reporter-4.0.5-assembly.jar
+  - wget -nc -O $HOME/.m2/repository/codacy-coverage-reporter-4.0.5-assembly.jar https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.5/codacy-coverage-reporter-4.0.5-assembly.jar
 install: true
 script: $MVN_CMD install
 after_success:
