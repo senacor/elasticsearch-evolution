@@ -37,7 +37,7 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
 </dependency>
 ```
 
@@ -61,7 +61,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
 </dependency>
 ```
 
@@ -261,3 +261,14 @@ ElasticsearchEvolution.configure()
     .setPlaceholders(Collections.singletonMap("indexname", "myIndexReplacement"))
     .setHistoryIndex("es_evolution");
 ```
+
+## 6 changelog
+
+### v0.1.1
+
+-   improved logging
+-   fixed classpath scanning in fat-jars like spring-boot 
+
+### v0.1.0
+
+-   initial version
