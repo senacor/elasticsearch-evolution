@@ -23,7 +23,7 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 /**
  * @author Andreas Keefer
  */
-class MigrationScriptParserTest {
+class MigrationScriptParserImplTest {
 
     @Nested
     class replaceParams {

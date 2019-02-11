@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
-    <artifactId>test-spring-boot-2.1</artifactId>
+    <artifactId>test-spring-boot-2.1-scriptsInJarFile</artifactId>
     <version>0.1.1-SNAPSHOT</version>
     <description>Demo project for Spring Boot</description>
 
@@ -22,6 +22,13 @@
     </properties>
 
     <dependencies>
+        <!-- migration files in jar -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>migration-scripts</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

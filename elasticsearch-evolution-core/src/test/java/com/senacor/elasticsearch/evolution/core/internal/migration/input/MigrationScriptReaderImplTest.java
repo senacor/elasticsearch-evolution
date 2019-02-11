@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,13 +21,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * @author Andreas Keefer
  */
-class MigrationScriptReaderTest {
+class MigrationScriptReaderImplTest {
     @Nested
     class readResources {
         @Nested
         class fromClassPath {
             @Test
-            void normal() {
+            void nonJarFile() {
                 MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(
                         singletonList("classpath:scriptreader"),
                         StandardCharsets.UTF_8,
@@ -40,17 +41,17 @@ class MigrationScriptReaderTest {
             }
 
             @Test
-            void pom() {
+            void inJarFile() {
                 MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(
-                        singletonList("classpath:META-INF/maven/org.assertj/assertj-core"),
+                        singletonList("classpath:META-INF"),
                         StandardCharsets.UTF_8,
-                        "pom",
-                        singletonList(".properties"));
+                        "MANIFEST",
+                        singletonList(".MF"));
 
                 List<RawMigrationScript> res = reader.read();
 
                 assertThat(res).hasSize(1);
-                assertThat(res.get(0).getFileName()).isEqualTo("pom.properties");
+                assertThat(res.get(0).getFileName()).isEqualTo("MANIFEST.MF");
             }
 
             @Test
@@ -62,7 +63,7 @@ class MigrationScriptReaderTest {
                         "c",
                         singletonList(".http")) {
                     @Override
-                    protected List<RawMigrationScript> readFromLocation(String location) throws URISyntaxException, IOException {
+                    protected Stream<RawMigrationScript> readFromLocation(String location) throws URISyntaxException, IOException {
                         throw new URISyntaxException("input", "reason");
                     }
                 };
@@ -120,7 +121,7 @@ class MigrationScriptReaderTest {
         class fromFileSystem {
             @Test
             void normalPath() throws URISyntaxException {
-                URL resourceDirectory = MigrationScriptReaderImpl.resolveURL("scriptreader");
+                URL resourceDirectory = resolveURL("scriptreader");
                 String absolutePathToScriptreader = Paths.get(resourceDirectory.toURI()).toFile().getAbsolutePath();
                 MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(
                         singletonList("file:" + absolutePathToScriptreader),
@@ -144,13 +145,13 @@ class MigrationScriptReaderTest {
                                 "c",
                                 singletonList(".http")).read())
                         .isInstanceOf(MigrationException.class)
-                        .hasMessage("The location file:X:/snc/scripts is not a valid location!");
+                        .hasMessage("couldn't read scripts from file:X:/snc/scripts");
             }
 
 
             @Test
             void validAndInvalidPath() throws URISyntaxException {
-                URL resourceDirectory = MigrationScriptReaderImpl.resolveURL("scriptreader");
+                URL resourceDirectory = resolveURL("scriptreader");
                 String absolutePathToScriptreader = Paths.get(resourceDirectory.toURI()).toFile().getAbsolutePath();
                 assertThatThrownBy(() ->
                         new MigrationScriptReaderImpl(
@@ -159,12 +160,12 @@ class MigrationScriptReaderTest {
                                 "c",
                                 singletonList(".http")).read())
                         .isInstanceOf(MigrationException.class)
-                        .hasMessage("The location file:X:/snc/scripts is not a valid location!");
+                        .hasMessage("couldn't read scripts from file:X:/snc/scripts");
             }
 
             @Test
             void validPathButNoFiles() throws URISyntaxException {
-                URL resourceDirectory = MigrationScriptReaderImpl.resolveURL("scriptreader");
+                URL resourceDirectory = resolveURL("scriptreader");
                 String absolutePathToScriptreader = Paths.get(resourceDirectory.toURI()).toFile().getAbsolutePath();
                 MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(
                         singletonList("file:" + absolutePathToScriptreader),
@@ -174,6 +175,15 @@ class MigrationScriptReaderTest {
                 List<RawMigrationScript> actual = reader.read();
                 assertThat(actual).isEmpty();
             }
+        }
+    }
+
+    private URL resolveURL(String path) {
+        ClassLoader classLoader = MigrationScriptReaderImpl.getDefaultClassLoader();
+        if (classLoader != null) {
+            return classLoader.getResource(path);
+        } else {
+            return ClassLoader.getSystemResource(path);
         }
     }
 }

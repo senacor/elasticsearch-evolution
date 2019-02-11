@@ -17,7 +17,8 @@
     </properties>
 
     <modules>
-        <module>test-spring-boot-2.1</module>
+        <module>migration-scripts</module>
+        <module>test-spring-boot-2.1-scriptsInJarFile</module>
         <module>test-spring-boot-2.0</module>
         <module>test-spring-boot-1.5</module>
     </modules>

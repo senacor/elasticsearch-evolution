@@ -3,23 +3,33 @@ package com.senacor.elasticsearch.evolution.core.internal.migration.input;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptReader;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
+import org.reflections.Reflections;
+import org.reflections.scanners.ResourcesScanner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.*;
-import java.util.Collections;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Andreas Keefer
  */
 
 public class MigrationScriptReaderImpl implements MigrationScriptReader {
+
+    private static final Logger logger = LoggerFactory.getLogger(MigrationScriptReaderImpl.class);
 
     private static final String CLASSPATH_PREFIX = "classpath:";
     private static final String FILE_PREFIX = "file:";
@@ -55,7 +65,7 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         return this.locations.stream()
                 .flatMap(location -> {
                     try {
-                        return readFromLocation(location).stream();
+                        return readFromLocation(location);
                     } catch (URISyntaxException | IOException e) {
                         throw new MigrationException(
                                 String.format("couldn't read scripts from %s", location), e);
@@ -73,77 +83,99 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
      * @throws URISyntaxException if the location is not formatted strictly according to RFC2396 and cannot be converted to a URI.
      * @throws IOException        if an I/O error is thrown when accessing the files at the location(s).
      */
-    protected List<RawMigrationScript> readFromLocation(String location) throws URISyntaxException, IOException {
-        final URI uri;
-
+    protected Stream<RawMigrationScript> readFromLocation(String location) throws URISyntaxException, IOException {
         if (location.startsWith(CLASSPATH_PREFIX)) {
-            URL url = resolveURL(location.substring(CLASSPATH_PREFIX.length()));
-            uri = (url != null) ? url.toURI() : null;
+            return readScriptsFromClassPath(location);
+
         } else if (location.startsWith(FILE_PREFIX)) {
-            uri = Paths.get(location.substring(FILE_PREFIX.length())).toUri();
+            return readScriptsFromFilesystem(location);
         } else {
             throw new MigrationException(String.format("could not read location path %s, " +
                             "should look like this: %ses/migration or this: %s/home/scripts/migration",
                     location, CLASSPATH_PREFIX, FILE_PREFIX));
         }
-
-        if (uri == null) {
-            return Collections.emptyList();
-        }
-        List<RawMigrationScript> migrationScripts;
-        try {
-            migrationScripts = processResource(uri, path -> Files
-                    .find(path, 10, (pathToCheck, basicFileAttributes) ->
-                            !basicFileAttributes.isDirectory()
-                                    && hasValidSuffix(pathToCheck)
-                                    && basicFileAttributes.size() > 0
-                                    && pathToCheck.getFileName().toString().startsWith(this.esMigrationPrefix))
-                    .map(file -> {
-                        String filename = file.getFileName().toString();
-                        try (BufferedReader reader = Files.newBufferedReader(file, this.encoding)) {
-                            String content = reader.lines()
-                                    .collect(Collectors.joining(System.lineSeparator()));
-                            return new RawMigrationScript().setFileName(filename).setContent(content);
-                        } catch (IOException e) {
-                            throw new IllegalStateException("can't read file: " + file.getFileName(), e);
-                        }
-                    }).collect(Collectors.toList()));
-        } catch (NoSuchFileException e) {
-            throw new MigrationException(String.format("The location %s is not a valid location!", location), e);
-        }
-        return migrationScripts;
     }
 
-    public static URL resolveURL(String path) {
+    private Stream<RawMigrationScript> readScriptsFromFilesystem(String location) throws IOException {
+        String locationWithoutPrefix = location.substring(FILE_PREFIX.length());
+        URI uri = Paths.get(locationWithoutPrefix).toUri();
+        logger.debug("URI of location '{}' = '{}'", location, uri);
+        if (uri == null) {
+            return Stream.empty();
+        }
+        Path path = Paths.get(uri);
+        return Files.find(path, 10, (pathToCheck, basicFileAttributes) ->
+                !basicFileAttributes.isDirectory()
+                        && basicFileAttributes.size() > 0
+                        && isValidFilename(pathToCheck.getFileName().toString()))
+                .flatMap(file -> {
+                    logger.debug("reading migration script '{}' from filesystem...", file);
+                    String filename = file.getFileName().toString();
+                    try (BufferedReader reader = Files.newBufferedReader(file, this.encoding)) {
+                        return read(reader, filename);
+                    } catch (IOException e) {
+                        throw new MigrationException("can't read script from filesystem: " + file.getFileName(), e);
+                    }
+                });
+    }
+
+    private Stream<RawMigrationScript> readScriptsFromClassPath(String location) {
+        String locationWithoutPrefix = location.substring(CLASSPATH_PREFIX.length());
+
+        Reflections reflections = new Reflections(locationWithoutPrefix.replace("/", "."), new ResourcesScanner());
+        Set<String> resources = reflections.getResources(this::isValidFilename);
+        return resources.stream().flatMap(resource -> {
+            logger.debug("reading migration script '{}' from classpath...", resource);
+            try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(getInputStream(resource), encoding))) {
+                Path p = Paths.get(resource);
+                return read(bufferedReader, p.getFileName().toString());
+            } catch (IOException e) {
+                throw new MigrationException("can't read script from classpath: " + resource, e);
+            }
+        });
+    }
+
+    private Stream<RawMigrationScript> read(BufferedReader reader, String filename) {
+        String content = reader.lines()
+                .collect(Collectors.joining(System.lineSeparator()));
+        if (content.isEmpty()) {
+            return Stream.empty();
+        }
+        return Stream.of(new RawMigrationScript().setFileName(filename).setContent(content));
+    }
+
+    public static InputStream getInputStream(String path) {
         ClassLoader classLoader = getDefaultClassLoader();
         if (classLoader != null) {
-            return classLoader.getResource(path);
+            return classLoader.getResourceAsStream(path);
         } else {
-            return ClassLoader.getSystemResource(path);
+            return ClassLoader.getSystemResourceAsStream(path);
         }
     }
 
-    private boolean hasValidSuffix(Path pathToCheck) {
+    private boolean hasValidSuffix(String path) {
         return this.esMigrationSuffixes
                 .stream()
-                .anyMatch(suffix -> pathToCheck.toString().toLowerCase().endsWith(suffix.toLowerCase()));
+                .anyMatch(suffix -> path.toLowerCase().endsWith(suffix.toLowerCase()));
     }
 
-
-    private static ClassLoader getDefaultClassLoader() {
+    static ClassLoader getDefaultClassLoader() {
         ClassLoader cl = null;
         try {
             cl = Thread.currentThread().getContextClassLoader();
+            logger.trace("getDefaultClassLoader - Thread.currentThread().getContextClassLoader()='{}'", cl);
         } catch (Throwable ex) {
             // Cannot access thread context ClassLoader - falling back...
         }
         if (cl == null) {
             // No thread context class loader -> use class loader of this class.
             cl = MigrationScriptReaderImpl.class.getClassLoader();
+            logger.trace("getDefaultClassLoader - MigrationScriptReaderImpl.class.getClassLoader()='{}'", cl);
             if (cl == null) {
                 // getClassLoader() returning null indicates the bootstrap ClassLoader
                 try {
                     cl = ClassLoader.getSystemClassLoader();
+                    logger.trace("getDefaultClassLoader - ClassLoader.getSystemClassLoader()='{}'", cl);
                 } catch (Throwable ex) {
                     // Cannot access system ClassLoader - oh well, maybe the caller can live with null...
                 }
@@ -152,22 +184,8 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         return cl;
     }
 
-    @FunctionalInterface
-    interface IOFunction<T, R> {
-        R accept(T t) throws IOException;
-    }
-
-    private static <R> R processResource(URI uri, IOFunction<Path, R> action) throws IOException {
-        try {
-            Path p = Paths.get(uri);
-            return action.accept(p);
-        } catch (FileSystemNotFoundException ex) {
-            // handle resources in jar files
-            try (FileSystem fs = FileSystems.newFileSystem(
-                    uri, Collections.emptyMap())) {
-                Path p = fs.provider().getPath(uri);
-                return action.accept(p);
-            }
-        }
+    private boolean isValidFilename(String fileName) {
+        return hasValidSuffix(fileName)
+                && fileName.startsWith(this.esMigrationPrefix);
     }
 }
