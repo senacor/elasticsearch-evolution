@@ -79,8 +79,8 @@ public class MigrationServiceImpl implements MigrationService {
                     executedScripts.add(executedScriptProtocol);
                     // write protocols to history index
                     historyRepository.saveOrUpdate(executedScriptProtocol);
-                    if (res.error.isPresent()) {
-                        throw res.error.get();
+                    if (res.getError().isPresent()) {
+                        throw res.getError().get();
                     }
                 }
             } finally {
