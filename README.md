@@ -51,7 +51,7 @@ Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and require
 
 Place your migration scripts in your application classpath at `es/evolution`
 
-That's it. Elasticsearch-Evolution runs at application startup and expects you Elasticsearch at <http://localhost:9200>
+That's it. Elasticsearch-Evolution runs at application startup and expects your Elasticsearch at <http://localhost:9200>
 
 ### 3.2 Quickstart with core library
 
