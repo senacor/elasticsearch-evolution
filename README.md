@@ -264,6 +264,10 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
+### v0.1.2-SNAPSHOT
+
+-   version updates (spring-boot 2.1.3.RELEASE; elasticsearch 6.6.2)
+
 ### v0.1.1
 
 -   improved logging
