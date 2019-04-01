@@ -5,6 +5,7 @@ import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.Migrati
 import com.senacor.elasticsearch.evolution.core.test.ArgumentProviders;
 import com.senacor.elasticsearch.evolution.core.test.MockitoExtension;
 import org.elasticsearch.client.IndicesClient;
+import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.rest.RestStatus;
@@ -32,7 +33,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class HistoryRepositoryImplTest {
 
-    public static final String INDEX = "es_evolution";
+    private static final String INDEX = "es_evolution";
 
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private RestHighLevelClient restHighLevelClient;
@@ -113,7 +114,7 @@ class HistoryRepositoryImplTest {
     class createIndexIfAbsent {
         @Test
         void failedCheckingIndex() throws IOException {
-            when(restHighLevelClient.indices().exists(any(), eq(RequestOptions.DEFAULT)))
+            when(restHighLevelClient.getLowLevelClient().performRequest(new Request("HEAD", "/" + INDEX)))
                     .thenThrow(new IOException("test error"));
 
             assertThatThrownBy(() -> underTest.createIndexIfAbsent())

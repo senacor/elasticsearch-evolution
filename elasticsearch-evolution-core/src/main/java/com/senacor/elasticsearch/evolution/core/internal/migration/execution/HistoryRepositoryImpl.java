@@ -4,7 +4,6 @@ import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
 import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
-import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -12,7 +11,8 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.IndicesOptions;
-import org.elasticsearch.client.Requests;
+import org.elasticsearch.client.Request;
+import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.core.CountRequest;
 import org.elasticsearch.client.core.CountResponse;
@@ -190,16 +190,19 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     @Override
     public boolean createIndexIfAbsent() throws MigrationException {
         try {
-            boolean exists = restHighLevelClient.indices().exists(
-                    new GetIndexRequest().indices(historyIndex),
-                    DEFAULT);
+            Response existsRes = restHighLevelClient.getLowLevelClient().performRequest(new Request("HEAD", "/" + historyIndex));
+            boolean exists = 200 == existsRes.getStatusLine().getStatusCode();
             if (exists) {
-                logger.debug("Elasticsearch-Evolution history index '{}' already exists", historyIndex);
+                logger.debug("Elasticsearch-Evolution history index '{}' already exists.", historyIndex);
                 return false;
             }
+            logger.debug("Elasticsearch-Evolution history index '{}' does not yet exists. Res={}", historyIndex, existsRes);
 
             // create index
-            restHighLevelClient.indices().create(Requests.createIndexRequest(historyIndex), DEFAULT);
+            Response createRes = restHighLevelClient.getLowLevelClient().performRequest(new Request("PUT", "/" + historyIndex));
+            if (existsRes.getStatusLine().getStatusCode() < 200 || createRes.getStatusLine().getStatusCode() > 299) {
+                throw new IllegalStateException("Could not create Elasticsearch-Evolution history index '" + historyIndex + "'. Create res=" + createRes);
+            }
             logger.debug("created Elasticsearch-Evolution history index '{}'", historyIndex);
             return true;
         } catch (IOException e) {
