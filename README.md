@@ -264,9 +264,14 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.1.2-SNAPSHOT
+### v0.1.3-SNAPSHOT
+
+-   ...
+
+### v0.1.2
 
 -   version updates (spring-boot 2.1.3.RELEASE; elasticsearch 6.7.0)
+-   bugfix: support more than 10 migration scripts: now 1000.
 
 ### v0.1.1
 
