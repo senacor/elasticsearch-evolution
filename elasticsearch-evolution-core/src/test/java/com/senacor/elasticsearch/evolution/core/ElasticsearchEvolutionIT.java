@@ -1,5 +1,7 @@
 package com.senacor.elasticsearch.evolution.core;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
@@ -9,10 +11,11 @@ import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.Migrati
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.ElasticsearchArgumentsProvider;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.IgnoreEsVersion;
-import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
-import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
+import org.apache.commons.io.IOUtils;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.Request;
+import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -24,6 +27,8 @@ import org.slf4j.LoggerFactory;
 import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.NavigableSet;
 
 import static java.util.Collections.singletonList;
@@ -66,18 +71,21 @@ class ElasticsearchEvolutionIT {
         embeddedElastic.refreshIndices();
 
         String testIndex = "test_*";
-        GetIndexResponse getIndexResponse = restHighLevelClient.indices().get(
-                new GetIndexRequest()
-                        .indices(testIndex)
-                        .masterNodeTimeout((String) null)
-                , DEFAULT);
-        logger.debug("GetIndexResponse: {}", getIndexResponse);
+        Response getIndexResponse = restHighLevelClient.getLowLevelClient().performRequest(new Request("GET", "/" + testIndex));
+        String getIndexResponseBody = IOUtils.toString(getIndexResponse.getEntity().getContent(), StandardCharsets.UTF_8);
+        logger.debug("GetIndexResponse: {}; BODY={}", getIndexResponse, getIndexResponseBody);
+        Map<String, Map<String, Map>> bodyParsed = new ObjectMapper().readValue(getIndexResponseBody,
+                new TypeReference<Map<String, Map<String, Map>>>() {
+                });
         assertSoftly(softly -> {
-            softly.assertThat(getIndexResponse.getMappings()).hasSize(2);
-            softly.assertThat(getIndexResponse.getMappings().get("test_1"))
-                    .as("'test_1' and 'test_2' mapping should be equals '%s'", getIndexResponse)
+            softly.assertThat(bodyParsed)
+                    .hasSize(2)
+                    .containsKeys("test_1", "test_2");
+            softly.assertThat(bodyParsed.get("test_1").get("mappings"))
+                    .as("'test_1' and 'test_2' mapping should be equals '%s'", bodyParsed)
                     .isNotNull()
-                    .isEqualTo(getIndexResponse.getMappings().get("test_2"));
+                    .isNotEmpty()
+                    .isEqualTo(bodyParsed.get("test_2").get("mappings"));
         });
 
         // search for indexed documents:

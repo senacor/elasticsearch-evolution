@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.senacor.elasticsearch.evolution</groupId>
         <artifactId>elasticsearch-evolution-parent</artifactId>
-        <version>0.1.1</version>
+        <version>0.1.2</version>
         <relativePath>../</relativePath>
     </parent>
     <artifactId>tests</artifactId>

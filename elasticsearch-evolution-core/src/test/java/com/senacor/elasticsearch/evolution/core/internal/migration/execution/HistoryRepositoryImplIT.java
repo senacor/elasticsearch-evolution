@@ -63,11 +63,28 @@ class HistoryRepositoryImplIT {
             underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.1"));
             underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("2.0"));
             underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.0"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.2"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.3"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.4"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.5"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.6"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.7"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.8"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.9"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.10"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.11"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.12"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.13"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.14"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.15"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.16"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.17"));
+            underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.18"));
             underTest.refresh(INDEX);
 
             NavigableSet<MigrationScriptProtocol> all = underTest.findAll();
 
-            assertThat(all).hasSize(3);
+            assertThat(all).hasSize(20);
             assertThat(all.first().getVersion()).isEqualTo(MigrationVersion.fromVersion("1.0"));
             assertThat(all.last().getVersion()).isEqualTo(MigrationVersion.fromVersion("2.0"));
         }

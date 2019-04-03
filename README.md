@@ -19,7 +19,7 @@ Successful executed migration scripts will not be executed again!
 
 -   runs on Java 8, 9, 10 and 11
 -   runs on Spring-Boot 1.5, 2.0 and 2.1 (and of course without Spring-Boot)
--   runs on Elasticsearch 6.6.x, 6.5.x, 6.4.x, 6.3.x, 6.2.x
+-   runs on Elasticsearch 6.7.x 6.6.x, 6.5.x, 6.4.x, 6.3.x, 6.2.x
 -   highly configurable (e.g. location(s) of your migration files, migration files format pattern)
 -   placeholder substitution in migration scripts
 -   easily extendable to your needs
@@ -37,7 +37,7 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.1.1</version>
+    <version>0.1.2</version>
 </dependency>
 ```
 
@@ -51,7 +51,7 @@ Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and require
 
 Place your migration scripts in your application classpath at `es/evolution`
 
-That's it. Elasticsearch-Evolution runs at application startup and expects you Elasticsearch at <http://localhost:9200>
+That's it. Elasticsearch-Evolution runs at application startup and expects your Elasticsearch at <http://localhost:9200>
 
 ### 3.2 Quickstart with core library
 
@@ -61,7 +61,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.1.1</version>
+    <version>0.1.2</version>
 </dependency>
 ```
 
@@ -263,6 +263,15 @@ ElasticsearchEvolution.configure()
 ```
 
 ## 6 changelog
+
+### v0.1.3-SNAPSHOT
+
+-   ...
+
+### v0.1.2
+
+-   version updates (spring-boot 2.1.3.RELEASE; elasticsearch 6.7.0)
+-   bugfix: support more than 10 migration scripts: now 1000.
 
 ### v0.1.1
 

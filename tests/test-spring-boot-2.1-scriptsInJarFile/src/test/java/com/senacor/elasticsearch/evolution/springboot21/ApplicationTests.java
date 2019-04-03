@@ -39,7 +39,7 @@ public class ApplicationTests {
         @Bean
         public EmbeddedElastic embeddedElastic() throws Exception {
             EmbeddedElastic.Builder builder = EmbeddedElastic.builder()
-                    .withElasticVersion("6.6.0")
+                    .withElasticVersion("6.7.0")
                     .withStartTimeout(2, TimeUnit.MINUTES)
                     .withSetting(PopularProperties.HTTP_PORT, ELASTICSEARCH_PORT)
                     .withEsJavaOpts("-Xms128m -Xmx128m");

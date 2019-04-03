@@ -4,9 +4,7 @@ import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.test.MockitoExtension;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Node;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.*;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 
@@ -44,11 +43,18 @@ class ElasticsearchEvolutionTest {
 
     @Test
     void migrate_Failed() throws IOException {
+        String indexName = "es_evolution";
         ElasticsearchEvolution underTest = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_OK"))
+                .setHistoryIndex(indexName)
                 .load(restHighLevelClient);
         when(restHighLevelClient.indices().refresh(any(), eq(DEFAULT)).getStatus())
                 .thenReturn(RestStatus.OK);
+        Response existsMock = mock(Response.class, Mockito.RETURNS_DEEP_STUBS);
+        when(restHighLevelClient.getLowLevelClient().performRequest(new Request("HEAD", "/" + indexName)))
+                .thenReturn(existsMock);
+        when(existsMock.getStatusLine().getStatusCode())
+                .thenReturn(200);
         when(restHighLevelClient.count(any(), eq(DEFAULT)).status())
                 .thenReturn(RestStatus.OK);
         when(restHighLevelClient.index(any(), eq(DEFAULT)).status())
