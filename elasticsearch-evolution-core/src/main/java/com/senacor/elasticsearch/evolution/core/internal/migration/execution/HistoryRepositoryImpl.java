@@ -61,7 +61,8 @@ public class HistoryRepositoryImpl implements HistoryRepository {
             SearchResponse searchResponse = restHighLevelClient.search(
                     new SearchRequest(historyIndex)
                             .source(new SearchSourceBuilder()
-                                    .query(QueryBuilders.matchAllQuery()))
+                                    // TODO (ak) make this configurable
+                                    .size(1000))
                             .indicesOptions(IndicesOptions.lenientExpandOpen()),
                     DEFAULT);
             logger.debug("findAll res: {}", searchResponse);
