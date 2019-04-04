@@ -20,7 +20,7 @@ public class EmbeddedElasticsearchConfiguration {
     @Bean(destroyMethod = "stop")
     public EmbeddedElastic embeddedElastic() throws Exception {
         EmbeddedElastic.Builder builder = EmbeddedElastic.builder()
-                .withElasticVersion("6.7.0")
+                .withElasticVersion("6.7.1")
                 .withStartTimeout(2, TimeUnit.MINUTES)
                 .withEsJavaOpts("-Xms128m -Xmx128m");
         logger.info("starting embedded ElasticSearch...");

@@ -85,14 +85,14 @@
         <apache.lucene.test.version>7.7.0</apache.lucene.test.version>
         <assertj.version>3.11.1</assertj.version>
         <!--when updating elasticsearch versions, also update "EmbeddedElasticSearch" version in EmbeddedElasticsearchExtension-->
-        <elasticsearch.version>6.7.0</elasticsearch.version>
+        <elasticsearch.version>6.7.1</elasticsearch.version>
         <embedded-elasticsearch.version>2.8.0</embedded-elasticsearch.version>
         <junit-jupiter.version>5.3.2</junit-jupiter.version>
         <logback.version>1.2.3</logback.version>
         <mockito.version>2.23.4</mockito.version>
         <reflections.version>0.9.11</reflections.version>
         <slf4j.version>1.7.25</slf4j.version>
-        <spring-boot.version>2.1.3.RELEASE</spring-boot.version>
+        <spring-boot.version>2.1.4.RELEASE</spring-boot.version>
     </properties>
 
     <dependencyManagement>
