@@ -99,6 +99,11 @@ public class ElasticsearchEvolution {
             logger.info("start elasticsearch migration...");
             logger.info("reading migration scripts...");
             Collection<RawMigrationScript> rawMigrationScripts = migrationScriptReader.read();
+            if (rawMigrationScripts.size() > getConfig().getHistoryMaxQuerySize()) {
+                throw new MigrationException(String.format("configured historyMaxQuerySize of '%s' is to low for the number of migration scripts of '%s'",
+                        getConfig().getHistoryMaxQuerySize(), rawMigrationScripts.size()));
+            }
+
             logger.info("parsing migration scripts...");
             Collection<ParsedMigrationScript> parsedMigrationScripts = migrationScriptParser.parse(rawMigrationScripts);
             logger.info("execute migration scripts...");
@@ -143,7 +148,8 @@ public class ElasticsearchEvolution {
         return new HistoryRepositoryImpl(
                 getRestHighLevelClient(),
                 getConfig().getHistoryIndex(),
-                new MigrationScriptProtocolMapper());
+                new MigrationScriptProtocolMapper(),
+                getConfig().getHistoryMaxQuerySize());
     }
 
     protected MigrationService createMigrationService() {

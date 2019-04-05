@@ -105,5 +105,12 @@ class ElasticsearchEvolutionConfigTest {
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("placeholder value 'x${x' must not contain placeholderPrefix '${'");
         }
+
+        @Test
+        void noValidHistoryMaxQuerySize_mustBeGreaterThan0() {
+            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate().setHistoryMaxQuerySize(0).validate())
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("historyMaxQuerySize value '0' must be greater than 0");
+        }
     }
 }

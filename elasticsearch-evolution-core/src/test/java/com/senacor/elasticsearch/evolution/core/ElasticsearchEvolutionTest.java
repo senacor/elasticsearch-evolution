@@ -80,6 +80,26 @@ class ElasticsearchEvolutionTest {
     }
 
     @Test
+    void migrate_historyMaxQuerySizeToLow() throws IOException {
+        String indexName = "es_evolution";
+        int historyMaxQuerySize = 6;
+        ElasticsearchEvolution underTest = ElasticsearchEvolution.configure()
+                .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_OK"))
+                .setHistoryIndex(indexName)
+                .setHistoryMaxQuerySize(historyMaxQuerySize)
+                .load(restHighLevelClient);
+
+        assertThatThrownBy(underTest::migrate)
+                .isInstanceOf(MigrationException.class)
+                .hasMessage("configured historyMaxQuerySize of '%s' is to low for the number of migration scripts of '%s'", historyMaxQuerySize, 7);
+
+        InOrder order = inOrder(restHighLevelClient, restClient);
+        order.verify(restHighLevelClient, times(3)).getLowLevelClient();
+        order.verify(restClient).getNodes();
+        order.verifyNoMoreInteractions();
+    }
+
+    @Test
     void elasticsearchEvolutionIsNotEnabled() {
         int migrations = ElasticsearchEvolution.configure()
                 .setEnabled(false)

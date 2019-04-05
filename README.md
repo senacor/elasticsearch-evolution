@@ -179,6 +179,7 @@ Elasticsearch-Evolution can be configured to your needs:
 -   **placeholderPrefix** (default=${): Prefix of placeholders in migration scripts.
 -   **placeholderSuffix** (default=}): Suffix of placeholders in migration scripts.
 -   **historyIndex** (default=es_evolution): Name of the history index that will be used by Elasticsearch-Evolution. In this index Elasticsearch-Evolution will persist his internal state and tracks which migration script has already been executed.
+-   **historyMaxQuerySize** (default=1000): The maximum query size while validating already executed scripts. This query size have to be higher than the total count of your migration scripts.
 
 ### 5.1 Spring Boot
 
@@ -266,6 +267,7 @@ ElasticsearchEvolution.configure()
 
 ### v0.1.3-SNAPSHOT
 
+-   new configuration parameter `historyMaxQuerySize`
 -   version updates (spring-boot 2.1.4.RELEASE; elasticsearch 6.7.1)
 
 ### v0.1.2

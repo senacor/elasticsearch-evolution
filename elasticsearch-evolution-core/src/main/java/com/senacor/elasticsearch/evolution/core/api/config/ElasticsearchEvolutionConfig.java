@@ -78,6 +78,12 @@ public class ElasticsearchEvolutionConfig {
     private String historyIndex = "es_evolution";
 
     /**
+     * The maximum query size while validating already executed scripts.
+     * This query size have to be higher than the total count of your migration scripts.
+     */
+    private int historyMaxQuerySize = 1_000;
+
+    /**
      * Loads this configuration into a new ElasticsearchEvolution instance.
      *
      * @param restHighLevelClient REST client to interact with Elasticsearch
@@ -117,6 +123,7 @@ public class ElasticsearchEvolutionConfig {
                 });
             }
             requireNotBlank(historyIndex, "historyIndex must not be empty");
+            requireCondition(historyMaxQuerySize, size -> size > 0, "historyMaxQuerySize value '%s' must be greater than 0", historyMaxQuerySize);
         }
         return this;
     }
@@ -220,6 +227,15 @@ public class ElasticsearchEvolutionConfig {
         return this;
     }
 
+    public int getHistoryMaxQuerySize() {
+        return historyMaxQuerySize;
+    }
+
+    public ElasticsearchEvolutionConfig setHistoryMaxQuerySize(int historyMaxQuerySize) {
+        this.historyMaxQuerySize = historyMaxQuerySize;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "ElasticsearchEvolutionConfig{" +
@@ -234,6 +250,7 @@ public class ElasticsearchEvolutionConfig {
                 ", placeholderSuffix='" + placeholderSuffix + '\'' +
                 ", placeholderReplacement=" + placeholderReplacement +
                 ", historyIndex='" + historyIndex + '\'' +
+                ", historyMaxQuerySize=" + historyMaxQuerySize +
                 '}';
     }
 }

@@ -54,7 +54,7 @@ class ElasticsearchEvolutionIT {
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_OK"));
         String historyIndex = elasticsearchEvolutionConfig.getHistoryIndex();
-        historyRepository = new HistoryRepositoryImpl(restHighLevelClient, historyIndex, new MigrationScriptProtocolMapper());
+        historyRepository = new HistoryRepositoryImpl(restHighLevelClient, historyIndex, new MigrationScriptProtocolMapper(), 1000);
         ElasticsearchEvolution underTest = elasticsearchEvolutionConfig
                 .load(restHighLevelClient);
 
@@ -125,7 +125,7 @@ class ElasticsearchEvolutionIT {
     void migrate_failed_then_fixed_script_and_reexecute(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_failed_step1"));
-        historyRepository = new HistoryRepositoryImpl(restHighLevelClient, elasticsearchEvolutionConfig.getHistoryIndex(), new MigrationScriptProtocolMapper());
+        historyRepository = new HistoryRepositoryImpl(restHighLevelClient, elasticsearchEvolutionConfig.getHistoryIndex(), new MigrationScriptProtocolMapper(), 1000);
 
         assertSoftly(softly -> {
             softly.assertThatThrownBy(() -> elasticsearchEvolutionConfig.load(restHighLevelClient).migrate())

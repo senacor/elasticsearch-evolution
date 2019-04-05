@@ -41,7 +41,7 @@ class HistoryRepositoryImplTest {
 
     @BeforeEach
     void setUp() {
-        underTest = new HistoryRepositoryImpl(restHighLevelClient, INDEX, new MigrationScriptProtocolMapper());
+        underTest = new HistoryRepositoryImpl(restHighLevelClient, INDEX, new MigrationScriptProtocolMapper(), 1000);
     }
 
     @Nested

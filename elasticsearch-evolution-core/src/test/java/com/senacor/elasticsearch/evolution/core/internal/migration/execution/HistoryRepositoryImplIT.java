@@ -419,6 +419,6 @@ class HistoryRepositoryImplIT {
     }
 
     private HistoryRepositoryImpl createHistoryRepositoryImpl(RestHighLevelClient restHighLevelClient) {
-        return new HistoryRepositoryImpl(restHighLevelClient, INDEX, new MigrationScriptProtocolMapper());
+        return new HistoryRepositoryImpl(restHighLevelClient, INDEX, new MigrationScriptProtocolMapper(), 1000);
     }
 }

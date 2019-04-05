@@ -48,11 +48,16 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     private final RestHighLevelClient restHighLevelClient;
     private final String historyIndex;
     private final MigrationScriptProtocolMapper migrationScriptProtocolMapper;
+    private final int querySize;
 
-    public HistoryRepositoryImpl(RestHighLevelClient restHighLevelClient, String historyIndex, MigrationScriptProtocolMapper migrationScriptProtocolMapper) {
+    public HistoryRepositoryImpl(RestHighLevelClient restHighLevelClient,
+                                 String historyIndex,
+                                 MigrationScriptProtocolMapper migrationScriptProtocolMapper,
+                                 int querySize) {
         this.restHighLevelClient = requireNonNull(restHighLevelClient, "restHighLevelClient must not be null");
         this.historyIndex = requireNotBlank(historyIndex, "historyIndex must not be blank: {}", historyIndex);
         this.migrationScriptProtocolMapper = requireNonNull(migrationScriptProtocolMapper, "migrationScriptProtocolMapper must not be null");
+        this.querySize = querySize;
     }
 
     @Override
@@ -61,8 +66,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
             SearchResponse searchResponse = restHighLevelClient.search(
                     new SearchRequest(historyIndex)
                             .source(new SearchSourceBuilder()
-                                    // TODO (ak) make this configurable
-                                    .size(1000))
+                                    .size(querySize))
                             .indicesOptions(IndicesOptions.lenientExpandOpen()),
                     DEFAULT);
             logger.debug("findAll res: {}", searchResponse);
