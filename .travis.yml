@@ -5,7 +5,6 @@ env:
   global:
     - MVN_CMD="./mvnw --settings .travis.settings.xml -e -B -V"
 jdk:
-  - oraclejdk8
   - oraclejdk9
   - oraclejdk11
   - openjdk8
