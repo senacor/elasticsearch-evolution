@@ -65,7 +65,7 @@ public class EsUtils {
                     .map(hitNode -> hitNode.get("_source"))
                     .map(JsonNode::toString);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException("parseDocuments failed. body=" + body, e);
         }
     }
 }
