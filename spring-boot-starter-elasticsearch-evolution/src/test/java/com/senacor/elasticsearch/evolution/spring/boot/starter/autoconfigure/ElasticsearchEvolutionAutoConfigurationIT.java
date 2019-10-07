@@ -12,7 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
 
 import java.io.IOException;
 
@@ -33,11 +32,11 @@ class ElasticsearchEvolutionAutoConfigurationIT {
     private RestHighLevelClient restHighLevelClient;
 
     @Autowired
-    private EmbeddedElastic embeddedElastic;
+    private EsUtils esUtils;
 
     @Test
     void migrateOnApplicationStartViaInitializer() throws IOException {
-        embeddedElastic.refreshIndices();
+        esUtils.refreshIndices();
         SearchResponse searchResponse = restHighLevelClient.search(
                 new SearchRequest("test_*")
                         .source(new SearchSourceBuilder()

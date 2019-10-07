@@ -11,6 +11,7 @@ import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.Migrati
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.ElasticsearchArgumentsProvider;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.IgnoreEsVersion;
+import com.senacor.elasticsearch.evolution.core.test.EsUtils;
 import org.apache.commons.io.IOUtils;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -24,7 +25,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -50,7 +50,7 @@ class ElasticsearchEvolutionIT {
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
     // this scenario does not work on 6.3.* (V002.02 always fails with '{"error":{"root_cause":[],"type":"search_phase_execution_exception","reason":"all shards failed","phase":"query","grouped":true,"failed_shards":[]},"status":503}')
     @IgnoreEsVersion("^6\\.3\\..*")
-    void migrate_OK(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws IOException {
+    void migrate_OK(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_OK"));
         String historyIndex = elasticsearchEvolutionConfig.getHistoryIndex();
@@ -67,8 +67,7 @@ class ElasticsearchEvolutionIT {
                     .hasSize(7)
                     .allMatch(MigrationScriptProtocol::isSuccess);
         });
-
-        embeddedElastic.refreshIndices();
+        esUtils.refreshIndices();
 
         String testIndex = "test_*";
         Response getIndexResponse = restHighLevelClient.getLowLevelClient().performRequest(new Request("GET", "/" + testIndex));
@@ -122,7 +121,7 @@ class ElasticsearchEvolutionIT {
 
     @ParameterizedTest
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-    void migrate_failed_then_fixed_script_and_reexecute(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
+    void migrate_failed_then_fixed_script_and_reexecute(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_failed_step1"));
         historyRepository = new HistoryRepositoryImpl(restHighLevelClient, elasticsearchEvolutionConfig.getHistoryIndex(), new MigrationScriptProtocolMapper(), 1000);

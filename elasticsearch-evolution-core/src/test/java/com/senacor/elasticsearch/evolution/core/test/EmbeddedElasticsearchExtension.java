@@ -10,8 +10,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
-import pl.allegro.tech.embeddedelasticsearch.PopularProperties;
+import org.springframework.util.SocketUtils;
+import org.testcontainers.elasticsearch.ElasticsearchContainer;
 
 import java.io.IOException;
 import java.lang.annotation.ElementType;
@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
@@ -47,51 +46,46 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     public void postProcessTestInstance(Object testInstance, ExtensionContext context) throws Exception {
         SUPPORTED_ES_VERSIONS.parallelStream()
                 .forEach(esVersion -> getStore(context)
-                        .getOrComputeIfAbsent(esVersion, EmbeddedElasticsearchExtension::createEmbeddedElastic, EmbeddedElastic.class));
+                        .getOrComputeIfAbsent(esVersion, EmbeddedElasticsearchExtension::createElasticsearchContainer, ElasticsearchContainer.class));
     }
 
-    private static RestHighLevelClient createRestHighLevelClient(String esVersion, EmbeddedElastic embeddedElastic) {
-        HttpHost host = new HttpHost("localhost", embeddedElastic.getHttpPort(), "http");
+    private static RestHighLevelClient createRestHighLevelClient(String esVersion, ElasticsearchContainer elasticsearchContainer) {
+        HttpHost host = HttpHost.create(elasticsearchContainer.getHttpHostAddress());
         logger.debug("create RestHighLevelClient for ES {} at {}", esVersion, host);
         RestClientBuilder builder = RestClient.builder(host);
         return new RestHighLevelClient(builder);
     }
 
-    private static EmbeddedElastic createEmbeddedElastic(String esVersion) {
-        logger.info("creating EmbeddedElastic {} ...", esVersion);
-        EmbeddedElastic embeddedElastic = EmbeddedElastic.builder()
-                .withElasticVersion(esVersion)
-                .withStartTimeout(5, TimeUnit.MINUTES)
-                .withSetting(PopularProperties.CLUSTER_NAME, esVersion)
-                .withEsJavaOpts("-Xms128m -Xmx128m")
-                .build();
-        start(embeddedElastic, esVersion);
-        logger.info("EmbeddedElastic {} started with HttpPort={} and TransportTcpPort={}!",
+    private static ElasticsearchContainer createElasticsearchContainer(String esVersion) {
+        logger.info("creating ElasticsearchContainer {} ...", esVersion);
+        ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch-oss:" + esVersion)
+                .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
+        int esHttpPort = SocketUtils.findAvailableTcpPort(5000, 30000);
+        int esTransportPort = SocketUtils.findAvailableTcpPort(30001, 65535);
+        container.setPortBindings(Arrays.asList(esHttpPort + ":9200", esTransportPort + ":9300"));
+        start(container, esVersion);
+        logger.info("ElasticsearchContainer {} started with HttpPort={} and TransportTcpPort={}!",
                 esVersion,
-                embeddedElastic.getHttpPort(),
-                embeddedElastic.getTransportTcpPort());
-        return embeddedElastic;
+                esHttpPort,
+                esTransportPort);
+        return container;
     }
 
-    private static void start(EmbeddedElastic embeddedElastic, String esVersion) {
-        try {
-            logger.debug("starting EmbeddedElastic {}", esVersion);
-            embeddedElastic.start();
-        } catch (IOException | InterruptedException e) {
-            throw new IllegalStateException("could not start embedded elasticsearch " + esVersion, e);
-        }
+    private static void start(ElasticsearchContainer elasticsearchContainer, String esVersion) {
+        logger.debug("starting ElasticsearchContainer {}", esVersion);
+        elasticsearchContainer.start();
     }
 
-    private static void cleanup(EmbeddedElastic embeddedElastic, String esVersion, RestHighLevelClient restHighLevelClient) {
-        logger.debug("cleanup EmbeddedElastic {}", esVersion);
+    private static void cleanup(EsUtils esUtils, String esVersion, RestHighLevelClient restHighLevelClient) {
+        logger.debug("cleanup ElasticsearchContainer {}", esVersion);
         try {
             restHighLevelClient.indices().delete(new DeleteIndexRequest("*"), DEFAULT);
             Response deleteRes = restHighLevelClient.getLowLevelClient().performRequest(new Request("DELETE", "/_template/*"));
             logger.debug("deleted all templates: {}", deleteRes);
         } catch (IOException e) {
-            throw new IllegalStateException("EmbeddedElastic cleanup failed", e);
+            throw new IllegalStateException("ElasticsearchContainer cleanup failed", e);
         }
-        embeddedElastic.refreshIndices();
+        esUtils.refreshIndices();
     }
 
     private static ExtensionContext.Store getStore(ExtensionContext context) {
@@ -100,7 +94,7 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
 
     /**
      * provides
-     * - EmbeddedElastic
+     * - ElasticsearchContainer
      * - RestHighLevelClient
      */
     public static class ElasticsearchArgumentsProvider implements ArgumentsProvider {
@@ -118,12 +112,13 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
                     )
                     .sorted()
                     .map(esVersion -> {
-                        EmbeddedElastic embeddedElastic = getStore(context)
-                                .getOrComputeIfAbsent(esVersion, EmbeddedElasticsearchExtension::createEmbeddedElastic, EmbeddedElastic.class);
-                        start(embeddedElastic, esVersion);
-                        RestHighLevelClient restHighLevelClient = createRestHighLevelClient(esVersion, embeddedElastic);
-                        cleanup(embeddedElastic, esVersion, restHighLevelClient);
-                        return Arguments.of(esVersion, embeddedElastic, restHighLevelClient);
+                        ElasticsearchContainer elasticsearchContainer = getStore(context)
+                                .getOrComputeIfAbsent(esVersion, EmbeddedElasticsearchExtension::createElasticsearchContainer, ElasticsearchContainer.class);
+                        start(elasticsearchContainer, esVersion);
+                        RestHighLevelClient restHighLevelClient = createRestHighLevelClient(esVersion, elasticsearchContainer);
+                        EsUtils esUtils = new EsUtils(restHighLevelClient.getLowLevelClient());
+                        cleanup(esUtils, esVersion, restHighLevelClient);
+                        return Arguments.of(esVersion, esUtils, restHighLevelClient);
                     });
         }
     }

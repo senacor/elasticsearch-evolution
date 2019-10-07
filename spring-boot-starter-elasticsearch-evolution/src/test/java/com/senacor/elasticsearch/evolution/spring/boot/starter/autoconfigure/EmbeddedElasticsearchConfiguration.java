@@ -7,9 +7,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
-import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
-
-import java.util.concurrent.TimeUnit;
+import org.testcontainers.elasticsearch.ElasticsearchContainer;
 
 /**
  * @author Andreas Keefer
@@ -18,20 +16,22 @@ public class EmbeddedElasticsearchConfiguration {
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchConfiguration.class);
 
     @Bean(destroyMethod = "stop")
-    public EmbeddedElastic embeddedElastic() throws Exception {
-        EmbeddedElastic.Builder builder = EmbeddedElastic.builder()
-                .withElasticVersion("6.8.3")
-                .withStartTimeout(2, TimeUnit.MINUTES)
-                .withEsJavaOpts("-Xms128m -Xmx128m");
+    public ElasticsearchContainer elasticsearchContainer() {
+        ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.3")
+                .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
         logger.info("starting embedded ElasticSearch...");
-        return builder
-                .build()
-                .start();
+        container.start();
+        return container;
     }
 
     @Bean
-    public RestHighLevelClient restHighLevelClient(EmbeddedElastic embeddedElastic) {
-        RestClientBuilder builder = RestClient.builder(HttpHost.create("http://localhost:" + embeddedElastic.getHttpPort()));
+    public RestHighLevelClient restHighLevelClient(ElasticsearchContainer elasticsearchContainer) {
+        RestClientBuilder builder = RestClient.builder(HttpHost.create(elasticsearchContainer.getHttpHostAddress()));
         return new RestHighLevelClient(builder);
+    }
+
+    @Bean
+    public EsUtils esUtils(RestHighLevelClient restHighLevelClient) {
+        return new EsUtils(restHighLevelClient.getLowLevelClient());
     }
 }

@@ -82,17 +82,19 @@
         <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
 
         <!-- Dependency Versions -->
-        <apache.lucene.test.version>7.7.0</apache.lucene.test.version>
         <assertj.version>3.11.1</assertj.version>
-        <!--when updating elasticsearch versions, also update "EmbeddedElasticSearch" version in EmbeddedElasticsearchExtension-->
+        <commons-io.version>2.6</commons-io.version>
+        <commons-lang3.version>3.9</commons-lang3.version>
+        <!--when updating elasticsearch versions, also update "ElasticsearchContainer" version in EmbeddedElasticsearchExtension-->
         <elasticsearch.version>6.8.3</elasticsearch.version>
-        <embedded-elasticsearch.version>2.10.0</embedded-elasticsearch.version>
+        <jackson.version>2.10.0</jackson.version>
         <junit-jupiter.version>5.3.2</junit-jupiter.version>
         <logback.version>1.2.3</logback.version>
         <mockito.version>2.23.4</mockito.version>
         <reflections.version>0.9.11</reflections.version>
         <slf4j.version>1.7.25</slf4j.version>
         <spring-boot.version>2.1.9.RELEASE</spring-boot.version>
+        <testcontainers.elasticsearch.version>1.12.2</testcontainers.elasticsearch.version>
     </properties>
 
     <dependencyManagement>
@@ -168,36 +170,31 @@
                 </exclusions>
             </dependency>
             <dependency>
-                <groupId>org.elasticsearch.test</groupId>
-                <artifactId>framework</artifactId>
-                <version>${elasticsearch.version}</version>
-                <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.hamcrest</groupId>
-                        <artifactId>hamcrest-all</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.elasticsearch</groupId>
-                        <artifactId>securemock</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.lucene</groupId>
-                <artifactId>lucene-test-framework</artifactId>
-                <version>${apache.lucene.test.version}</version>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>elasticsearch</artifactId>
+                <version>${testcontainers.elasticsearch.version}</version>
                 <scope>test</scope>
             </dependency>
+
             <dependency>
-                <groupId>pl.allegro.tech</groupId>
-                <artifactId>embedded-elasticsearch</artifactId>
-                <version>${embedded-elasticsearch.version}</version>
-                <scope>test</scope>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
             </dependency>
 
             <!-- JUnit 5 -->

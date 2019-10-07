@@ -91,18 +91,18 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.elasticsearch.test</groupId>
-            <artifactId>framework</artifactId>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>elasticsearch</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-test-framework</artifactId>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>pl.allegro.tech</groupId>
-            <artifactId>embedded-elasticsearch</artifactId>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

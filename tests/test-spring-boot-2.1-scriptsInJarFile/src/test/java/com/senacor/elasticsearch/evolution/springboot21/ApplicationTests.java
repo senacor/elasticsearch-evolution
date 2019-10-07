@@ -1,5 +1,7 @@
 package com.senacor.elasticsearch.evolution.springboot21;
 
+import org.apache.http.HttpHost;
+import org.elasticsearch.client.RestClient;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,12 +9,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.junit4.SpringRunner;
-import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
-import pl.allegro.tech.embeddedelasticsearch.PopularProperties;
+import org.testcontainers.elasticsearch.ElasticsearchContainer;
 
 import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,29 +24,31 @@ public class ApplicationTests {
     static final int ELASTICSEARCH_PORT = 18769;
 
     @Autowired
-    private EmbeddedElastic embeddedElastic;
+    private EsUtils esUtils;
 
     @Test
     public void contextLoads() throws UnknownHostException {
-        embeddedElastic.refreshIndices();
+        esUtils.refreshIndices();
 
-        List<String> documents = embeddedElastic.fetchAllDocuments("test_1");
+        List<String> documents = esUtils.fetchAllDocuments("test_1");
 
         assertThat(documents).hasSize(1);
     }
 
     @TestConfiguration
     static class Config {
+        @Bean(destroyMethod = "stop")
+        public ElasticsearchContainer elasticsearchContainer() {
+            ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.3")
+                    .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
+            container.setPortBindings(Collections.singletonList(ELASTICSEARCH_PORT + ":9200"));
+            container.start();
+            return container;
+        }
+
         @Bean
-        public EmbeddedElastic embeddedElastic() throws Exception {
-            EmbeddedElastic.Builder builder = EmbeddedElastic.builder()
-                    .withElasticVersion("6.8.3")
-                    .withStartTimeout(2, TimeUnit.MINUTES)
-                    .withSetting(PopularProperties.HTTP_PORT, ELASTICSEARCH_PORT)
-                    .withEsJavaOpts("-Xms128m -Xmx128m");
-            return builder
-                    .build()
-                    .start();
+        public EsUtils esUtils(ElasticsearchContainer elasticsearchContainer) {
+            return new EsUtils(RestClient.builder(HttpHost.create(elasticsearchContainer.getHttpHostAddress())).build());
         }
     }
 }

@@ -4,6 +4,7 @@ import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.ElasticsearchArgumentsProvider;
+import com.senacor.elasticsearch.evolution.core.test.EsUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -15,7 +16,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -44,7 +44,7 @@ class HistoryRepositoryImplIT {
     class findAll {
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void doesNotReturnProtocolsWithMajorVersion0(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
+        void doesNotReturnProtocolsWithMajorVersion0(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("0.1"));
             underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.0"));
@@ -58,7 +58,7 @@ class HistoryRepositoryImplIT {
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void returnsProtocolsInVersionOrder(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
+        void returnsProtocolsInVersionOrder(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.1"));
             underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("2.0"));
@@ -91,7 +91,7 @@ class HistoryRepositoryImplIT {
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void returnsFullProtocol(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
+        void returnsFullProtocol(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             OffsetDateTime executionTimestamp = OffsetDateTime.of(2019, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
             MigrationScriptProtocol protocol = new MigrationScriptProtocol()
@@ -128,7 +128,7 @@ class HistoryRepositoryImplIT {
     class saveOrUpdate {
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void saveFullDocument(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws IOException {
+        void saveFullDocument(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             OffsetDateTime now = OffsetDateTime.now();
@@ -144,8 +144,8 @@ class HistoryRepositoryImplIT {
                     .setIndexName(INDEX)
                     .setLocked(true));
 
-            embeddedElastic.refreshIndices();
-            List<String> res = embeddedElastic.fetchAllDocuments(INDEX);
+            esUtils.refreshIndices();
+            List<String> res = esUtils.fetchAllDocuments(INDEX);
             String executionTimestamp = now.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
             assertThat(res).hasSize(1)
                     .contains("{" +
@@ -175,7 +175,7 @@ class HistoryRepositoryImplIT {
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void save2DocumentsWithDifferentVersions(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws IOException {
+        void save2DocumentsWithDifferentVersions(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             underTest.saveOrUpdate(new MigrationScriptProtocol()
@@ -183,14 +183,14 @@ class HistoryRepositoryImplIT {
             underTest.saveOrUpdate(new MigrationScriptProtocol()
                     .setVersion("1.2"));
 
-            embeddedElastic.refreshIndices();
-            List<String> res = embeddedElastic.fetchAllDocuments(INDEX);
+            esUtils.refreshIndices();
+            List<String> res = esUtils.fetchAllDocuments(INDEX);
             assertThat(res).hasSize(2);
         }
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void updateDocument(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws IOException {
+        void updateDocument(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             underTest.saveOrUpdate(new MigrationScriptProtocol()
@@ -202,8 +202,8 @@ class HistoryRepositoryImplIT {
                     .setVersion("1.1")
                     .setDescription("new"));
 
-            embeddedElastic.refreshIndices();
-            List<String> res = embeddedElastic.fetchAllDocuments(INDEX);
+            esUtils.refreshIndices();
+            List<String> res = esUtils.fetchAllDocuments(INDEX);
             assertThat(res).hasSize(2);
             GetResponse getRes = restHighLevelClient.get(new GetRequest(INDEX).id("1.1"), DEFAULT);
             assertThat(getRes.getSourceAsMap())
@@ -216,11 +216,11 @@ class HistoryRepositoryImplIT {
     class isLocked {
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void emptyIndex_IsNotLocked(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
+        void emptyIndex_IsNotLocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.createIndexIfAbsent();
 
-            embeddedElastic.refreshIndices();
+            esUtils.refreshIndices();
             assertThat(underTest.isLocked())
                     .as("isLocked")
                     .isFalse();
@@ -228,10 +228,10 @@ class HistoryRepositoryImplIT {
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void noIndex_IsNotLocked(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
+        void noIndex_IsNotLocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
-            embeddedElastic.refreshIndices();
+            esUtils.refreshIndices();
             assertThat(underTest.isLocked())
                     .as("isLocked")
                     .isFalse();
@@ -239,12 +239,12 @@ class HistoryRepositoryImplIT {
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void existingDocuments_IsNotLocked(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws Exception {
+        void existingDocuments_IsNotLocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.createIndexIfAbsent();
-            indexDocumentWithLock(false, embeddedElastic, restHighLevelClient);
+            indexDocumentWithLock(false, esUtils, restHighLevelClient);
 
-            embeddedElastic.refreshIndices();
+            esUtils.refreshIndices();
             assertThat(underTest.isLocked())
                     .as("isLocked")
                     .isFalse();
@@ -252,12 +252,12 @@ class HistoryRepositoryImplIT {
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void existingDocuments_IsLocked(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws Exception {
+        void existingDocuments_IsLocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.createIndexIfAbsent();
-            indexDocumentWithLock(true, embeddedElastic, restHighLevelClient);
+            indexDocumentWithLock(true, esUtils, restHighLevelClient);
 
-            embeddedElastic.refreshIndices();
+            esUtils.refreshIndices();
             assertThat(underTest.isLocked())
                     .as("isLocked")
                     .isTrue();
@@ -269,40 +269,40 @@ class HistoryRepositoryImplIT {
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void noDocumentsInIndex(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
+        void noDocumentsInIndex(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.createIndexIfAbsent();
-            embeddedElastic.refreshIndices();
+            esUtils.refreshIndices();
 
             assertThat(underTest.lock()).isTrue();
 
-            embeddedElastic.refreshIndices();
+            esUtils.refreshIndices();
             assertThat(underTest.isLocked()).isTrue();
         }
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void indexDoesNotExist(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
+        void indexDoesNotExist(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             assertThat(underTest.lock()).isTrue();
 
-            embeddedElastic.refreshIndices();
+            esUtils.refreshIndices();
             assertThat(underTest.isLocked()).isTrue();
         }
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void allExistingLockedDocumentsStayLocked(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws Exception {
+        void allExistingLockedDocumentsStayLocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
-            indexDocumentWithLock(true, embeddedElastic, restHighLevelClient);
-            embeddedElastic.refreshIndices();
+            indexDocumentWithLock(true, esUtils, restHighLevelClient);
+            esUtils.refreshIndices();
 
             assertThat(underTest.lock()).isTrue();
 
-            embeddedElastic.refreshIndices();
-            List<String> docs = embeddedElastic.fetchAllDocuments(INDEX);
+            esUtils.refreshIndices();
+            List<String> docs = esUtils.fetchAllDocuments(INDEX);
             assertThat(docs).hasSize(1)
                     .contains("{\"" + LOCKED_FIELD_NAME + "\":true}");
             assertThat(underTest.isLocked()).isTrue();
@@ -310,16 +310,16 @@ class HistoryRepositoryImplIT {
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void allExistingUnlockedDocumentsGetsLocked(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws Exception {
+        void allExistingUnlockedDocumentsGetsLocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
-            indexDocumentWithLock(false, embeddedElastic, restHighLevelClient);
-            embeddedElastic.refreshIndices();
+            indexDocumentWithLock(false, esUtils, restHighLevelClient);
+            esUtils.refreshIndices();
 
             assertThat(underTest.lock()).isTrue();
 
-            embeddedElastic.refreshIndices();
-            List<String> docs = embeddedElastic.fetchAllDocuments(INDEX);
+            esUtils.refreshIndices();
+            List<String> docs = esUtils.fetchAllDocuments(INDEX);
             assertThat(docs).hasSize(1)
                     .contains("{\"" + LOCKED_FIELD_NAME + "\":true}");
             assertThat(underTest.isLocked()).isTrue();
@@ -330,41 +330,41 @@ class HistoryRepositoryImplIT {
     class unlock {
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void noDocumentsInIndex(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
+        void noDocumentsInIndex(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.createIndexIfAbsent();
-            embeddedElastic.refreshIndices();
+            esUtils.refreshIndices();
 
             assertThat(underTest.unlock()).isTrue();
 
-            embeddedElastic.refreshIndices();
+            esUtils.refreshIndices();
             assertThat(underTest.isLocked()).isFalse();
         }
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void indexDoesNotExist(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
+        void indexDoesNotExist(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             assertThat(underTest.unlock()).isTrue();
 
-            embeddedElastic.refreshIndices();
+            esUtils.refreshIndices();
             assertThat(underTest.isLocked()).isFalse();
         }
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void allExistingLockedDocumentsGetsUnlocked(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws Exception {
+        void allExistingLockedDocumentsGetsUnlocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.lock();
-            indexDocumentWithLock(true, embeddedElastic, restHighLevelClient);
-            embeddedElastic.refreshIndices();
-            assertThat(embeddedElastic.fetchAllDocuments(INDEX)).hasSize(2);
+            indexDocumentWithLock(true, esUtils, restHighLevelClient);
+            esUtils.refreshIndices();
+            assertThat(esUtils.fetchAllDocuments(INDEX)).hasSize(2);
 
             assertThat(underTest.unlock()).isTrue();
 
-            embeddedElastic.refreshIndices();
-            List<String> docs = embeddedElastic.fetchAllDocuments(INDEX);
+            esUtils.refreshIndices();
+            List<String> docs = esUtils.fetchAllDocuments(INDEX);
             assertThat(docs).hasSize(1)
                     .contains("{\"" + LOCKED_FIELD_NAME + "\":false}");
             assertThat(underTest.isLocked()).isFalse();
@@ -372,15 +372,15 @@ class HistoryRepositoryImplIT {
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void allExistingNonLockedDocumentsStayUnlocked(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws Exception {
+        void allExistingNonLockedDocumentsStayUnlocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
-            indexDocumentWithLock(false, embeddedElastic, restHighLevelClient);
-            embeddedElastic.refreshIndices();
+            indexDocumentWithLock(false, esUtils, restHighLevelClient);
+            esUtils.refreshIndices();
 
             assertThat(underTest.unlock()).isTrue();
 
-            embeddedElastic.refreshIndices();
-            List<String> docs = embeddedElastic.fetchAllDocuments(INDEX);
+            esUtils.refreshIndices();
+            List<String> docs = esUtils.fetchAllDocuments(INDEX);
             assertThat(docs).hasSize(1)
                     .contains("{\"" + LOCKED_FIELD_NAME + "\":false}");
             assertThat(underTest.isLocked()).isFalse();
@@ -391,19 +391,19 @@ class HistoryRepositoryImplIT {
     class createIndexIfAbsent {
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void indexDoesNotExistsYet_indexWillBeCreated(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) {
+        void indexDoesNotExistsYet_indexWillBeCreated(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             assertThat(underTest.createIndexIfAbsent()).as("new index created").isTrue();
 
-            embeddedElastic.refreshIndices();
+            esUtils.refreshIndices();
 
             assertThat(underTest.createIndexIfAbsent()).as("new index created").isFalse();
         }
 
     }
 
-    private void indexDocumentWithLock(boolean locked, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws Exception {
+    private void indexDocumentWithLock(boolean locked, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
         HashMap<String, Object> source = new HashMap<>();
         source.put(LOCKED_FIELD_NAME, locked);
 
@@ -414,8 +414,8 @@ class HistoryRepositoryImplIT {
                         .source(source),
                 DEFAULT);
 
-        embeddedElastic.refreshIndices();
-        logger.debug("all documents in index '{}': {}", INDEX, embeddedElastic.fetchAllDocuments(INDEX));
+        esUtils.refreshIndices();
+        logger.debug("all documents in index '{}': {}", INDEX, esUtils.fetchAllDocuments(INDEX));
     }
 
     private HistoryRepositoryImpl createHistoryRepositoryImpl(RestHighLevelClient restHighLevelClient) {

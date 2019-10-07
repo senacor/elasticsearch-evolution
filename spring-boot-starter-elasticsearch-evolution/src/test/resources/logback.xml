@@ -8,7 +8,6 @@
     </appender>
 
     <logger name="com.senacor.elasticsearch.evolution" level="DEBUG"/>
-    <logger name="pl.allegro.tech.embeddedelasticsearch.ElasticServer" level="WARN"/>
     <logger name="org.elasticsearch" level="INFO"/>
 
     <root level="INFO">

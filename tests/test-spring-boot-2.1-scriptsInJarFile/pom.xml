@@ -16,9 +16,9 @@
     <properties>
         <java.version>1.8</java.version>
 
-        <apache.lucene.test.version>7.7.0</apache.lucene.test.version>
+        <commons-io.version>2.6</commons-io.version>
         <elasticsearch.version>6.8.3</elasticsearch.version>
-        <embedded-elasticsearch.version>2.10.0</embedded-elasticsearch.version>
+        <testcontainers.elasticsearch.version>1.12.2</testcontainers.elasticsearch.version>
     </properties>
 
     <dependencies>
@@ -49,21 +49,15 @@
 
         <!--Embedded Elasticsearch dependencies-->
         <dependency>
-            <groupId>org.elasticsearch.test</groupId>
-            <artifactId>framework</artifactId>
-            <version>${elasticsearch.version}</version>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>${testcontainers.elasticsearch.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-test-framework</artifactId>
-            <version>${apache.lucene.test.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>pl.allegro.tech</groupId>
-            <artifactId>embedded-elasticsearch</artifactId>
-            <version>${embedded-elasticsearch.version}</version>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons-io.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

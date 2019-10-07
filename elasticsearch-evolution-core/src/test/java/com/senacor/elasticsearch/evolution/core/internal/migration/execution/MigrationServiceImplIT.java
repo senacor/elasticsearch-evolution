@@ -7,6 +7,7 @@ import com.senacor.elasticsearch.evolution.core.internal.model.migration.Migrati
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.ElasticsearchArgumentsProvider;
+import com.senacor.elasticsearch.evolution.core.test.EsUtils;
 import com.senacor.elasticsearch.evolution.core.test.MockitoExtension;
 import org.apache.http.entity.ContentType;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.mockito.Mock;
-import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -51,7 +51,7 @@ class MigrationServiceImplIT {
 
         @ParameterizedTest
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void OK_indexDocumentIsWrittenToElasticsearch(String esVersion, EmbeddedElastic embeddedElastic, RestHighLevelClient restHighLevelClient) throws IOException {
+        void OK_indexDocumentIsWrittenToElasticsearch(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
             String index = "myindex";
             ParsedMigrationScript script = createParsedMigrationScript("1.1", index);
 
@@ -86,9 +86,9 @@ class MigrationServiceImplIT {
             });
 
             // wait until all documents are indexed
-            embeddedElastic.refreshIndices();
+            esUtils.refreshIndices();
 
-            List<String> allDocuments = embeddedElastic.fetchAllDocuments(index);
+            List<String> allDocuments = esUtils.fetchAllDocuments(index);
             assertThat(allDocuments)
                     .hasSize(1)
                     .contains(script.getMigrationScriptRequest().getBody());

@@ -4,6 +4,10 @@ language: java
 env:
   global:
     - MVN_CMD="./mvnw --settings .travis.settings.xml -e -B -V"
+
+services:
+  - docker
+
 jdk:
   - oraclejdk9
   - oraclejdk11
