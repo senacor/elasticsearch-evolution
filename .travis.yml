@@ -19,7 +19,7 @@ cache:
   directories:
     - $HOME/.m2/repository
     - $HOME/.m2/wrapper
-    - /tmp/embedded-elasticsearch-temp-dir
+#    - /tmp/embedded-elasticsearch-temp-dir
 before_install:
   - wget -O ~/codacy-coverage-reporter.jar https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.5/codacy-coverage-reporter-4.0.5-assembly.jar
 install: true
