@@ -270,7 +270,8 @@ ElasticsearchEvolution.configure()
 ### v0.1.3-SNAPSHOT
 
 -   new configuration parameter `historyMaxQuerySize`
--   version updates (spring-boot 2.1.4.RELEASE; elasticsearch 6.7.1)
+-   version updates (spring-boot 2.1.9.RELEASE; elasticsearch 6.8.3)
+-   ElasticsearchEvolutionInitializer logs now the migration duration
 
 ### v0.1.2
 

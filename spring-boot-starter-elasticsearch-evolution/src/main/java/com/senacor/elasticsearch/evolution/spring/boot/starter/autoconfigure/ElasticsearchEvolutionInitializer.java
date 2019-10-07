@@ -1,5 +1,6 @@
 package com.senacor.elasticsearch.evolution.spring.boot.starter.autoconfigure;
 
+import com.google.common.base.Stopwatch;
 import com.senacor.elasticsearch.evolution.core.ElasticsearchEvolution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +26,11 @@ public class ElasticsearchEvolutionInitializer implements InitializingBean, Orde
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        Stopwatch stopwatch = Stopwatch.createStarted();
         int sucessfullExecutedScriots = elasticsearchEvolution.migrate();
-        logger.info("ElasticsearchEvolution executed successfully {} migration scripts", sucessfullExecutedScriots);
+        stopwatch.stop();
+        logger.info("ElasticsearchEvolution executed successfully {} migration scripts in {}",
+                sucessfullExecutedScriots, stopwatch);
     }
 
     @Override
