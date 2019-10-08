@@ -125,14 +125,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <dependencies>
-                    <!-- This dependency is somehow missing on travis -->
-                    <dependency>
-                        <groupId>org.elasticsearch</groupId>
-                        <artifactId>elasticsearch</artifactId>
-                        <version>${elasticsearch.version}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
         </plugins>
 
