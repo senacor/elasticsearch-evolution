@@ -26,7 +26,7 @@ cache:
     - $HOME/.m2/repository
     - $HOME/.m2/wrapper
 before_install:
-  - sudo apt-get install jq
+  - sudo apt-get install -y jq
   - curl -LSs $(curl -LSs https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest | jq -r '.assets | map({content_type, browser_download_url} | select(.content_type | contains("application/java-archive"))) | .[0].browser_download_url') -o codacy-coverage-reporter-assembly.jar
 install: true
 script: $MVN_CMD install
