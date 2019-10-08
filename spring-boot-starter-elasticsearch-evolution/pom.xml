@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.senacor.elasticsearch.evolution</groupId>
         <artifactId>elasticsearch-evolution-parent</artifactId>
-        <version>0.1.3</version>
+        <version>0.1.4-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>

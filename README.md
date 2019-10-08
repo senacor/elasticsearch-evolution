@@ -267,6 +267,10 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
+### v0.1.4-SNAPSHOT
+
+-   ...
+
 ### v0.1.3
 
 -   new configuration parameter `historyMaxQuerySize`
