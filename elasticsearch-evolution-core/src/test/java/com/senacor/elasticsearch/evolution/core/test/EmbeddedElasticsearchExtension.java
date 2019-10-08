@@ -39,6 +39,9 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     private static final Set<String> SUPPORTED_ES_VERSIONS = new HashSet<>(Arrays.asList(
             "7.4.0",
             "7.3.2",
+            "7.2.1",
+            "7.1.1",
+            "7.0.1",
             "6.8.3",
             "6.7.2",
             "6.6.2"
