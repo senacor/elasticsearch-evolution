@@ -1,5 +1,6 @@
 language: java
-dist: bionic
+# bionic does not support openjdk8 :(
+dist: xenial
 env:
   global:
     - MVN_CMD="./mvnw --settings .travis.settings.xml -e -B -V"
