@@ -1,4 +1,4 @@
-PUT _template/test_1
+PUT _template/test_1${include_type_name}
 Content-Type: application/json
 
 {

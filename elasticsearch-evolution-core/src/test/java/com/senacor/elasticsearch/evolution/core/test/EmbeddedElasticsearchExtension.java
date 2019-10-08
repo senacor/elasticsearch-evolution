@@ -37,6 +37,8 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
     private static final Set<String> SUPPORTED_ES_VERSIONS = new HashSet<>(Arrays.asList(
+            "7.4.0",
+            "7.3.2",
             "6.8.3",
             "6.7.2",
             "6.6.2"

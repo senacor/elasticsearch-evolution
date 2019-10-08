@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Map;
 import java.util.NavigableSet;
 
@@ -51,8 +52,13 @@ class ElasticsearchEvolutionIT {
     // this scenario does not work on 6.3.* (V002.02 always fails with '{"error":{"root_cause":[],"type":"search_phase_execution_exception","reason":"all shards failed","phase":"query","grouped":true,"failed_shards":[]},"status":503}')
     @IgnoreEsVersion("^6\\.3\\..*")
     void migrate_OK(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
+        Map<String, String> placeholders = esVersion.startsWith("7")
+                ? Collections.singletonMap("include_type_name", "?include_type_name=true") // compatibility for 7.x
+                : Collections.singletonMap("include_type_name", "");
+
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
-                .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_OK"));
+                .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_OK"))
+                .setPlaceholders(placeholders);
         String historyIndex = elasticsearchEvolutionConfig.getHistoryIndex();
         historyRepository = new HistoryRepositoryImpl(restHighLevelClient, historyIndex, new MigrationScriptProtocolMapper(), 1000);
         ElasticsearchEvolution underTest = elasticsearchEvolutionConfig
@@ -122,8 +128,13 @@ class ElasticsearchEvolutionIT {
     @ParameterizedTest
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
     void migrate_failed_then_fixed_script_and_reexecute(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+        Map<String, String> placeholders = esVersion.startsWith("7")
+                ? Collections.singletonMap("include_type_name", "?include_type_name=true") // compatibility for 7.x
+                : Collections.singletonMap("include_type_name", "");
+
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
-                .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_failed_step1"));
+                .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_failed_step1"))
+                .setPlaceholders(placeholders);
         historyRepository = new HistoryRepositoryImpl(restHighLevelClient, elasticsearchEvolutionConfig.getHistoryIndex(), new MigrationScriptProtocolMapper(), 1000);
 
         assertSoftly(softly -> {
