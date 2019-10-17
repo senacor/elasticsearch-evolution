@@ -94,7 +94,7 @@
         <mockito.version>3.1.0</mockito.version>
         <reflections.version>0.9.11</reflections.version>
         <slf4j.version>1.7.28</slf4j.version>
-        <spring-boot.version>2.1.9.RELEASE</spring-boot.version>
+        <spring-boot.version>2.2.0.RELEASE</spring-boot.version>
         <testcontainers.elasticsearch.version>1.12.2</testcontainers.elasticsearch.version>
     </properties>
 
