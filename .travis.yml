@@ -13,8 +13,7 @@ jdk:
   - openjdk10
   - openjdk11
   - openjdk12
-# openjdk13 is not yet supported by mockito / Byte Buddy
-#  - openjdk13
+  - openjdk13
   - oraclejdk9
 
 stages:

@@ -16,6 +16,9 @@
     <properties>
         <java.version>1.8</java.version>
 
+        <!-- override spring-boot default for compatibility with jdk 13 -->
+        <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
+
         <commons-io.version>2.6</commons-io.version>
         <elasticsearch.version>6.8.5</elasticsearch.version>
         <testcontainers.elasticsearch.version>1.12.4</testcontainers.elasticsearch.version>
