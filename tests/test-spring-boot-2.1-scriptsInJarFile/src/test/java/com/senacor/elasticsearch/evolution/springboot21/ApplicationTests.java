@@ -39,7 +39,7 @@ public class ApplicationTests {
     static class Config {
         @Bean(destroyMethod = "stop")
         public ElasticsearchContainer elasticsearchContainer() {
-            ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.3")
+            ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.5")
                     .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
             container.setPortBindings(Collections.singletonList(ELASTICSEARCH_PORT + ":9200"));
             container.start();
