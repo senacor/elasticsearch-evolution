@@ -18,7 +18,7 @@
 
 		<commons-io.version>2.6</commons-io.version>
 		<elasticsearch.version>6.8.6</elasticsearch.version>
-		<testcontainers.elasticsearch.version>1.12.5</testcontainers.elasticsearch.version>
+		<testcontainers.elasticsearch.version>1.13.0</testcontainers.elasticsearch.version>
 	</properties>
 
 	<dependencies>
