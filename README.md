@@ -63,7 +63,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.1.2</version>
+    <version>0.1.3</version>
 </dependency>
 ```
 
@@ -269,7 +269,7 @@ ElasticsearchEvolution.configure()
 
 ### v0.1.4-SNAPSHOT
 
--   version updates (spring-boot 2.2.6.RELEASE, elasticsearch 6.8.6, jackson 2.10.3, slf4j 1.7.30, reflections 0.9.12)
+-   version updates (spring-boot 2.2.7.RELEASE, elasticsearch 6.8.6, jackson 2.10.3, slf4j 1.7.30, reflections 0.9.12)
 -   added spring-boot 2.2 compatibility tests
 
 ### v0.1.3
