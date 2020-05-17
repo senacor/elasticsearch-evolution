@@ -154,7 +154,7 @@ The filename has to follow a pattern:
 -   starts with `esMigrationPrefix` which is by default `V` and is configurable.
 -   followed by a version, which have to be numeric and can be structured by separating the version parts with `.`
 -   followed by the `versionDescriptionSeparator`: `__`
--   followed ba a description which can be any text your filesystem supports
+-   followed by a description which can be any text your filesystem supports
 -   ended with `esMigrationSuffixes` which is by default `.http` and is configurable and case-insensitive.
 
 Elasticsearch-Evolution uses the version for ordering your scripts and enforces strict ordered execution of your scripts. Out-of-Order execution is not supported.
