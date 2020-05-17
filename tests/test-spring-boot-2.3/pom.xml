@@ -5,11 +5,11 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.0.9.RELEASE</version>
+		<version>2.3.0.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.senacor.elasticsearch.evolution</groupId>
-	<artifactId>test-spring-boot-2.0</artifactId>
+	<artifactId>test-spring-boot-2.3</artifactId>
 	<version>0.2.0</version>
 	<description>Demo project for Spring Boot</description>
 

@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(properties = {"spring.elasticsearch.rest.uris=http://localhost:" + ApplicationTests.ELASTICSEARCH_PORT})
 public class ApplicationTests {
 
-    static final int ELASTICSEARCH_PORT = 18759;
+    static final int ELASTICSEARCH_PORT = 18753;
 
     @Autowired
     private EsUtils esUtils;
@@ -39,7 +39,7 @@ public class ApplicationTests {
     static class Config {
         @Bean(destroyMethod = "stop")
         public ElasticsearchContainer elasticsearchContainer() {
-            ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.3")
+            ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.9")
                     .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
             container.setPortBindings(Collections.singletonList(ELASTICSEARCH_PORT + ":9200"));
             container.start();

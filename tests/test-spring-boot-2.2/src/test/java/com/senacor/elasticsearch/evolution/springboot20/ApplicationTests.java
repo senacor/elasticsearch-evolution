@@ -1,4 +1,4 @@
-package com.senacor.elasticsearch.evolution.springboot15;
+package com.senacor.elasticsearch.evolution.springboot20;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(properties = {"spring.elasticsearch.rest.uris=http://localhost:" + ApplicationTests.ELASTICSEARCH_PORT})
 public class ApplicationTests {
 
-    static final int ELASTICSEARCH_PORT = 18749;
+    static final int ELASTICSEARCH_PORT = 18759;
 
     @Autowired
     private EsUtils esUtils;
