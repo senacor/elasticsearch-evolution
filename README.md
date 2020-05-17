@@ -19,8 +19,8 @@ Successful executed migration scripts will not be executed again!
 
 ## 2 Features
 
--   tested on Java 8, 9, 10, 11, 12 and 13
--   runs on Spring-Boot 1.5, 2.0, 2.1 and 2.2 (and of course without Spring-Boot)
+-   tested on Java 8, 9, 10, 11, 12, 13 and 14
+-   runs on Spring-Boot 1.5, 2.0, 2.1, 2.2 and 2.3 (and of course without Spring-Boot)
 -   runs on Elasticsearch 7.x, 6.8.x, 6.7.x, 6.6.x, 6.5.x, 6.4.x, 6.3.x, 6.2.x
 -   highly configurable (e.g. location(s) of your migration files, migration files format pattern)
 -   placeholder substitution in migration scripts
@@ -39,7 +39,7 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.1.2</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -47,7 +47,7 @@ Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and require
 
 ```xml
 <properties>
-    <elasticsearch.version>6.6.0</elasticsearch.version>
+    <elasticsearch.version>6.8.6</elasticsearch.version>
 </properties>
 ```
 
@@ -63,7 +63,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.1.2</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -154,7 +154,7 @@ The filename has to follow a pattern:
 -   starts with `esMigrationPrefix` which is by default `V` and is configurable.
 -   followed by a version, which have to be numeric and can be structured by separating the version parts with `.`
 -   followed by the `versionDescriptionSeparator`: `__`
--   followed ba a description which can be any text your filesystem supports
+-   followed by a description which can be any text your filesystem supports
 -   ended with `esMigrationSuffixes` which is by default `.http` and is configurable and case-insensitive.
 
 Elasticsearch-Evolution uses the version for ordering your scripts and enforces strict ordered execution of your scripts. Out-of-Order execution is not supported.
@@ -267,10 +267,15 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.1.4-SNAPSHOT
+### v0.2.1-SNAPSHOT
 
--   version updates (spring-boot 2.2.1.RELEASE, elasticsearch 6.8.5, jackson 2.10.1, slf4j 1.7.29)
+-   ...
+
+### v0.2.0
+
+-   version updates (spring-boot 2.3.0.RELEASE, elasticsearch 6.8.6, jackson 2.10.3, slf4j 1.7.30, reflections 0.9.12)
 -   added spring-boot 2.2 compatibility tests
+-   added spring-boot 2.3 compatibility tests
 
 ### v0.1.3
 
