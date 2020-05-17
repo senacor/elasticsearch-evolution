@@ -9,7 +9,7 @@ export PROJECT_VERSION=$(./mvnw help:evaluate -N -Dexpression=project.version|gr
 export IS_SNAPSHOT=$(if [[ $PROJECT_VERSION == *"-SNAPSHOT" ]]; then echo true; else echo false;fi)
 # Set up git user name and tag this commit
 git config --local user.name "Andreas Keefer (Travis CI)"
-git config --local user.email "andreas.keefer@senacor.com"
+git config --local user.email "xtermi2@users.noreply.github.com"
 #export TRAVIS_TAG=${PROJECT_VERSION}-$(date --iso-8601=seconds)-$(git log --format=%h -1)
 export TRAVIS_TAG=${PROJECT_VERSION}-$(date +'%Y-%m-%dT%H-%M-%S')-$(git log --format=%h -1)
 git tag $TRAVIS_TAG -m "Release ${PROJECT_VERSION}"
