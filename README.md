@@ -39,7 +39,7 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.1.3</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -47,7 +47,7 @@ Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and require
 
 ```xml
 <properties>
-    <elasticsearch.version>6.6.0</elasticsearch.version>
+    <elasticsearch.version>6.8.6</elasticsearch.version>
 </properties>
 ```
 
@@ -63,7 +63,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.1.3</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -266,6 +266,10 @@ ElasticsearchEvolution.configure()
 ```
 
 ## 6 changelog
+
+### v0.2.1-SNAPSHOT
+
+-   ...
 
 ### v0.2.0
 
