@@ -267,10 +267,11 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.1.4-SNAPSHOT
+### v0.2.0
 
 -   version updates (spring-boot 2.3.0.RELEASE, elasticsearch 6.8.6, jackson 2.10.3, slf4j 1.7.30, reflections 0.9.12)
 -   added spring-boot 2.2 compatibility tests
+-   added spring-boot 2.3 compatibility tests
 
 ### v0.1.3
 
