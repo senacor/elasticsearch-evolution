@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.2.7.RELEASE</version>
+		<version>2.2.8.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.senacor.elasticsearch.evolution</groupId>
@@ -16,9 +16,9 @@
 	<properties>
 		<java.version>1.8</java.version>
 
-		<commons-io.version>2.6</commons-io.version>
+		<commons-io.version>2.7</commons-io.version>
 		<elasticsearch.version>6.8.6</elasticsearch.version>
-		<testcontainers.elasticsearch.version>1.14.2</testcontainers.elasticsearch.version>
+		<testcontainers.elasticsearch.version>1.14.3</testcontainers.elasticsearch.version>
 	</properties>
 
 	<dependencies>
