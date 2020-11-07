@@ -19,7 +19,7 @@ Successful executed migration scripts will not be executed again!
 
 ## 2 Features
 
--   tested on Java 8, 9, 10, 11, 12, 13 and 14
+-   tested on Java 8, 9, 10, 11, 12, 13, 14 and 15
 -   runs on Spring-Boot 1.5, 2.0, 2.1, 2.2 and 2.3 (and of course without Spring-Boot)
 -   runs on Elasticsearch 7.x, 6.8.x, 6.7.x, 6.6.x, 6.5.x, 6.4.x, 6.3.x, 6.2.x
 -   highly configurable (e.g. location(s) of your migration files, migration files format pattern)
@@ -269,7 +269,7 @@ ElasticsearchEvolution.configure()
 
 ### v0.2.1-SNAPSHOT
 
--   version updates (spring-boot 2.3.1.RELEASE, commons-io 2.7)
+-   version updates (spring-boot 2.3.1.RELEASE, commons-io 2.8.0)
 
 ### v0.2.0
 
