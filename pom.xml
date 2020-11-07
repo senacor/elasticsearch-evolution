@@ -84,7 +84,7 @@
         <!-- Dependency Versions -->
         <commons-io.version>2.8.0</commons-io.version>
         <!--when updating elasticsearch versions, also update "ElasticsearchContainer" version in EmbeddedElasticsearchExtension-->
-        <!-- es client 6.8.7/6.8.8/6.8.9/6.8.10/6.8.11/6.8.12/6.8.13 does not work with ES 7.6.1, 7.5.2 and 7.4.2 so keep 6.8.6 until this issue is fixed -->
+        <!-- es client 6.8.7-13 does not work with ES >= 7.4 so keep 6.8.6 until this issue is fixed; ERROR InternalHttpAsyncClient I/O reactor terminated abnormally -->
         <elasticsearch.version>6.8.6</elasticsearch.version>
         <reflections.version>0.9.12</reflections.version>
         <testcontainers.elasticsearch.version>1.15.0</testcontainers.elasticsearch.version>
