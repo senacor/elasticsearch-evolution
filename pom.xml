@@ -5,7 +5,7 @@
 
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-parent</artifactId>
-    <version>0.2.1-SNAPSHOT</version>
+    <version>0.3.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -85,9 +85,9 @@
         <commons-io.version>2.7</commons-io.version>
         <!--when updating elasticsearch versions, also update "ElasticsearchContainer" version in EmbeddedElasticsearchExtension-->
         <!-- es client 6.8.7/6.8.8/6.8.9/6.8.10 does not work with ES 7.6.1, 7.5.2 and 7.4.2 so keep 6.8.6 until this issue is fixed -->
-        <elasticsearch.version>6.8.6</elasticsearch.version>
+        <elasticsearch.version>7.5.0</elasticsearch.version>
         <reflections.version>0.9.12</reflections.version>
-        <testcontainers.elasticsearch.version>1.14.3</testcontainers.elasticsearch.version>
+        <testcontainers.elasticsearch.version>1.15.0</testcontainers.elasticsearch.version>
     </properties>
 
     <dependencyManagement>

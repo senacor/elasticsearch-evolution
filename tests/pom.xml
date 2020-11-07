@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.senacor.elasticsearch.evolution</groupId>
         <artifactId>elasticsearch-evolution-parent</artifactId>
-        <version>0.2.1-SNAPSHOT</version>
+        <version>0.3.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
     <artifactId>tests</artifactId>
@@ -18,11 +18,25 @@
 
     <modules>
         <module>migration-scripts</module>
+        <module>test-spring-boot-2.3-es-rest-high-level-client-7.5.0</module>
+        <module>test-spring-boot-2.3-es-rest-high-level-client-7.5.1</module>
+        <module>test-spring-boot-2.3-es-rest-high-level-client-7.5.2</module>
+        <module>test-spring-boot-2.3-es-rest-high-level-client-7.6.0</module>
+        <module>test-spring-boot-2.3-es-rest-high-level-client-7.6.1</module>
+        <module>test-spring-boot-2.3-es-rest-high-level-client-7.6.2</module>
+        <module>test-spring-boot-2.3-es-rest-high-level-client-7.7.0</module>
+        <module>test-spring-boot-2.3-es-rest-high-level-client-7.7.1</module>
+        <module>test-spring-boot-2.3-es-rest-high-level-client-7.8.0</module>
+        <module>test-spring-boot-2.3-es-rest-high-level-client-7.8.1</module>
+        <module>test-spring-boot-2.3-es-rest-high-level-client-7.9.0</module>
+        <module>test-spring-boot-2.3-es-rest-high-level-client-7.9.1</module>
+        <module>test-spring-boot-2.3-es-rest-high-level-client-7.9.2</module>
+        <module>test-spring-boot-2.3-es-rest-high-level-client-7.9.3</module>
+        <module>test-spring-boot-2.3-spring-data-es</module>
         <module>test-spring-boot-2.3</module>
         <module>test-spring-boot-2.2</module>
         <module>test-spring-boot-2.1-scriptsInJarFile</module>
         <module>test-spring-boot-2.0</module>
-        <module>test-spring-boot-1.5</module>
     </modules>
 
 </project>

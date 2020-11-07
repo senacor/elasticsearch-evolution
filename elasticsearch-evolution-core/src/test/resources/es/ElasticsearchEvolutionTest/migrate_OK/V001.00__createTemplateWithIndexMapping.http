@@ -11,7 +11,6 @@ Content-Type: application/json
     "number_of_shards": 1
   },
   "mappings": {
-    "_doc": {
       "dynamic": "strict",
       "properties": {
         "doc": {
@@ -32,6 +31,5 @@ Content-Type: application/json
           }
         }
       }
-    }
   }
 }

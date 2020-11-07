@@ -37,19 +37,24 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
     private static final Set<String> SUPPORTED_ES_VERSIONS = new HashSet<>(Arrays.asList(
+            "7.9.3",
+            "7.9.2",
+            "7.9.1",
+            "7.9.0",
+            "7.8.1",
+            "7.8.0",
             "7.7.1",
+            "7.7.0",
             "7.6.2",
+            "7.6.1",
+            "7.6.0",
             "7.5.2",
-            "7.4.2",
-            "7.3.2",
-            "7.2.1",
-            "7.1.1",
-            "7.0.1",
-            "6.8.10"
+            "7.5.1",
+            "7.5.0"
     ));
 
     @Override
-    public void postProcessTestInstance(Object testInstance, ExtensionContext context) throws Exception {
+    public void postProcessTestInstance(Object testInstance, ExtensionContext context) {
         SUPPORTED_ES_VERSIONS.parallelStream()
                 .forEach(esVersion -> getStore(context)
                         .getOrComputeIfAbsent(esVersion, EmbeddedElasticsearchExtension::createElasticsearchContainer, ElasticsearchContainer.class));
@@ -105,7 +110,7 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
      */
     public static class ElasticsearchArgumentsProvider implements ArgumentsProvider {
         @Override
-        public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
+        public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
             Optional<String> versionFilterPattern = context.getTestMethod()
                     .map(method -> method.getDeclaredAnnotation(IgnoreEsVersion.class))
                     .map(IgnoreEsVersion::value);

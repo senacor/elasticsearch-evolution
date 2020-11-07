@@ -117,6 +117,8 @@ public class MigrationServiceImpl implements MigrationService {
                 }
                 request.setEntity(new NStringEntity(scriptToExecute.getMigrationScriptRequest().getBody(), contentType));
             }
+
+            //check if reflections can help
             RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
             scriptToExecute.getMigrationScriptRequest().getHttpHeader()
                     .forEach(builder::addHeader);

@@ -100,7 +100,7 @@ class ElasticsearchEvolutionIT {
                                 .query(QueryBuilders.boolQuery()
                                         .must(QueryBuilders.termsQuery("searchable.version", "1", "2")))),
                 DEFAULT);
-        assertThat(search.getHits().totalHits)
+        assertThat(search.getHits().getTotalHits().value)
                 .as("search res by version: %s", search)
                 .isEqualTo(3);
 
@@ -110,7 +110,7 @@ class ElasticsearchEvolutionIT {
                                 .query(QueryBuilders.boolQuery()
                                         .must(QueryBuilders.termsQuery("searchable.version.text", "1", "2")))),
                 DEFAULT);
-        assertThat(search.getHits().totalHits)
+        assertThat(search.getHits().getTotalHits().value)
                 .as("search res by version.text: %s", search)
                 .isEqualTo(3);
 
@@ -120,7 +120,7 @@ class ElasticsearchEvolutionIT {
                                 .query(QueryBuilders.boolQuery()
                                         .must(QueryBuilders.termsQuery("searchable.version.bm25", "1", "2")))),
                 DEFAULT);
-        assertThat(search.getHits().totalHits)
+        assertThat(search.getHits().getTotalHits().value)
                 .as("search res by version.bm25: %s", search)
                 .isEqualTo(3);
     }

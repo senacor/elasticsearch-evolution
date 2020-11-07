@@ -8,7 +8,6 @@ Content-Type: application/json
   "order": 2,
   "version": 2,
   "mappings": {
-    "_doc": {
       "properties": {
         "searchable": {
           "properties": {
@@ -35,6 +34,5 @@ Content-Type: application/json
           }
         }
       }
-    }
   }
 }

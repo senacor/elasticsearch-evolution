@@ -43,7 +43,7 @@ class ElasticsearchEvolutionAutoConfigurationIT {
                                 .query(QueryBuilders.termQuery("searchable.version", "1"))),
                 DEFAULT);
 
-        assertThat(searchResponse.getHits().totalHits)
+        assertThat(searchResponse.getHits().getTotalHits().value)
                 .as("searchResponse: %s", searchResponse)
                 .isEqualTo(1);
     }

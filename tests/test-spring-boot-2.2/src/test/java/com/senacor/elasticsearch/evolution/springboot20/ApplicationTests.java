@@ -27,7 +27,7 @@ public class ApplicationTests {
     private EsUtils esUtils;
 
     @Test
-    public void contextLoads() throws UnknownHostException {
+    public void contextLoads() {
         esUtils.refreshIndices();
 
         List<String> documents = esUtils.fetchAllDocuments("test_1");
@@ -39,7 +39,7 @@ public class ApplicationTests {
     static class Config {
         @Bean(destroyMethod = "stop")
         public ElasticsearchContainer elasticsearchContainer() {
-            ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.9")
+            ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch-oss:7.9.3")
                     .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
             container.setPortBindings(Collections.singletonList(ELASTICSEARCH_PORT + ":9200"));
             container.start();
