@@ -271,7 +271,7 @@ ElasticsearchEvolution.configure()
 
 ### v0.2.1-SNAPSHOT
 
--   version updates (spring-boot 2.3.1.RELEASE)
+-   version updates (spring-boot 2.3.5.RELEASE)
 
 ### v0.2.0
 
