@@ -7,45 +7,48 @@ env:
   GPG_EXECUTABLE: gpg
 
 jobs:
-#  build-and-test-with-jdk:
-#    strategy:
-#      matrix:
-#        java: [ 8, 9, 10, 11, 12, 13, 14, 15 ]
-#      fail-fast: false
-#    runs-on: ubuntu-18.04
-#
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v2
-#      - name: Set up JDK ${{ matrix.java }}
-#        uses: actions/setup-java@v1
-#        with:
-#          java-version: ${{ matrix.java }}
-#      - name: Cache local Maven repository
-#        uses: actions/cache@v2
-#        with:
-#          path: ~/.m2/repository
-#          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-#          restore-keys: |
-#            ${{ runner.os }}-maven-
-#      - name: Build and test with Maven
-#        run: $MVN_CMD install
+  #  build-and-test-with-jdk:
+  #    strategy:
+  #      matrix:
+  #        java: [ 8, 9, 10, 11, 12, 13, 14, 15 ]
+  #      fail-fast: false
+  #    runs-on: ubuntu-18.04
+  #
+  #    steps:
+  #      - name: Checkout
+  #        uses: actions/checkout@v2
+  #      - name: Set up JDK ${{ matrix.java }}
+  #        uses: actions/setup-java@v1
+  #        with:
+  #          java-version: ${{ matrix.java }}
+  #      - name: Cache local Maven repository
+  #        uses: actions/cache@v2
+  #        with:
+  #          path: ~/.m2/repository
+  #          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+  #          restore-keys: |
+  #            ${{ runner.os }}-maven-
+  #      - name: Build and test with Maven
+  #        run: $MVN_CMD install
 
 
   release:
     # Release to maven central and create Github release
-#    needs: build-and-test-with-jdk
-#    if: fork = false AND tag IS NOT present AND type = push AND branch = release
-#    if: ${{ github.event_name == 'pull_request' && github.event.action == 'unassigned' }}
+    #    needs: build-and-test-with-jdk
+    #    if: fork = false AND tag IS NOT present AND type = push AND branch = release
+    #    if: ${{ github.event_name == 'pull_request' && github.event.action == 'unassigned' }}
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: import GPG secret key and ownertrust
+      - name: import GPG secret key
         env:
           GPG_SECRET_KEYS: ${{ secrets.GPG_SECRET_KEYS }}
+        run: echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
+      - name: import GPG ownertrust
+        env:
           GPG_OWNERTRUST: ${{ secrets.GPG_OWNERTRUST }}
-        run: echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import && echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+        run: echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
       - name: Set up JDK 11
         uses: actions/setup-java@v1
         with:
