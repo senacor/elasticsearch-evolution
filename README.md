@@ -19,7 +19,7 @@ Successful executed migration scripts will not be executed again!
 
 ## 2 Features
 
--   tested on Java 8, 9, 10, 11, 12, 13 and 14
+-   tested on Java 8, 9, 10, 11, 12, 13, 14 and 15
 -   runs on Spring-Boot 2.0, 2.1, 2.2 and 2.3 (and of course without Spring-Boot)
 -   runs on Elasticsearch version 7.5.0+
 -   highly configurable (e.g. location(s) of your migration files, migration files format pattern)
@@ -266,12 +266,11 @@ ElasticsearchEvolution.configure()
 ## 6 changelog
 ### v0.3.0-SNAPSHOT
 - version upgrade elasticsearch-rest-high-level-client to 7.5.0 (Es version < 7.5.0 are no longer supported)
-- version upgrade testcontainer to 1.15.0 
 - remove Spring-Boot 1.5 support
 
 ### v0.2.1-SNAPSHOT
 
--   version updates (spring-boot 2.3.1.RELEASE, commons-io 2.7)
+-   version updates (spring-boot 2.3.1.RELEASE, commons-io 2.8.0)
 
 ### v0.2.0
 
