@@ -41,10 +41,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: import GPG secret key
-        run: echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
-      - name: import GPG ownertrust
-        run: echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+      - name: import GPG secret key and ownertrust
+        env:
+          GPG_SECRET_KEYS: ${{ secrets.GPG_SECRET_KEYS }}
+          GPG_OWNERTRUST: ${{ secrets.GPG_OWNERTRUST }}
+        run: echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import && echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
       - name: Set up JDK 11
         uses: actions/setup-java@v1
         with:
@@ -57,6 +58,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Release to maven central
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         run: $MVN_CMD deploy -DskipTests=true -Drelease
 
       - name: prepare release version
