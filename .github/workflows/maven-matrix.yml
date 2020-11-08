@@ -1,12 +1,12 @@
 name: Maven Matrix Build
 
-on: [ push, pull_request ]
+on: [ push ]
 
 env:
   MVN_CMD: "./mvnw --settings .cicd.settings.xml -e -B -V"
 
 jobs:
-  build-and-test:
+  build-and-test-with-jdk:
     strategy:
       matrix:
         java: [ 8, 9, 10, 11, 12, 13, 14, 15 ]
@@ -15,10 +15,17 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.java }}
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
       - name: Build and test with Maven
         run: $MVN_CMD install
