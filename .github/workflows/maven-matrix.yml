@@ -4,6 +4,7 @@ on: [ push ]
 
 env:
   MVN_CMD: "./mvnw --settings .cicd.settings.xml -e -B -V"
+  GPG_EXECUTABLE: gpg
 
 jobs:
 #  build-and-test-with-jdk:
