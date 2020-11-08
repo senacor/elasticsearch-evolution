@@ -70,7 +70,7 @@ jobs:
           draft: false
           prerelease: ${{ env.IS_SNAPSHOT }}
       - name: Upload Release Assets spring-boot-starter-elasticsearch-evolution
-        id: upload-release-asset
+        id: upload-release-asset-spring-boot-starter-elasticsearch-evolution
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -80,7 +80,7 @@ jobs:
           asset_name: spring-boot-starter-elasticsearch-evolution-${{ env.PROJECT_VERSION }}.jar
           asset_content_type: application/java-archive
       - name: Upload Release Assets elasticsearch-evolution-core
-        id: upload-release-asset
+        id: upload-release-asset-elasticsearch-evolution-core
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
