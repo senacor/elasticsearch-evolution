@@ -49,7 +49,8 @@ jobs:
       script: $MVN_CMD install -DskipTests=true -Prelease
 
       before_deploy:
-        - source prepare_release.sh
+        - source prepare_release_version.sh
+        - source prepare_release_tag.sh
       deploy:
         - provider: script
           on:
