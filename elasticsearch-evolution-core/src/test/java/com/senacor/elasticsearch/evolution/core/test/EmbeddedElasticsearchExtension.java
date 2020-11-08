@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.SocketUtils;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
 import java.lang.annotation.ElementType;
@@ -69,7 +70,8 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
 
     private static ElasticsearchContainer createElasticsearchContainer(String esVersion) {
         logger.info("creating ElasticsearchContainer {} ...", esVersion);
-        ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch-oss:" + esVersion)
+        ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch-oss")
+                .withTag(esVersion))
                 .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
         int esHttpPort = SocketUtils.findAvailableTcpPort(5000, 30000);
         int esTransportPort = SocketUtils.findAvailableTcpPort(30001, 65535);

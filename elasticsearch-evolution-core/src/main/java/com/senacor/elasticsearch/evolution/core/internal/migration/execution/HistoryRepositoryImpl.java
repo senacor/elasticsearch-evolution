@@ -107,7 +107,8 @@ public class HistoryRepositoryImpl implements HistoryRepository {
         try {
             refresh(historyIndex);
             CountRequest countRequest = new CountRequest(historyIndex)
-                    .query(QueryBuilders.termQuery(MigrationScriptProtocolMapper.LOCKED_FIELD_NAME, true));
+                    .query(QueryBuilders.termQuery(MigrationScriptProtocolMapper.LOCKED_FIELD_NAME, true))
+                    .indicesOptions(IndicesOptions.lenientExpandOpen());
             CountResponse countResponse = restHighLevelClient.count(countRequest, DEFAULT);
             validateHttpStatus2xxOK(countResponse.status(), "isLocked");
 

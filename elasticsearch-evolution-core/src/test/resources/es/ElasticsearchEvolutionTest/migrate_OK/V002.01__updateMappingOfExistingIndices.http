@@ -1,4 +1,4 @@
-PUT test_*/_mappings/_doc${include_type_name}
+PUT test_*/_mappings
 Content-Type: application/json
 
 {
