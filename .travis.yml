@@ -3,7 +3,7 @@ language: java
 dist: bionic
 env:
   global:
-    - MVN_CMD="./mvnw --settings .travis.settings.xml -e -B -V"
+    - MVN_CMD="./mvnw --settings .cicd.settings.xml -e -B -V"
 
 services:
   - docker
