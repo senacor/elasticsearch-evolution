@@ -40,8 +40,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: import GPG details
-        run: echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import; echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+      - name: import GPG secret key
+        run: echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
+      - name: import GPG ownertrust
+        run: echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
       - name: Set up JDK 11
         uses: actions/setup-java@v1
         with:
@@ -65,7 +67,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:
-          tag_name: ${{ env.PROJECT_VERSION }}
+          tag_name: ${{ env.TRAVIS_TAG }}
           release_name: ${{ env.PROJECT_VERSION }}
           draft: false
           prerelease: ${{ env.IS_SNAPSHOT }}
