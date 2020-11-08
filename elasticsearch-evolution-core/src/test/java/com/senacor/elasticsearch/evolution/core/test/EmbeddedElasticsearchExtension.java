@@ -39,19 +39,10 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
     private static final Set<String> SUPPORTED_ES_VERSIONS = new HashSet<>(Arrays.asList(
             "7.9.3",
-            "7.9.2",
-            "7.9.1",
-            "7.9.0",
             "7.8.1",
-            "7.8.0",
             "7.7.1",
-            "7.7.0",
             "7.6.2",
-            "7.6.1",
-            "7.6.0",
-            "7.5.2",
-            "7.5.1",
-            "7.5.0"
+            "7.5.2"
     ));
 
     @Override
