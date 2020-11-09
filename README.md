@@ -270,7 +270,7 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.2.1-SNAPSHOT
+### v0.2.1
 
 -   version updates (spring-boot 2.3.5.RELEASE)
 
