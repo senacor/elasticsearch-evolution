@@ -1,6 +1,10 @@
 name: Maven Matrix Build
 
-on: [ push ]
+on:
+  push:
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron: '30 5 * * *'
 
 env:
   MVN_CMD: "./mvnw --settings .cicd.settings.xml -e -B -V"
