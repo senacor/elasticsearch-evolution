@@ -36,16 +36,11 @@ jobs:
     # Release to maven central and create Github release
     #    needs: build-and-test-with-jdk
     #    if: fork = false AND tag IS NOT present AND type = push AND branch = release
-    #    if: ${{ github.event_name == 'pull_request' && github.event.action == 'unassigned' }}
+        if: ${{ github.repository == 'senacor/elasticsearch-evolution' }}
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-#      - name: import GPG secret key and ownertrust
-#        env:
-#          GPG_OWNERTRUST: ${{ secrets.GPG_OWNERTRUST }}
-#          GPG_SECRET_KEYS: ${{ secrets.GPG_SECRET_KEYS }}
-#        run: ./import_gpg_key.sh
       - name: Import GPG key to sign maven build artifacts
         uses: crazy-max/ghaction-import-gpg@v3
         with:
@@ -84,6 +79,7 @@ jobs:
         with:
           tag_name: ${{ env.TRAVIS_TAG }}
           release_name: ${{ env.PROJECT_VERSION }}
+          body: ""
           draft: false
           prerelease: ${{ env.IS_SNAPSHOT }}
       - name: Upload Release Assets spring-boot-starter-elasticsearch-evolution
