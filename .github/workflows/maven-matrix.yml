@@ -41,15 +41,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+#      - name: import GPG secret key and ownertrust
+#        env:
+#          GPG_OWNERTRUST: ${{ secrets.GPG_OWNERTRUST }}
+#          GPG_SECRET_KEYS: ${{ secrets.GPG_SECRET_KEYS }}
+#        run: ./import_gpg_key.sh
+      - name: Import GPG key to sign maven build artifacts
+        uses: crazy-max/ghaction-import-gpg@v3
+        with:
+          gpg-private-key: ${{ secrets.GPG_SECRET_KEYS }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git-user-signingkey: true
+          git-commit-gpgsign: true
+      - name: list gpg keys
+        run: $GPG_EXECUTABLE --list-keys
       - name: Set up JDK 11
         uses: actions/setup-java@v1
         with:
           java-version: 11
-      - name: import GPG secret key and ownertrust
-        env:
-          GPG_OWNERTRUST: ${{ secrets.GPG_OWNERTRUST }}
-          GPG_SECRET_KEYS: ${{ secrets.GPG_SECRET_KEYS }}
-        run: ./import_gpg_key.sh
       - name: Cache local Maven repository
         uses: actions/cache@v2
         with:
