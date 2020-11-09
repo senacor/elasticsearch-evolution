@@ -8,9 +8,12 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core)
 [![Javadocs](https://www.javadoc.io/badge/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core.svg)](https://www.javadoc.io/doc/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core)
 [![Build Status](https://travis-ci.org/senacor/elasticsearch-evolution.svg?branch=master)](https://travis-ci.org/senacor/elasticsearch-evolution)
+[![Github build](https://github.com/senacor/elasticsearch-evolution/workflows/Maven%20Matrix%20Build/badge.svg?branch=master)](https://github.com/senacor/elasticsearch-evolution/actions?query=branch%3Amaster)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a629ba3201104ecc81c6af7671b29b05)](https://www.codacy.com/app/xtermi2/elasticsearch-evolution?utm_source=github.com&utm_medium=referral&utm_content=senacor/elasticsearch-evolution&utm_campaign=Badge_Grade)
 [![codebeat badge](https://codebeat.co/badges/29dc74db-88e2-4b26-963b-14eb340ae275)](https://codebeat.co/projects/github-com-senacor-elasticsearch-evolution-master)
 [![Coverage Status](https://coveralls.io/repos/github/senacor/elasticsearch-evolution/badge.svg?branch=master)](https://coveralls.io/github/senacor/elasticsearch-evolution?branch=master)
+![Lines of code](https://img.shields.io/tokei/lines/github/senacor/elasticsearch-evolution)
+![Libraries.io dependency status for GitHub repo](https://img.shields.io/librariesio/github/senacor/elasticsearch-evolution)
 
 ## 1 Evolve your Elasticsearch mapping easily and reliable across all your instances
 
@@ -268,9 +271,12 @@ ElasticsearchEvolution.configure()
 - version upgrade elasticsearch-rest-high-level-client to 7.5.0 (Es version < 7.5.0 are no longer supported)
 - remove Spring-Boot 1.5 support
 
-### v0.2.1-SNAPSHOT
+### v0.2.2-SNAPSHOT
+- ...
 
--   version updates (spring-boot 2.3.1.RELEASE, commons-io 2.8.0)
+### v0.2.1
+
+-   version updates (spring-boot 2.3.5.RELEASE)
 
 ### v0.2.0
 
