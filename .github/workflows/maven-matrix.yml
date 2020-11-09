@@ -36,7 +36,7 @@ jobs:
     # Release to maven central and create Github release
     #    needs: build-and-test-with-jdk
     #    if: fork = false AND tag IS NOT present AND type = push AND branch = release
-        if: ${{ github.repository == 'senacor/elasticsearch-evolution' }}
+    if: ${{ github.repository == 'senacor/elasticsearch-evolution' }}
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout
