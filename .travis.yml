@@ -3,7 +3,7 @@ language: java
 dist: bionic
 env:
   global:
-    - MVN_CMD="./mvnw --settings .travis.settings.xml -e -B -V"
+    - MVN_CMD="./mvnw --settings .cicd.settings.xml -e -B -V"
 
 services:
   - docker
@@ -49,7 +49,8 @@ jobs:
       script: $MVN_CMD install -DskipTests=true -Prelease
 
       before_deploy:
-        - source prepare_release.sh
+        - source prepare_release_version.sh
+        - source prepare_release_tag.sh
       deploy:
         - provider: script
           on:
