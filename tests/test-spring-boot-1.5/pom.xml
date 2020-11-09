@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>test-spring-boot-1.5</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.1</version>
     <description>Demo project for Spring Boot</description>
 
     <properties>
@@ -19,9 +19,10 @@
         <!-- override spring-boot default for compatibility with jdk 13 -->
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
 
-        <commons-io.version>2.6</commons-io.version>
+        <commons-io.version>2.8.0</commons-io.version>
         <elasticsearch.version>6.8.6</elasticsearch.version>
-        <testcontainers.elasticsearch.version>1.14.2</testcontainers.elasticsearch.version>
+        <!-- 1.15.0 does not work here. Image "docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.13" could not be found-->
+        <testcontainers.elasticsearch.version>1.14.3</testcontainers.elasticsearch.version>
     </properties>
 
     <dependencies>
@@ -67,7 +68,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.5</version>
+                <version>0.8.6</version>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>

@@ -8,9 +8,12 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core)
 [![Javadocs](https://www.javadoc.io/badge/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core.svg)](https://www.javadoc.io/doc/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core)
 [![Build Status](https://travis-ci.org/senacor/elasticsearch-evolution.svg?branch=master)](https://travis-ci.org/senacor/elasticsearch-evolution)
+[![Github build](https://github.com/senacor/elasticsearch-evolution/workflows/Maven%20Matrix%20Build/badge.svg)](https://github.com/senacor/elasticsearch-evolution/actions?query=workflow%3A%22Maven+Matrix+Build%22)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a629ba3201104ecc81c6af7671b29b05)](https://www.codacy.com/app/xtermi2/elasticsearch-evolution?utm_source=github.com&utm_medium=referral&utm_content=senacor/elasticsearch-evolution&utm_campaign=Badge_Grade)
 [![codebeat badge](https://codebeat.co/badges/29dc74db-88e2-4b26-963b-14eb340ae275)](https://codebeat.co/projects/github-com-senacor-elasticsearch-evolution-master)
 [![Coverage Status](https://coveralls.io/repos/github/senacor/elasticsearch-evolution/badge.svg?branch=master)](https://coveralls.io/github/senacor/elasticsearch-evolution?branch=master)
+![Lines of code](https://img.shields.io/tokei/lines/github/senacor/elasticsearch-evolution)
+![Libraries.io dependency status for GitHub repo](https://img.shields.io/librariesio/github/senacor/elasticsearch-evolution)
 
 ## 1 Evolve your Elasticsearch mapping easily and reliable across all your instances
 
@@ -19,7 +22,7 @@ Successful executed migration scripts will not be executed again!
 
 ## 2 Features
 
--   tested on Java 8, 9, 10, 11, 12, 13 and 14
+-   tested on Java 8, 9, 10, 11, 12, 13, 14 and 15
 -   runs on Spring-Boot 1.5, 2.0, 2.1, 2.2 and 2.3 (and of course without Spring-Boot)
 -   runs on Elasticsearch 7.x, 6.8.x, 6.7.x, 6.6.x, 6.5.x, 6.4.x, 6.3.x, 6.2.x
 -   highly configurable (e.g. location(s) of your migration files, migration files format pattern)
@@ -39,7 +42,7 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.1.3</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -47,7 +50,7 @@ Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and require
 
 ```xml
 <properties>
-    <elasticsearch.version>6.6.0</elasticsearch.version>
+    <elasticsearch.version>6.8.6</elasticsearch.version>
 </properties>
 ```
 
@@ -63,7 +66,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.1.3</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -154,7 +157,7 @@ The filename has to follow a pattern:
 -   starts with `esMigrationPrefix` which is by default `V` and is configurable.
 -   followed by a version, which have to be numeric and can be structured by separating the version parts with `.`
 -   followed by the `versionDescriptionSeparator`: `__`
--   followed ba a description which can be any text your filesystem supports
+-   followed by a description which can be any text your filesystem supports
 -   ended with `esMigrationSuffixes` which is by default `.http` and is configurable and case-insensitive.
 
 Elasticsearch-Evolution uses the version for ordering your scripts and enforces strict ordered execution of your scripts. Out-of-Order execution is not supported.
@@ -266,6 +269,10 @@ ElasticsearchEvolution.configure()
 ```
 
 ## 6 changelog
+
+### v0.2.1
+
+-   version updates (spring-boot 2.3.5.RELEASE)
 
 ### v0.2.0
 
