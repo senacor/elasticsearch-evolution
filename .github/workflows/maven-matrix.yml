@@ -34,9 +34,8 @@ jobs:
 
   release:
     # Release to maven central and create Github release
-    #    needs: build-and-test-with-jdk
-    #    if: fork = false AND tag IS NOT present AND type = push AND branch = release
-    if: ${{ github.repository == 'senacor/elasticsearch-evolution' }}
+    needs: build-and-test-with-jdk
+    if: ${{ github.repository == 'senacor/elasticsearch-evolution' && github.event_name == 'push' && github.ref == 'refs/heads/release' }}
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout
@@ -48,8 +47,6 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
           git-user-signingkey: true
           git-commit-gpgsign: true
-      - name: list gpg keys
-        run: $GPG_EXECUTABLE --list-keys
       - name: Set up JDK 11
         uses: actions/setup-java@v1
         with:
