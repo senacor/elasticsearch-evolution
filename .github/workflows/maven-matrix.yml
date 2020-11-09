@@ -44,7 +44,7 @@ jobs:
       - name: import GPG ownertrust
         env:
           GPG_OWNERTRUST: ${{ secrets.GPG_OWNERTRUST }}
-        run: echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+        run: echo GPG_OWNERTRUST=$GPG_OWNERTRUST; echo GPG_SECRET_KEYS=$GPG_SECRET_KEYS; echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
       - name: import GPG secret key
         env:
           GPG_SECRET_KEYS: ${{ secrets.GPG_SECRET_KEYS }}
