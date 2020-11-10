@@ -14,7 +14,7 @@
     <description>aggregator module for test projects</description>
 
     <properties>
-        <elasticsearch.version>7.6.2</elasticsearch.version>
+        <elasticsearch.version>7.5.0</elasticsearch.version>
     </properties>
 
     <modules>

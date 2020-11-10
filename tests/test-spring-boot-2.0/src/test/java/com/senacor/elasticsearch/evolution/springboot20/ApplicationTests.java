@@ -43,7 +43,7 @@ public class ApplicationTests {
 
             ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName
                     .parse("docker.elastic.co/elasticsearch/elasticsearch-oss")
-                    .withTag("7.9.3")
+                    .withTag(esVersion)
             ).withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
             container.setPortBindings(Collections.singletonList(ELASTICSEARCH_PORT + ":9200"));
             container.start();
