@@ -14,11 +14,11 @@
     <description>aggregator module for test projects</description>
 
     <properties>
+        <elasticsearch.version>7.6.2</elasticsearch.version>
     </properties>
 
     <modules>
         <module>migration-scripts</module>
-        <module>test-spring-boot-2.3-spring-data-es</module>
         <module>test-spring-boot-2.3</module>
         <module>test-spring-boot-2.2</module>
         <module>test-spring-boot-2.1-scriptsInJarFile</module>
