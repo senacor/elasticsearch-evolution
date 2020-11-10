@@ -36,11 +36,11 @@ jobs:
         run: $MVN_CMD install
       - name: Integration test with different ES, and Rest-High-Level-Client versions
         run: |
-          $MVN_CMD -f test/pom.xml verify -Delasticsearch.version=7.5.2
-          $MVN_CMD -f test/pom.xml verify -Delasticsearch.version=7.6.2
-          $MVN_CMD -f test/pom.xml verify -Delasticsearch.version=7.7.1
-          $MVN_CMD -f test/pom.xml verify -Delasticsearch.version=7.8.1
-          $MVN_CMD -f test/pom.xml verify -Delasticsearch.version=7.9.3
+          $MVN_CMD --file ./tests/pom.xml verify -Delasticsearch.version=7.5.2
+          $MVN_CMD --file ./tests/pom.xml verify -Delasticsearch.version=7.6.2
+          $MVN_CMD --file ./tests/pom.xml verify -Delasticsearch.version=7.7.1
+          $MVN_CMD --file ./tests/pom.xml verify -Delasticsearch.version=7.8.1
+          $MVN_CMD --file ./tests/pom.xml verify -Delasticsearch.version=7.9.3
 
 
   release:
