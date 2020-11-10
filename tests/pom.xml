@@ -18,13 +18,6 @@
 
     <modules>
         <module>migration-scripts</module>
-        <module>test-spring-boot-2.3-es-rest-high-level-client-7.5.0</module>
-        <module>test-spring-boot-2.3-es-rest-high-level-client-7.5.1</module>
-        <module>test-spring-boot-2.3-es-rest-high-level-client-7.5.2</module>
-        <module>test-spring-boot-2.3-es-rest-high-level-client-7.6.2</module>
-        <module>test-spring-boot-2.3-es-rest-high-level-client-7.7.1</module>
-        <module>test-spring-boot-2.3-es-rest-high-level-client-7.8.1</module>
-        <module>test-spring-boot-2.3-es-rest-high-level-client-7.9.3</module>
         <module>test-spring-boot-2.3-spring-data-es</module>
         <module>test-spring-boot-2.3</module>
         <module>test-spring-boot-2.2</module>

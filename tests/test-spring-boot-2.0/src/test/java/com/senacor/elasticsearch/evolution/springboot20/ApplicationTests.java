@@ -5,13 +5,14 @@ import org.elasticsearch.client.RestClient;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
+import org.testcontainers.utility.DockerImageName;
 
-import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.List;
 
@@ -38,9 +39,12 @@ public class ApplicationTests {
     @TestConfiguration
     static class Config {
         @Bean(destroyMethod = "stop")
-        public ElasticsearchContainer elasticsearchContainer() {
-            ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch-oss:7.9.3")
-                    .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
+        public ElasticsearchContainer elasticsearchContainer(@Value("${elasticsearch.version}") String esVersion) {
+
+            ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName
+                    .parse("docker.elastic.co/elasticsearch/elasticsearch-oss")
+                    .withTag("7.9.3")
+            ).withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
             container.setPortBindings(Collections.singletonList(ELASTICSEARCH_PORT + ":9200"));
             container.start();
             return container;
