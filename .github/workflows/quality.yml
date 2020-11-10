@@ -29,4 +29,6 @@ jobs:
       - name: Execute Maven coveralls Plugin
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        run: $MVN_CMD coveralls:report -DrepoToken=$COVERALLS_REPO_TOKEN -DserviceName=GitHub-Actions -DserviceBuildNumber=$GITHUB_RUN_NUMBER
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: $MVN_CMD coveralls:report -DrepoToken=$COVERALLS_REPO_TOKEN -DserviceName=GitHub-Actions
