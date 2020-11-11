@@ -20,7 +20,10 @@ jobs:
       - name: Cache local Maven repository
         uses: actions/cache@v2
         with:
-          path: ~/.m2/repository
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/com/senacor
+            ~/.m2/wrapper
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
@@ -32,3 +35,8 @@ jobs:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_EVENT_PATH: ${{ github.event_path }}
         run: $MVN_CMD coveralls:report -DrepoToken=$COVERALLS_REPO_TOKEN -DserviceName=GitHub-Actions
+      - name: Run codacy-coverage-reporter
+        uses: codacy/codacy-coverage-reporter-action@master
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          coverage-reports: elasticsearch-evolution-core/target/site/jacoco/jacoco.xml,spring-boot-starter-elasticsearch-evolution/target/site/jacoco/jacoco.xml
