@@ -30,6 +30,7 @@ jobs:
         with:
           path: |
             ~/.m2/repository
+            !~/.m2/repository/com/senacor
             ~/.m2/wrapper
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
@@ -62,6 +63,7 @@ jobs:
         with:
           path: |
             ~/.m2/repository
+            !~/.m2/repository/com/senacor
             ~/.m2/wrapper
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
