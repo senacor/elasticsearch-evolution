@@ -454,7 +454,10 @@ class MigrationServiceImplTest {
             assertThat(res.getError()).isNotEmpty();
             assertThat(res.getError().get())
                     .isInstanceOf(MigrationException.class)
-                    .hasMessage("execution of script '%s' failed with HTTP status %s: null", script.getFileNameInfo(), status.getStatus());
+                    .hasMessage("execution of script '%s' failed with HTTP status %s: Response(%s)",
+                            script.getFileNameInfo(),
+                            status.getStatus(),
+                            status.getStatus());
         }
 
         @ParameterizedTest
@@ -525,8 +528,9 @@ class MigrationServiceImplTest {
 
             assertThatThrownBy(() -> underTest.executePendingScripts(scripts))
                     .isInstanceOf(MigrationException.class)
-                    .hasMessage("execution of script '%s' failed with HTTP status %s: null",
+                    .hasMessage("execution of script '%s' failed with HTTP status %s: Response(%s)",
                             scripts.get(0).getFileNameInfo(),
+                            statusCode,
                             statusCode);
 
             InOrder order = inOrder(historyRepository, restClient);
@@ -614,6 +618,7 @@ class MigrationServiceImplTest {
         Response restResponse = mock(Response.class, withSettings().defaultAnswer(RETURNS_DEEP_STUBS));
         StatusLine statusLine = restResponse.getStatusLine();
         doReturn(statusCode).when(statusLine).getStatusCode();
+        doReturn("Response(" + statusCode + ")").when(restResponse).toString();
         return restResponse;
     }
 
