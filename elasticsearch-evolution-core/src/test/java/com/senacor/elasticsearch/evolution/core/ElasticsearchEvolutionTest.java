@@ -67,7 +67,7 @@ class ElasticsearchEvolutionTest {
 
         assertThatThrownBy(underTest::migrate)
                 .isInstanceOf(MigrationException.class)
-                .hasMessage("execution of script 'FileNameInfoImpl{version=1, description='createTemplateWithIndexMapping', scriptName='V001.00__createTemplateWithIndexMapping.http'}' failed with HTTP status 0: null");
+                .hasMessageStartingWith("execution of script 'FileNameInfoImpl{version=1, description='createTemplateWithIndexMapping', scriptName='V001.00__createTemplateWithIndexMapping.http'}' failed with HTTP status 0: ");
 
         InOrder order = inOrder(restHighLevelClient, restClient);
         order.verify(restHighLevelClient, times(3)).getLowLevelClient();
