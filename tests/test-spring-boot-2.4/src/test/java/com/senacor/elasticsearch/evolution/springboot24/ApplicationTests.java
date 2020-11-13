@@ -1,15 +1,13 @@
-package com.senacor.elasticsearch.evolution.springboot21;
+package com.senacor.elasticsearch.evolution.springboot24;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -18,11 +16,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(properties = {"spring.elasticsearch.rest.uris=http://localhost:" + ApplicationTests.ELASTICSEARCH_PORT})
 public class ApplicationTests {
 
-    static final int ELASTICSEARCH_PORT = 18769;
+    static final int ELASTICSEARCH_PORT = 18762;
 
     @Autowired
     private EsUtils esUtils;
@@ -39,7 +36,7 @@ public class ApplicationTests {
     @TestConfiguration
     static class Config {
         @Bean(destroyMethod = "stop")
-        public ElasticsearchContainer elasticsearchContainer(@Value("${elasticsearch.version:7.6.2}") String esVersion) {
+        public ElasticsearchContainer elasticsearchContainer(@Value("${elasticsearch.version:7.5.0}") String esVersion) {
             ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName
                     .parse("docker.elastic.co/elasticsearch/elasticsearch-oss")
                     .withTag(esVersion)

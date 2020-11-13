@@ -1,4 +1,4 @@
-package com.senacor.elasticsearch.evolution.springboot20;
+package com.senacor.elasticsearch.evolution.springboot23;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
@@ -36,7 +36,7 @@ public class ApplicationTests {
     @TestConfiguration
     static class Config {
         @Bean(destroyMethod = "stop")
-        public ElasticsearchContainer elasticsearchContainer(@Value("${elasticsearch.version:7.6.2}") String esVersion) {
+        public ElasticsearchContainer elasticsearchContainer(@Value("${elasticsearch.version:7.5.0}") String esVersion) {
             ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName
                     .parse("docker.elastic.co/elasticsearch/elasticsearch-oss")
                     .withTag(esVersion)

@@ -23,7 +23,6 @@
         <module>test-spring-boot-2.3</module>
         <module>test-spring-boot-2.2</module>
         <module>test-spring-boot-2.1-scriptsInJarFile</module>
-        <module>test-spring-boot-2.0</module>
     </modules>
 
 </project>

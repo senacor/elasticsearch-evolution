@@ -1,4 +1,4 @@
-package com.senacor.elasticsearch.evolution.springboot21;
+package com.senacor.elasticsearch.evolution.springboot24;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

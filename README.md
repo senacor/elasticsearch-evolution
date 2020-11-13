@@ -268,8 +268,8 @@ ElasticsearchEvolution.configure()
 ## 6 changelog
 
 ### v0.3.0-SNAPSHOT
-- version upgrade elasticsearch-rest-high-level-client to 7.5.0 (Es version < 7.5.0 are no longer supported)
-- remove Spring-Boot 1.5 support
+-   version upgrade elasticsearch-rest-high-level-client to 7.5.0 (Es version < 7.5.0 are no longer supported)
+-   remove Spring-Boot 1.5 and 2.0 support
 -   version updates (spring-boot 2.4.0)
 -   added spring-boot 2.4 compatibility tests
 

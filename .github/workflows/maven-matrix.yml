@@ -47,7 +47,8 @@ jobs:
         run: $MVN_CMD --file ./tests/pom.xml verify -Delasticsearch.version=7.8.1
       - name: Integration test es version 7.9.3
         run: $MVN_CMD --file ./tests/pom.xml verify -Delasticsearch.version=7.9.3
-
+      - name: Integration test es version 7.10.0
+        run: $MVN_CMD --file ./tests/pom.xml verify -Delasticsearch.version=7.10.0
 
   release:
     # Release to maven central and create Github release
