@@ -65,9 +65,9 @@ jobs:
       - name: Build and test with Maven
         run: $MVN_CMD install -DskipTests
       - name: elasticsearch test version ${{ matrix.elasticsearchVersion }}
+        run: $MVN_CMD --file ./tests/pom.xml clean verify -Delasticsearch.version=${{es-version}}
         with:
           es-version: ${{ matrix.elasticsearchVersion }}
-        run: $MVN_CMD --file ./tests/pom.xml clean verify -Delasticsearch.version=${{es-version}}
 
   release:
     # Release to maven central and create Github release
