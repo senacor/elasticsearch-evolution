@@ -17,7 +17,6 @@ jobs:
         java: [ 8, 9, 10, 11, 12, 13, 14, 15 ]
       fail-fast: false
     runs-on: ubuntu-18.04
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -37,18 +36,37 @@ jobs:
             ${{ runner.os }}-maven-
       - name: Build and test with Maven
         run: $MVN_CMD install
-      - name: Integration test es version 7.5.2
-        run: $MVN_CMD --file ./tests/pom.xml verify -Delasticsearch.version=7.5.2
-      - name: Integration test es version 7.6.2
-        run: $MVN_CMD --file ./tests/pom.xml verify -Delasticsearch.version=7.6.2
-      - name: Integration test es version 7.7.1
-        run: $MVN_CMD --file ./tests/pom.xml verify -Delasticsearch.version=7.7.1
-      - name: Integration test es version 7.8.1
-        run: $MVN_CMD --file ./tests/pom.xml verify -Delasticsearch.version=7.8.1
-      - name: Integration test es version 7.9.3
-        run: $MVN_CMD --file ./tests/pom.xml verify -Delasticsearch.version=7.9.3
-      - name: Integration test es version 7.10.0
-        run: $MVN_CMD --file ./tests/pom.xml verify -Delasticsearch.version=7.10.0
+
+build-and-test-with-es-version:
+  strategy:
+    matrix:
+      elasticsearchVersion: [ "7.10.0", "7.9.3", "7.8.1",
+                              "7.7.1", "7.6.2", "7.5.2" ]
+    fail-fast: false
+  runs-on: ubuntu-18.04
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Set up JDK 11
+      uses: actions/setup-java@v1
+      with:
+        java-version: 11
+    - name: Cache local Maven repository
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.m2/repository
+          !~/.m2/repository/com/senacor
+          ~/.m2/wrapper
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - name: Build and test with Maven
+      run: $MVN_CMD install -DskipTests
+    - name: elasticsearch test version ${{ matrix.elasticsearchVersion }}
+      with:
+        es-version: ${{ matrix.elasticsearchVersion }}
+      run: $MVN_CMD --file ./tests/pom.xml clean verify -Delasticsearch.version=${{es-version}}
 
   release:
     # Release to maven central and create Github release
