@@ -19,10 +19,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
@@ -37,14 +34,14 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
 
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
-    private static final Set<String> SUPPORTED_ES_VERSIONS = new HashSet<>(Arrays.asList(
+    private static final SortedSet<String> SUPPORTED_ES_VERSIONS = Collections.unmodifiableSortedSet(new TreeSet<>(Arrays.asList(
             "7.10.0",
             "7.9.3",
             "7.8.1",
             "7.7.1",
             "7.6.2",
             "7.5.2"
-    ));
+    )));
 
     @Override
     public void postProcessTestInstance(Object testInstance, ExtensionContext context) {
@@ -98,8 +95,9 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     }
 
     /**
-     * provides
-     * - ElasticsearchContainer
+     * provides in this order:
+     * - Elasticsearch Version
+     * - EsUtils
      * - RestHighLevelClient
      */
     public static class ElasticsearchArgumentsProvider implements ArgumentsProvider {
@@ -115,7 +113,6 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
                             .map(filterPattern -> !version.matches(filterPattern))
                             .orElse(true)
                     )
-                    .sorted()
                     .map(esVersion -> {
                         ElasticsearchContainer elasticsearchContainer = getStore(context)
                                 .getOrComputeIfAbsent(esVersion, EmbeddedElasticsearchExtension::createElasticsearchContainer, ElasticsearchContainer.class);
