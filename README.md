@@ -30,6 +30,10 @@ Successful executed migration scripts will not be executed again!
 -   supports microservices / multiple parallel running instances via logical database locks
 -   ready to use default configuration
 -   line comments in migration files
+| Compatibility                    | Spring Boot                  | Elasticsearch        |
+|----------------------------------|------------------------------|----------------------|
+| elasticsearch-evolution >= 0.3.0 | 2.1, 2.2, 2.3, 2.4           | 7.5.x and later      |
+| elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4 | 7.0.x - 7.4.x, 6.8.x |
 
 ## 3 Quickstart
 
@@ -45,11 +49,11 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 </dependency>
 ```
 
-Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and requires at minimum version 7.5.0. Spring boot uses a older version, so update it in your pom.xml:
+Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and requires at minimum version 7.5.2. Spring boot could use a older version, depending on your Spring Boot version, so update it in your pom.xml:
 
 ```xml
 <properties>
-    <elasticsearch.version>7.5.0</elasticsearch.version>
+    <elasticsearch.version>7.5.2</elasticsearch.version>
 </properties>
 ```
 
@@ -268,7 +272,7 @@ ElasticsearchEvolution.configure()
 ## 6 changelog
 
 ### v0.3.0-SNAPSHOT
--   version upgrade elasticsearch-rest-high-level-client to 7.5.0 (Es version < 7.5.0 are no longer supported)
+-   version upgrade elasticsearch-rest-high-level-client to 7.5.2 (Es version < 7.5.0 are no longer supported)
 -   remove Spring-Boot 1.5 and 2.0 support
 -   version updates (spring-boot 2.4.0)
 -   added spring-boot 2.4 compatibility tests

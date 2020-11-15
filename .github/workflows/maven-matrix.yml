@@ -69,7 +69,7 @@ jobs:
 
   release:
     # Release to maven central and create Github release
-    needs: build-and-test-with-jdk
+    needs: build-and-test-with-jdk, build-and-test-with-es-version
     if: ${{ github.repository == 'senacor/elasticsearch-evolution' && github.event_name == 'push' && github.ref == 'refs/heads/release' }}
     runs-on: ubuntu-18.04
     steps:
