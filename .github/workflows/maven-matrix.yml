@@ -54,10 +54,11 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
           git-user-signingkey: true
           git-commit-gpgsign: true
-      - name: Set up JDK 11
+      - name: Set up JDK 8
+        # with JDK 11 the maven-javadoc-plugin > 3.0.1 fails with "cannot find symbol org.elasticsearch.*"
         uses: actions/setup-java@v1
         with:
-          java-version: 11
+          java-version: 8
       - name: Cache local Maven repository
         uses: actions/cache@v2
         with:
