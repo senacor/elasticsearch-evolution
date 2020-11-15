@@ -65,9 +65,10 @@ jobs:
         run: $MVN_CMD install -DskipTests
       - name: elasticsearch test version ${{ matrix.elasticsearchVersion }}
         run: $MVN_CMD --file ./tests/pom.xml clean verify -Delasticsearch.version=${{ matrix.elasticsearchVersion }}
+
   release-dry-run:
     # this will just build like the reals release job, but not do a release (dry run)
-    needs: build-and-test-with-jdk
+    needs: [build-and-test-with-jdk, build-and-test-with-es-version]
     if: ${{ github.ref != 'refs/heads/release' }}
     runs-on: ubuntu-18.04
     steps:
