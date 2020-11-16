@@ -12,16 +12,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.SocketUtils;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
@@ -36,23 +34,17 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
 
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
-    private static final Set<String> SUPPORTED_ES_VERSIONS = new HashSet<>(Arrays.asList(
+    private static final SortedSet<String> SUPPORTED_ES_VERSIONS = Collections.unmodifiableSortedSet(new TreeSet<>(Arrays.asList(
             "7.10.0",
             "7.9.3",
             "7.8.1",
             "7.7.1",
             "7.6.2",
-            "7.5.2",
-            "7.4.2",
-            "7.3.2",
-            "7.2.1",
-            "7.1.1",
-            "7.0.1",
-            "6.8.13"
-    ));
+            "7.5.2"
+    )));
 
     @Override
-    public void postProcessTestInstance(Object testInstance, ExtensionContext context) throws Exception {
+    public void postProcessTestInstance(Object testInstance, ExtensionContext context) {
         SUPPORTED_ES_VERSIONS.parallelStream()
                 .forEach(esVersion -> getStore(context)
                         .getOrComputeIfAbsent(esVersion, EmbeddedElasticsearchExtension::createElasticsearchContainer, ElasticsearchContainer.class));
@@ -67,7 +59,8 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
 
     private static ElasticsearchContainer createElasticsearchContainer(String esVersion) {
         logger.info("creating ElasticsearchContainer {} ...", esVersion);
-        ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch-oss:" + esVersion)
+        ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch-oss")
+                .withTag(esVersion))
                 .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
         int esHttpPort = SocketUtils.findAvailableTcpPort(5000, 30000);
         int esTransportPort = SocketUtils.findAvailableTcpPort(30001, 65535);
@@ -102,13 +95,14 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     }
 
     /**
-     * provides
-     * - ElasticsearchContainer
+     * provides in this order:
+     * - Elasticsearch Version
+     * - EsUtils
      * - RestHighLevelClient
      */
     public static class ElasticsearchArgumentsProvider implements ArgumentsProvider {
         @Override
-        public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
+        public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
             Optional<String> versionFilterPattern = context.getTestMethod()
                     .map(method -> method.getDeclaredAnnotation(IgnoreEsVersion.class))
                     .map(IgnoreEsVersion::value);
@@ -119,7 +113,6 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
                             .map(filterPattern -> !version.matches(filterPattern))
                             .orElse(true)
                     )
-                    .sorted()
                     .map(esVersion -> {
                         ElasticsearchContainer elasticsearchContainer = getStore(context)
                                 .getOrComputeIfAbsent(esVersion, EmbeddedElasticsearchExtension::createElasticsearchContainer, ElasticsearchContainer.class);

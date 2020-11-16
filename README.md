@@ -22,14 +22,18 @@ Successful executed migration scripts will not be executed again!
 ## 2 Features
 
 -   tested on Java 8, 9, 10, 11, 12, 13, 14 and 15
--   runs on Spring-Boot 1.5, 2.0, 2.1, 2.2, 2.3 and 2.4 (and of course without Spring-Boot)
--   runs on Elasticsearch 7.x, 6.8.x, 6.7.x, 6.6.x, 6.5.x, 6.4.x, 6.3.x, 6.2.x
+-   runs on Spring-Boot 2.1, 2.2, 2.3 and 2.4 (and of course without Spring-Boot)
+-   runs on Elasticsearch version 7.5.0+
 -   highly configurable (e.g. location(s) of your migration files, migration files format pattern)
 -   placeholder substitution in migration scripts
 -   easily extendable to your needs
 -   supports microservices / multiple parallel running instances via logical database locks
 -   ready to use default configuration
 -   line comments in migration files
+| Compatibility                    | Spring Boot                  | Elasticsearch        |
+|----------------------------------|------------------------------|----------------------|
+| elasticsearch-evolution >= 0.3.0 | 2.1, 2.2, 2.3, 2.4           | 7.5.x and later      |
+| elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4 | 7.0.x - 7.4.x, 6.8.x |
 
 ## 3 Quickstart
 
@@ -41,15 +45,15 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.2.1</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
-Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and requires at minimum version 6.6.0. Spring boot uses a older version, so update it in your pom.xml:
+Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and requires at minimum version 7.5.2. Spring boot could use a older version, depending on your Spring Boot version, so update it in your pom.xml:
 
 ```xml
 <properties>
-    <elasticsearch.version>6.8.6</elasticsearch.version>
+    <elasticsearch.version>7.5.2</elasticsearch.version>
 </properties>
 ```
 
@@ -65,7 +69,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
@@ -104,17 +108,15 @@ Content-Type: application/json
     "number_of_shards": 1
   },
   "mappings": {
-    "_doc": {
-      "properties": {
-        "version": {
-          "type": "keyword",
-          "ignore_above": 20,
-          "similarity": "boolean"
-        },
-        "locked": {
-          "type": "boolean"
-        }
-      }
+    "properties": {
+    "version": {
+      "type": "keyword",
+      "ignore_above": 20,
+      "similarity": "boolean"
+    },
+    "locked": {
+      "type": "boolean"
+    }
     }
   }
 }
@@ -270,7 +272,8 @@ ElasticsearchEvolution.configure()
 ## 6 changelog
 
 ### v0.3.0-SNAPSHOT
-
+-   version upgrade elasticsearch-rest-high-level-client to 7.5.2 (Es version < 7.5.0 are no longer supported)
+-   remove Spring-Boot 1.5 and 2.0 support
 -   version updates (spring-boot 2.4.0)
 -   added spring-boot 2.4 compatibility tests
 
