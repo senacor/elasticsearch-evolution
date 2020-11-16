@@ -30,6 +30,7 @@ Successful executed migration scripts will not be executed again!
 -   supports microservices / multiple parallel running instances via logical database locks
 -   ready to use default configuration
 -   line comments in migration files
+
 | Compatibility                    | Spring Boot                  | Elasticsearch        |
 |----------------------------------|------------------------------|----------------------|
 | elasticsearch-evolution >= 0.3.0 | 2.1, 2.2, 2.3, 2.4           | 7.5.x and later      |
