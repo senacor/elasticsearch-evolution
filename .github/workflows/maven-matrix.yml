@@ -106,46 +106,6 @@ jobs:
       - name: prepare release version
         run: source prepare_release_version.sh
 
-  release-dry-run:
-    # this will just build like the reals release job, but not do a release (dry run)
-    needs: [build-and-test-with-jdk, build-and-test-with-es-version]
-    if: ${{ github.ref != 'refs/heads/release' }}
-    runs-on: ubuntu-18.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Import GPG key to sign maven build artifacts
-        uses: crazy-max/ghaction-import-gpg@v3
-        with:
-          gpg-private-key: ${{ secrets.GPG_SECRET_KEYS }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          git-user-signingkey: true
-          git-commit-gpgsign: true
-      - name: Set up JDK 8
-        # with JDK 11 the maven-javadoc-plugin > 3.0.1 fails with "cannot find symbol org.elasticsearch.*"
-        uses: actions/setup-java@v1
-        with:
-          java-version: 8
-      - name: Cache local Maven repository
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.m2/repository
-            !~/.m2/repository/com/senacor
-            ~/.m2/wrapper
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-      - name: Release to maven central
-        env:
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        run: $MVN_CMD deploy -DskipTests=true -Drelease -Dmaven.deploy.skip=true -DskipNexusStagingDeployMojo=true
-
-      - name: prepare release version
-        run: source prepare_release_version.sh
-
   release:
     # Release to maven central and create Github release
     needs: [build-and-test-with-jdk, build-and-test-with-es-version]
