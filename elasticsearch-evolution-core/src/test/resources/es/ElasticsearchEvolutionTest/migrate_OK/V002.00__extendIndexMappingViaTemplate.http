@@ -1,4 +1,4 @@
-PUT /_template/test_2${include_type_name}
+PUT /_template/test_2
 Content-Type: application/json
 
 {
@@ -8,7 +8,6 @@ Content-Type: application/json
   "order": 2,
   "version": 2,
   "mappings": {
-    "_doc": {
       "properties": {
         "searchable": {
           "properties": {
@@ -35,6 +34,5 @@ Content-Type: application/json
           }
         }
       }
-    }
   }
 }

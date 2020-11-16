@@ -103,7 +103,7 @@ public class MigrationServiceImpl implements MigrationService {
         logger.info("executing script {}", scriptToExecute.getFileNameInfo().getScriptName());
         boolean success = false;
         long startTimeInMillis = System.currentTimeMillis();
-        Optional error = Optional.empty();
+        Optional<RuntimeException> error = Optional.empty();
         try {
             Request request = new Request(scriptToExecute.getMigrationScriptRequest().getHttpMethod().name(),
                     scriptToExecute.getMigrationScriptRequest().getPath());
@@ -117,6 +117,7 @@ public class MigrationServiceImpl implements MigrationService {
                 }
                 request.setEntity(new NStringEntity(scriptToExecute.getMigrationScriptRequest().getBody(), contentType));
             }
+
             RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
             scriptToExecute.getMigrationScriptRequest().getHttpHeader()
                     .forEach(builder::addHeader);

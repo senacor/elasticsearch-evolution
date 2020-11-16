@@ -7,8 +7,7 @@
 [![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core)
 [![Javadocs](https://www.javadoc.io/badge/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core.svg)](https://www.javadoc.io/doc/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core)
-[![Build Status](https://travis-ci.org/senacor/elasticsearch-evolution.svg?branch=master)](https://travis-ci.org/senacor/elasticsearch-evolution)
-[![Github build](https://github.com/senacor/elasticsearch-evolution/workflows/Maven%20Matrix%20Build/badge.svg)](https://github.com/senacor/elasticsearch-evolution/actions?query=workflow%3A%22Maven+Matrix+Build%22)
+[![Github build](https://github.com/senacor/elasticsearch-evolution/workflows/Maven%20Matrix%20Build/badge.svg?branch=master)](https://github.com/senacor/elasticsearch-evolution/actions?query=branch%3Amaster)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/a629ba3201104ecc81c6af7671b29b05)](https://www.codacy.com/app/xtermi2/elasticsearch-evolution?utm_source=github.com&utm_medium=referral&utm_content=senacor/elasticsearch-evolution&utm_campaign=Badge_Grade)
 [![codebeat badge](https://codebeat.co/badges/29dc74db-88e2-4b26-963b-14eb340ae275)](https://codebeat.co/projects/github-com-senacor-elasticsearch-evolution-master)
 [![Coverage Status](https://coveralls.io/repos/github/senacor/elasticsearch-evolution/badge.svg?branch=master)](https://coveralls.io/github/senacor/elasticsearch-evolution?branch=master)
@@ -23,14 +22,19 @@ Successful executed migration scripts will not be executed again!
 ## 2 Features
 
 -   tested on Java 8, 9, 10, 11, 12, 13, 14 and 15
--   runs on Spring-Boot 1.5, 2.0, 2.1, 2.2 and 2.3 (and of course without Spring-Boot)
--   runs on Elasticsearch 7.x, 6.8.x, 6.7.x, 6.6.x, 6.5.x, 6.4.x, 6.3.x, 6.2.x
+-   runs on Spring-Boot 2.1, 2.2, 2.3 and 2.4 (and of course without Spring-Boot)
+-   runs on Elasticsearch version 7.5.0+
 -   highly configurable (e.g. location(s) of your migration files, migration files format pattern)
 -   placeholder substitution in migration scripts
 -   easily extendable to your needs
 -   supports microservices / multiple parallel running instances via logical database locks
 -   ready to use default configuration
 -   line comments in migration files
+
+| Compatibility                    | Spring Boot                  | Elasticsearch        |
+|----------------------------------|------------------------------|----------------------|
+| elasticsearch-evolution >= 0.3.0 | 2.1, 2.2, 2.3, 2.4           | 7.5.x and later      |
+| elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4 | 7.0.x - 7.4.x, 6.8.x |
 
 ## 3 Quickstart
 
@@ -42,15 +46,15 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
-Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and requires at minimum version 6.6.0. Spring boot uses a older version, so update it in your pom.xml:
+Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and requires at minimum version 7.5.2. Spring boot could use a older version, depending on your Spring Boot version, so update it in your pom.xml:
 
 ```xml
 <properties>
-    <elasticsearch.version>6.8.6</elasticsearch.version>
+    <elasticsearch.version>7.5.2</elasticsearch.version>
 </properties>
 ```
 
@@ -66,7 +70,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
@@ -105,17 +109,15 @@ Content-Type: application/json
     "number_of_shards": 1
   },
   "mappings": {
-    "_doc": {
-      "properties": {
-        "version": {
-          "type": "keyword",
-          "ignore_above": 20,
-          "similarity": "boolean"
-        },
-        "locked": {
-          "type": "boolean"
-        }
-      }
+    "properties": {
+    "version": {
+      "type": "keyword",
+      "ignore_above": 20,
+      "similarity": "boolean"
+    },
+    "locked": {
+      "type": "boolean"
+    }
     }
   }
 }
@@ -269,6 +271,12 @@ ElasticsearchEvolution.configure()
 ```
 
 ## 6 changelog
+
+### v0.3.0-SNAPSHOT
+-   version upgrade elasticsearch-rest-high-level-client to 7.5.2 (Es version < 7.5.0 are no longer supported)
+-   remove Spring-Boot 1.5 and 2.0 support
+-   version updates (spring-boot 2.4.0)
+-   added spring-boot 2.4 compatibility tests
 
 ### v0.2.1
 
