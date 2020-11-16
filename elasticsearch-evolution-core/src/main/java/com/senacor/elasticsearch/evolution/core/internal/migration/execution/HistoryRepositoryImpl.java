@@ -92,7 +92,6 @@ public class HistoryRepositoryImpl implements HistoryRepository {
             HashMap<String, Object> source = migrationScriptProtocolMapper.mapToMap(migrationScriptProtocol);
             IndexResponse res = restHighLevelClient.index(
                     new IndexRequest(historyIndex)
-                            .type(INDEX_TYPE_DOC)
                             .id(requireNonNull(migrationScriptProtocol.getVersion(), "migrationScriptProtocol.version must not be null").getVersion())
                             .source(source),
                     DEFAULT);
@@ -108,9 +107,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
         try {
             refresh(historyIndex);
             CountRequest countRequest = new CountRequest(historyIndex)
-                    .source(new SearchSourceBuilder()
-                            .query(QueryBuilders
-                                    .termQuery(MigrationScriptProtocolMapper.LOCKED_FIELD_NAME, true)))
+                    .query(QueryBuilders.termQuery(MigrationScriptProtocolMapper.LOCKED_FIELD_NAME, true))
                     .indicesOptions(IndicesOptions.lenientExpandOpen());
             CountResponse countResponse = restHighLevelClient.count(countRequest, DEFAULT);
             validateHttpStatus2xxOK(countResponse.status(), "isLocked");

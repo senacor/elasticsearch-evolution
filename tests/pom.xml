@@ -14,6 +14,7 @@
     <description>aggregator module for test projects</description>
 
     <properties>
+        <elasticsearch.version>7.5.2</elasticsearch.version>
     </properties>
 
     <modules>
@@ -22,8 +23,6 @@
         <module>test-spring-boot-2.3</module>
         <module>test-spring-boot-2.2</module>
         <module>test-spring-boot-2.1-scriptsInJarFile</module>
-        <module>test-spring-boot-2.0</module>
-        <module>test-spring-boot-1.5</module>
     </modules>
 
 </project>

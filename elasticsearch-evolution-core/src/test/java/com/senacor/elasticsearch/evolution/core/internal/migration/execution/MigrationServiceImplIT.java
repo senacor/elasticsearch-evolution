@@ -49,7 +49,7 @@ class MigrationServiceImplIT {
     @Nested
     class executeScript {
 
-        @ParameterizedTest
+        @ParameterizedTest(name = "esVersion: {0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
         void OK_indexDocumentIsWrittenToElasticsearch(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
             String index = "myindex";
