@@ -38,8 +38,9 @@ Successful executed migration scripts will not be executed again!
 
 NOTE: When you run on Java 11 and using spring-boot 2.2 or 2.3 and you hit [this issue](https://github.com/ronmamo/reflections/issues/279) 
 You have 2 options: 
-* downgrade to `org.reflections:reflections:0.9.11` via defining this dependency explicitly 
-* use spring boot 2.3.6
+
+-   downgrade to `org.reflections:reflections:0.9.11` via defining this dependency explicitly 
+-   use spring boot 2.3.6
 
 ## 3 Quickstart
 
