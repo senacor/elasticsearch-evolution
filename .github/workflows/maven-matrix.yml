@@ -40,7 +40,7 @@ jobs:
   build-and-test-with-es-version:
     strategy:
       matrix:
-        elasticsearchVersion: [ "7.10.1", "7.9.3", "7.8.1",
+        elasticsearchVersion: [ "7.10.2", "7.9.3", "7.8.1",
                                 "7.7.1", "7.6.2", "7.5.2" ]
       fail-fast: false
     runs-on: ubuntu-18.04
@@ -67,7 +67,7 @@ jobs:
         run: $MVN_CMD --file ./tests/pom.xml clean verify -Delasticsearch.version=${{ matrix.elasticsearchVersion }}
 
   release-dry-run:
-    # this will just build like the reals release job, but not do a release (dry run)
+    # this will just build like the real release job, but not do a release (dry run)
     needs: [build-and-test-with-jdk, build-and-test-with-es-version]
     if: ${{ github.ref != 'refs/heads/release' }}
     runs-on: ubuntu-18.04
