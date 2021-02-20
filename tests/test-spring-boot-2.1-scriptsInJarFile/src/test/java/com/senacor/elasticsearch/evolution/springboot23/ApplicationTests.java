@@ -41,7 +41,7 @@ public class ApplicationTests {
         @Bean(destroyMethod = "stop")
         public ElasticsearchContainer elasticsearchContainer(@Value("${elasticsearch.version:7.5.2}") String esVersion) {
             ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName
-                    .parse("docker.elastic.co/elasticsearch/elasticsearch-oss")
+                    .parse("docker.elastic.co/elasticsearch/elasticsearch")
                     .withTag(esVersion)
             ).withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
             container.setPortBindings(Collections.singletonList(ELASTICSEARCH_PORT + ":9200"));
