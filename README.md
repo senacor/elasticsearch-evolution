@@ -279,6 +279,7 @@ ElasticsearchEvolution.configure()
 
 ### v0.3.1-SNAPSHOT
 
+-   fixed issue [#27](https://github.com/senacor/elasticsearch-evolution/issues/27)
 -   version updates (spring-boot 2.4.3)
 
 ### v0.3.0

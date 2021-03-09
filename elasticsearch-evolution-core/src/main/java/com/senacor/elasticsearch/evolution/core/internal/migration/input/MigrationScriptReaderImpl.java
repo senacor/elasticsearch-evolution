@@ -4,8 +4,10 @@ import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptReader;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 import org.reflections.Reflections;
-import org.reflections.ReflectionsException;
 import org.reflections.scanners.ResourcesScanner;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,14 +17,18 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.Collections.emptySet;
 
 /**
  * @author Andreas Keefer
@@ -121,20 +127,23 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
     }
 
     private Stream<RawMigrationScript> readScriptsFromClassPath(String location) {
-        String locationWithoutPrefix = location.substring(CLASSPATH_PREFIX.length());
+        String locationWithoutPrefixAsPackageNotation = location.substring(CLASSPATH_PREFIX.length())
+                .replace("/", ".");
 
-        Reflections reflections = new Reflections(locationWithoutPrefix.replace("/", "."), new ResourcesScanner());
+        final Collection<URL> urls = ClasspathHelper.forPackage(locationWithoutPrefixAsPackageNotation);
         final Set<String> resources;
-        try {
+        if (urls.isEmpty()) {
+            // https://github.com/senacor/elasticsearch-evolution/issues/27
+            // when the package is empty or does not exist, Reflections can't find any URLs to scan for
+            resources = emptySet();
+        } else {
+            Reflections reflections = new Reflections(new ConfigurationBuilder()
+                    .setScanners(new ResourcesScanner())
+                    .filterInputsBy(new FilterBuilder().includePackage(locationWithoutPrefixAsPackageNotation))
+                    .setUrls(urls));
             resources = reflections.getResources(this::isValidFilename);
-        } catch (ReflectionsException e) {
-            if ("Scanner ResourcesScanner was not configured".equals(e.getMessage())) {
-                // https://github.com/senacor/elasticsearch-evolution/issues/27
-                // when the package is empty, Reflections can't find any URLs to scan for and then throws this Exception
-                return Stream.empty();
-            }
-            throw e;
         }
+
         return resources.stream().flatMap(resource -> {
             logger.debug("reading migration script '{}' from classpath...", resource);
             try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(getInputStream(resource), encoding))) {
