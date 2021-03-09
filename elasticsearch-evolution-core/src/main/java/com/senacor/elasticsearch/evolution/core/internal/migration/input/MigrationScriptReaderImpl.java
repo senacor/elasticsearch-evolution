@@ -4,6 +4,7 @@ import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptReader;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 import org.reflections.Reflections;
+import org.reflections.ReflectionsException;
 import org.reflections.scanners.ResourcesScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,7 +124,17 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         String locationWithoutPrefix = location.substring(CLASSPATH_PREFIX.length());
 
         Reflections reflections = new Reflections(locationWithoutPrefix.replace("/", "."), new ResourcesScanner());
-        Set<String> resources = reflections.getResources(this::isValidFilename);
+        final Set<String> resources;
+        try {
+            resources = reflections.getResources(this::isValidFilename);
+        } catch (ReflectionsException e) {
+            if ("Scanner ResourcesScanner was not configured".equals(e.getMessage())) {
+                // https://github.com/senacor/elasticsearch-evolution/issues/27
+                // when the package is empty, Reflections can't find any URLs to scan for and then throws this Exception
+                return Stream.empty();
+            }
+            throw e;
+        }
         return resources.stream().flatMap(resource -> {
             logger.debug("reading migration script '{}' from classpath...", resource);
             try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(getInputStream(resource), encoding))) {
