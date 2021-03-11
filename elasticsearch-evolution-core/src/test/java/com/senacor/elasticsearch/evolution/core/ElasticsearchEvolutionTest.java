@@ -17,8 +17,7 @@ import org.mockito.Mockito;
 import java.io.IOException;
 
 import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.*;
@@ -97,6 +96,26 @@ class ElasticsearchEvolutionTest {
         order.verify(restHighLevelClient, times(3)).getLowLevelClient();
         order.verify(restClient).getNodes();
         order.verifyNoMoreInteractions();
+    }
+
+    @Test
+    void migrate_empty_location() {
+        ElasticsearchEvolution underTest = ElasticsearchEvolution.configure()
+                .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/empty_location"))
+                .load(restHighLevelClient);
+
+        assertThatCode(underTest::migrate)
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void migrate_non_existing_location() {
+        ElasticsearchEvolution underTest = ElasticsearchEvolution.configure()
+                .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/does_not_exist"))
+                .load(restHighLevelClient);
+
+        assertThatCode(underTest::migrate)
+                .doesNotThrowAnyException();
     }
 
     @Test
