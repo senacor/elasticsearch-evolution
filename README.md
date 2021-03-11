@@ -277,7 +277,7 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.3.1-SNAPSHOT
+### v0.3.1
 
 -   fixed issue [#29](https://github.com/senacor/elasticsearch-evolution/issues/29)
 -   fixed issue [#27](https://github.com/senacor/elasticsearch-evolution/issues/27)
