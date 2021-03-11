@@ -35,7 +35,8 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
     private static final SortedSet<String> SUPPORTED_ES_VERSIONS = Collections.unmodifiableSortedSet(new TreeSet<>(Arrays.asList(
-            "7.10.0",
+            "7.11.2",
+            "7.10.2",
             "7.9.3",
             "7.8.1",
             "7.7.1",
@@ -59,7 +60,7 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
 
     private static ElasticsearchContainer createElasticsearchContainer(String esVersion) {
         logger.info("creating ElasticsearchContainer {} ...", esVersion);
-        ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch-oss")
+        ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch")
                 .withTag(esVersion))
                 .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
         int esHttpPort = SocketUtils.findAvailableTcpPort(5000, 30000);

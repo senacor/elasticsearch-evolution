@@ -33,7 +33,8 @@ import java.util.Arrays;
         "org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration" // since spring-boot 1.5
 })
 @AutoConfigureAfter(name = {
-        "org.springframework.boot.autoconfigure.elasticsearch.rest.RestClientAutoConfiguration" // since spring-boot 2.1
+        "org.springframework.boot.autoconfigure.elasticsearch.rest.RestClientAutoConfiguration", // spring-boot 2.1 / 2.2
+        "org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration" // spring-boot 2.3+
 })
 public class ElasticsearchEvolutionAutoConfiguration {
 

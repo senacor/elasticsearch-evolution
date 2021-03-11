@@ -36,6 +36,11 @@ Successful executed migration scripts will not be executed again!
 | elasticsearch-evolution >= 0.3.0 | 2.1, 2.2, 2.3, 2.4           | 7.5.x and later      |
 | elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4 | 7.0.x - 7.4.x, 6.8.x |
 
+NOTE: When you run on Java 11 and using spring-boot 2.2 or 2.3 and you hit [this issue](https://github.com/ronmamo/reflections/issues/279), you have 2 options: 
+
+-   downgrade to `org.reflections:reflections:0.9.11` via defining this dependency explicitly 
+-   use spring boot 2.3.6+
+
 ## 3 Quickstart
 
 ### 3.1 Quickstart with Spring-Boot starter
@@ -272,7 +277,14 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
+### v0.3.1-SNAPSHOT
+
+-   fixed issue [#29](https://github.com/senacor/elasticsearch-evolution/issues/29)
+-   fixed issue [#27](https://github.com/senacor/elasticsearch-evolution/issues/27)
+-   version updates (spring-boot 2.4.3)
+
 ### v0.3.0
+
 -   version upgrade elasticsearch-rest-high-level-client to 7.5.2 (Es version < 7.5.0 are no longer supported)
 -   remove Spring-Boot 1.5 and 2.0 support
 -   version updates (spring-boot 2.4.0)
