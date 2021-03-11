@@ -39,7 +39,7 @@ Successful executed migration scripts will not be executed again!
 NOTE: When you run on Java 11 and using spring-boot 2.2 or 2.3 and you hit [this issue](https://github.com/ronmamo/reflections/issues/279), you have 2 options: 
 
 -   downgrade to `org.reflections:reflections:0.9.11` via defining this dependency explicitly 
--   use spring boot 2.3.6
+-   use spring boot 2.3.6+
 
 ## 3 Quickstart
 
@@ -279,9 +279,9 @@ ElasticsearchEvolution.configure()
 
 ### v0.3.1-SNAPSHOT
 
+-   fixed issue [#29](https://github.com/senacor/elasticsearch-evolution/issues/29)
 -   fixed issue [#27](https://github.com/senacor/elasticsearch-evolution/issues/27)
 -   version updates (spring-boot 2.4.3)
--   fixed issue [#29](https://github.com/senacor/elasticsearch-evolution/issues/29)
 
 ### v0.3.0
 
