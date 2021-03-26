@@ -104,6 +104,39 @@ class MigrationScriptReaderImplTest {
             }
 
             @Test
+            void exclude_locations_with_suffix() {
+                MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(
+                        singletonList("classpath:scriptreader/issue36/location"),
+                        StandardCharsets.UTF_8,
+                        "c",
+                        singletonList(".http"));
+
+                List<RawMigrationScript> actual = reader.read();
+
+                // should not contain anything from "classpath:scriptreader/issue36/location_with_suffix"
+                assertThat(actual)
+                        .containsExactlyInAnyOrder(
+                                new RawMigrationScript().setFileName("content.http").setContent("content!"));
+            }
+
+            @Test
+            void handle_locations_with_suffix() {
+                MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(
+                        Arrays.asList("classpath:scriptreader/issue36/location",
+                                "classpath:scriptreader/issue36/location_with_suffix"),
+                        StandardCharsets.UTF_8,
+                        "c",
+                        singletonList(".http"));
+
+                List<RawMigrationScript> actual = reader.read();
+
+                assertThat(actual)
+                        .containsExactlyInAnyOrder(
+                                new RawMigrationScript().setFileName("content.http").setContent("content!"),
+                                new RawMigrationScript().setFileName("content_sub.http").setContent("sub content!"));
+            }
+
+            @Test
             void withWrongProtocol() {
                 MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(
                         Arrays.asList("classpath:scriptreader", "http:scriptreader"),
@@ -135,6 +168,42 @@ class MigrationScriptReaderImplTest {
                                 new RawMigrationScript().setFileName("content_sub.http").setContent("sub content!"));
             }
 
+            @Test
+            void exclude_locations_with_suffix() throws URISyntaxException {
+                URL resourceDirectory = resolveURL("scriptreader");
+                String absolutePathToScriptreader = Paths.get(resourceDirectory.toURI()).toFile().getAbsolutePath();
+                MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(
+                        singletonList("file:"+absolutePathToScriptreader+"/issue36/location"),
+                        StandardCharsets.UTF_8,
+                        "c",
+                        singletonList(".http"));
+
+                List<RawMigrationScript> actual = reader.read();
+
+                // should not contain anything from "classpath:scriptreader/issue36/location_with_suffix"
+                assertThat(actual)
+                        .containsExactlyInAnyOrder(
+                                new RawMigrationScript().setFileName("content.http").setContent("content!"));
+            }
+
+            @Test
+            void handle_locations_with_suffix() throws URISyntaxException {
+                URL resourceDirectory = resolveURL("scriptreader");
+                String absolutePathToScriptreader = Paths.get(resourceDirectory.toURI()).toFile().getAbsolutePath();
+                MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(
+                        Arrays.asList("file:"+absolutePathToScriptreader+"/issue36/location",
+                                "file:"+absolutePathToScriptreader+"/issue36/location_with_suffix"),
+                        StandardCharsets.UTF_8,
+                        "c",
+                        singletonList(".http"));
+
+                List<RawMigrationScript> actual = reader.read();
+
+                assertThat(actual)
+                        .containsExactlyInAnyOrder(
+                                new RawMigrationScript().setFileName("content.http").setContent("content!"),
+                                new RawMigrationScript().setFileName("content_sub.http").setContent("sub content!"));
+            }
 
             @Test
             void invalidPath() {
