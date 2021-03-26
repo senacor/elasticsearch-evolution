@@ -21,7 +21,7 @@ Successful executed migration scripts will not be executed again!
 
 ## 2 Features
 
--   tested on Java 8, 9, 10, 11, 12, 13, 14 and 15
+-   tested on Java 8, 9, 10, 11, 12, 13, 14, 15 and 16
 -   runs on Spring-Boot 2.1, 2.2, 2.3 and 2.4 (and of course without Spring-Boot)
 -   runs on Elasticsearch version 7.5.0+
 -   highly configurable (e.g. location(s) of your migration files, migration files format pattern)
@@ -51,7 +51,7 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.3.1</version>
+    <version>0.3.2</version>
 </dependency>
 ```
 
@@ -75,7 +75,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.3.1</version>
+    <version>0.3.2</version>
 </dependency>
 ```
 
@@ -277,9 +277,15 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.3.2-SNAPSHOT
+### v0.3.3-SNAPSHOT
 
 -   ...
+
+### v0.3.2
+
+-   fixed issue [#36](https://github.com/senacor/elasticsearch-evolution/issues/36)
+-   added java 16 compatibility tests
+-   added Elasticsearch 7.12 compatibility tests
 
 ### v0.3.1
 
