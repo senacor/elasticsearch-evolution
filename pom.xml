@@ -5,12 +5,12 @@
 
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-parent</artifactId>
-    <version>0.3.1</version>
+    <version>0.3.2</version>
     <packaging>pom</packaging>
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>2.4.3</version>
+        <version>2.4.4</version>
     </parent>
 
     <name>elasticsearch-evolution</name>
@@ -21,6 +21,11 @@
         <license>
             <name>Apache License, Version 2.0</name>
             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+        <license>
+            <name>Anti 996 License, Version 1.0 (Draft)</name>
+            <url>https://github.com/996icu/996.ICU/blob/master/LICENSE/</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -51,8 +56,8 @@
     <developers>
         <developer>
             <name>Andreas Keefer</name>
-            <email>andreas.keefer@senacor.com</email>
-            <organizationUrl>https://senacor.com/</organizationUrl>
+            <email>andreas.keefer@proxora.com</email>
+            <organizationUrl>https://www.proxora.com/</organizationUrl>
         </developer>
     </developers>
 
