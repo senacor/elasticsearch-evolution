@@ -127,7 +127,12 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
     }
 
     private Stream<RawMigrationScript> readScriptsFromClassPath(String location) {
-        String locationWithoutPrefixAsPackageNotation = location.substring(CLASSPATH_PREFIX.length())
+        if (!location.endsWith("/")) {
+            // fixes https://github.com/senacor/elasticsearch-evolution/issues/36
+            // otherwise e.g. "...location_some_suffix" will also be found when search for "...location".
+            location = location + "/";
+        }
+        final String locationWithoutPrefixAsPackageNotation = location.substring(CLASSPATH_PREFIX.length())
                 .replace("/", ".");
 
         final Collection<URL> urls = ClasspathHelper.forPackage(locationWithoutPrefixAsPackageNotation);
