@@ -22,7 +22,7 @@ Successful executed migration scripts will not be executed again!
 ## 2 Features
 
 -   tested on Java 8, 9, 10, 11, 12, 13, 14, 15 and 16
--   runs on Spring-Boot 2.1, 2.2, 2.3 and 2.4 (and of course without Spring-Boot)
+-   runs on Spring-Boot 2.1, 2.2, 2.3, 2.4 and 2.5 (and of course without Spring-Boot)
 -   runs on Elasticsearch version 7.5.0+
 -   highly configurable (e.g. location(s) of your migration files, migration files format pattern)
 -   placeholder substitution in migration scripts
@@ -279,7 +279,8 @@ ElasticsearchEvolution.configure()
 
 ### v0.3.3-SNAPSHOT
 
--   ...
+-   version updates (spring-boot 2.5.0)
+-   spring boot 2.5 compatibility tests
 
 ### v0.3.2
 
