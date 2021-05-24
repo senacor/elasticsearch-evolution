@@ -170,7 +170,7 @@ The filename has to follow a pattern:
 Elasticsearch-Evolution uses the version for ordering your scripts and enforces strict ordered execution of your scripts. Out-of-Order execution is not supported.
 Elasticsearch-Evolution interprets the version parts as Integers, so each version part must be between 1 (inclusive) and 2,147,483,647 (inclusive).
 
-Here is and example which indicates the ordering: `1.0.1` &lt; `1.1` &lt; `1.2.1` &lt; (`2.0.0` == `2`).
+Here is an example which indicates the ordering: `1.0.1` &lt; `1.1` &lt; `1.2.1` &lt; (`2.0.0` == `2`).
 In this example version `1.0.1` is the smallest version and is executed first, after that version `1.1`, `1.2.1` and in the end `2`. 
 `2` is the same as `2.0` or `2.0.0` - so leading zeros will be trimed.
 
