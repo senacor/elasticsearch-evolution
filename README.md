@@ -33,7 +33,7 @@ Successful executed migration scripts will not be executed again!
 
 | Compatibility                    | Spring Boot                  | Elasticsearch        |
 |----------------------------------|------------------------------|----------------------|
-| elasticsearch-evolution >= 0.3.0 | 2.1, 2.2, 2.3, 2.4, 2.5           | 7.5.x and later      |
+| elasticsearch-evolution >= 0.3.0 | 2.1, 2.2, 2.3, 2.4, 2.5      | 7.5.x and later      |
 | elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4 | 7.0.x - 7.4.x, 6.8.x |
 
 NOTE: When you run on Java 11 and using spring-boot 2.2 or 2.3 and you hit [this issue](https://github.com/ronmamo/reflections/issues/279), you have 2 options: 
