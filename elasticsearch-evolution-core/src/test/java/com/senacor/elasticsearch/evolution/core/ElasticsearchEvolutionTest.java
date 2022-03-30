@@ -63,6 +63,8 @@ class ElasticsearchEvolutionTest {
                 .thenReturn(new SearchHit[0]);
         when(searchResponse.status())
                 .thenReturn(RestStatus.OK);
+        when(restHighLevelClient.getLowLevelClient().performRequest(new Request("GET","/" + indexName + "/_refresh?ignore_unavailable=true&allow_no_indices=true&ignore_throttled=false&expand_wildcards=open")))
+                .thenReturn(existsMock);
 
         assertThatThrownBy(underTest::migrate)
                 .isInstanceOf(MigrationException.class)
@@ -73,7 +75,8 @@ class ElasticsearchEvolutionTest {
         order.verify(restClient).getNodes();
         order.verify(restClient).performRequest(any());
         order.verify(restHighLevelClient).index(any(), eq(DEFAULT));
-        order.verify(restHighLevelClient).indices();
+        order.verify(restHighLevelClient, times(1)).getLowLevelClient();
+        order.verify(restClient).performRequest(any());
         order.verify(restHighLevelClient, times(2)).updateByQuery(any(), eq(DEFAULT));
         order.verifyNoMoreInteractions();
     }

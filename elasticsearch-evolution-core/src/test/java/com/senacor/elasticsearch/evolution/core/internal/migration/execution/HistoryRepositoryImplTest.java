@@ -4,7 +4,6 @@ import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.test.ArgumentProviders;
 import com.senacor.elasticsearch.evolution.core.test.MockitoExtension;
-import org.elasticsearch.client.IndicesClient;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -24,7 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 /**
@@ -75,6 +73,9 @@ class HistoryRepositoryImplTest {
     class isLocked {
         @Test
         void failed() throws IOException {
+            when(
+                    restHighLevelClient.getLowLevelClient().performRequest(any()).getStatusLine().getStatusCode()
+            ).thenReturn(200);
             when(restHighLevelClient.indices().refresh(any(), eq(RequestOptions.DEFAULT)).getStatus())
                     .thenReturn(RestStatus.OK);
             when(restHighLevelClient.count(any(), eq(RequestOptions.DEFAULT)))
@@ -101,6 +102,10 @@ class HistoryRepositoryImplTest {
     class unlock {
         @Test
         void failed() throws IOException {
+            when(
+                    restHighLevelClient.getLowLevelClient().performRequest(any()).getStatusLine().getStatusCode()
+            ).thenReturn(200);
+
             when(restHighLevelClient.indices().refresh(any(), eq(RequestOptions.DEFAULT)).getStatus())
                     .thenReturn(RestStatus.OK);
             when(restHighLevelClient.updateByQuery(any(), eq(RequestOptions.DEFAULT)))
@@ -146,8 +151,9 @@ class HistoryRepositoryImplTest {
     class refresh {
         @Test
         void allIndices_failed() throws IOException {
-            IndicesClient indices = restHighLevelClient.indices();
-            doThrow(new IOException("foo")).when(indices).refresh(any(), eq(RequestOptions.DEFAULT));
+            when(
+                    restHighLevelClient.getLowLevelClient().performRequest(any())
+            ).thenThrow(new IOException("foo"));
 
             assertThatThrownBy(() -> underTest.refresh())
                     .isInstanceOf(MigrationException.class)
