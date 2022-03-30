@@ -36,6 +36,19 @@
         <url>https://github.com/senacor/elasticsearch-evolution</url>
     </scm>
 
+    <pluginRepositories>
+        <pluginRepository>
+            <id>oss.sonatype.org-snapshot</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
     <distributionManagement>
         <site>
             <id>readme</id>
@@ -80,7 +93,8 @@
 
         <!-- Plugin Versions -->
         <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
-        <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
+        <!--jacoco snapshot to support java 17/18-->
+        <jacoco-maven-plugin.version>0.8.8-SNAPSHOT</jacoco-maven-plugin.version>
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
         <!-- maven-javadoc-plugin.version 3.1.1 does not work on travis -->
         <maven-javadoc-plugin.version>3.3.1</maven-javadoc-plugin.version>

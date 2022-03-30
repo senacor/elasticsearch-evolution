@@ -19,6 +19,7 @@
 
     <modules>
         <module>migration-scripts</module>
+        <module>test-spring-boot-2.6</module>
         <module>test-spring-boot-2.5-scriptsInJarFile</module>
         <module>test-spring-boot-2.4</module>
         <module>test-spring-boot-2.3</module>

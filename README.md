@@ -8,7 +8,6 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core)
 [![Javadocs](https://www.javadoc.io/badge/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core.svg)](https://www.javadoc.io/doc/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core)
 [![Github build](https://github.com/senacor/elasticsearch-evolution/workflows/Maven%20Matrix%20Build/badge.svg?branch=master)](https://github.com/senacor/elasticsearch-evolution/actions?query=branch%3Amaster)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a629ba3201104ecc81c6af7671b29b05)](https://www.codacy.com/app/xtermi2/elasticsearch-evolution?utm_source=github.com&utm_medium=referral&utm_content=senacor/elasticsearch-evolution&utm_campaign=Badge_Grade)
 [![codebeat badge](https://codebeat.co/badges/29dc74db-88e2-4b26-963b-14eb340ae275)](https://codebeat.co/projects/github-com-senacor-elasticsearch-evolution-master)
 [![Coverage Status](https://coveralls.io/repos/github/senacor/elasticsearch-evolution/badge.svg?branch=master)](https://coveralls.io/github/senacor/elasticsearch-evolution?branch=master)
 ![Lines of code](https://img.shields.io/tokei/lines/github/senacor/elasticsearch-evolution)
@@ -279,9 +278,11 @@ ElasticsearchEvolution.configure()
 
 ### v0.3.3-SNAPSHOT
 
--   version updates (spring-boot 2.5.2)
--   spring boot 2.5 compatibility tests
--   added Elasticsearch 7.13 compatibility tests
+- version updates (spring-boot 2.5.2)
+- spring boot 2.5 compatibility tests
+- spring boot 2.6 compatibility tests
+- added java 17 and 18 compatibility tests
+- added Elasticsearch 7.17, 7.16, 7.15, 7.14 and 7.13 compatibility tests
 
 ### v0.3.2
 
