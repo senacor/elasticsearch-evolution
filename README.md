@@ -20,8 +20,8 @@ Successful executed migration scripts will not be executed again!
 
 ## 2 Features
 
--   tested on Java 8, 9, 10, 11, 12, 13, 14, 15 and 16
--   runs on Spring-Boot 2.1, 2.2, 2.3, 2.4 and 2.5 (and of course without Spring-Boot)
+-   tested on Java 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 and 18
+-   runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5 and 2.6 (and of course without Spring-Boot)
 -   runs on Elasticsearch version 7.5.0+
 -   highly configurable (e.g. location(s) of your migration files, migration files format pattern)
 -   placeholder substitution in migration scripts
@@ -32,7 +32,7 @@ Successful executed migration scripts will not be executed again!
 
 | Compatibility                    | Spring Boot                  | Elasticsearch        |
 |----------------------------------|------------------------------|----------------------|
-| elasticsearch-evolution >= 0.3.0 | 2.1, 2.2, 2.3, 2.4, 2.5      | 7.5.x and later      |
+| elasticsearch-evolution >= 0.3.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 | 7.5.x and later      |
 | elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4 | 7.0.x - 7.4.x, 6.8.x |
 
 NOTE: When you run on Java 11 and using spring-boot 2.2 or 2.3 and you hit [this issue](https://github.com/ronmamo/reflections/issues/279), you have 2 options: 
@@ -211,6 +211,15 @@ spring.elasticsearch.evolution.historyIndex=es_evolution
 Since spring boot 2.1 AutoConfiguration for Elasticsearchs REST client is provided (see org.springframework.boot.autoconfigure.elasticsearch.rest.RestClientAutoConfiguration).
 You can configure the RestHighLevelClient, required for Elasticsearch-Evolution, just like that in your `application.properties`:
 
+##### 5.1.1.1 spring boot 2.6+
+```properties
+spring.elasticsearch.uris[0]=https://example.com:9200
+spring.elasticsearch.username=my-user-name
+spring.elasticsearch.password=my-secret-pw
+```
+
+##### 5.1.1.2 spring boot < 2.7
+NOTE: these config properties are deprecated since spring boot 2.6 and may be removed in 2.7! See spring-boot 2.6 [release notes](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-2.6-Release-Notes#elasticsearch-property-consolidation).
 ```properties
 spring.elasticsearch.rest.uris[0]=https://example.com:9200
 spring.elasticsearch.rest.username=my-user-name
@@ -278,9 +287,8 @@ ElasticsearchEvolution.configure()
 
 ### v0.3.3-SNAPSHOT
 
-- version updates (spring-boot 2.5.2)
-- spring boot 2.5 compatibility tests
-- spring boot 2.6 compatibility tests
+- version updates (spring-boot 2.6.5)
+- added spring boot 2.5 and 2.6 compatibility tests
 - added java 17 and 18 compatibility tests
 - added Elasticsearch 7.17, 7.16, 7.15, 7.14 and 7.13 compatibility tests
 
