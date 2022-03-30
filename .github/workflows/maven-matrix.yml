@@ -2,6 +2,8 @@ name: Maven Matrix Build
 
 on:
   push:
+  # pull_request to run the pipeline on PRs from external, because "push" does not create this pipeline on external PRs
+  pull_request:
   schedule:
     # * is a special character in YAML so you have to quote this string
     - cron: '30 5 * * *'
@@ -70,8 +72,8 @@ jobs:
 
   release-dry-run:
     # this will just build like the real release job, but not do a release (dry run)
-    needs: [build-and-test-with-jdk, build-and-test-with-es-version]
-    if: ${{ github.ref != 'refs/heads/release' }}
+    needs: [ build-and-test-with-jdk, build-and-test-with-es-version ]
+    if: ${{ github.event_name != 'pull_request' && github.ref != 'refs/heads/release' }}
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout
@@ -111,7 +113,7 @@ jobs:
 
   release:
     # Release to maven central and create Github release
-    needs: [build-and-test-with-jdk, build-and-test-with-es-version]
+    needs: [ build-and-test-with-jdk, build-and-test-with-es-version ]
     if: ${{ github.repository == 'senacor/elasticsearch-evolution' && github.event_name == 'push' && github.ref == 'refs/heads/release' }}
     runs-on: ubuntu-18.04
     steps:
