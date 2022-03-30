@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = {"spring.elasticsearch.rest.uris=http://localhost:" + ApplicationTests.ELASTICSEARCH_PORT})
-public class ApplicationTests {
+class ApplicationTests {
 
     static final int ELASTICSEARCH_PORT = 18761;
 
@@ -25,7 +25,7 @@ public class ApplicationTests {
     private EsUtils esUtils;
 
     @Test
-    public void contextLoads() {
+    void contextLoads() {
         esUtils.refreshIndices();
 
         List<String> documents = esUtils.fetchAllDocuments("test_1");

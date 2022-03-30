@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(properties = {"spring.elasticsearch.rest.uris=http://localhost:" + ApplicationTest.ELASTICSEARCH_PORT})
 class ApplicationTest {
 
-    static final int ELASTICSEARCH_PORT = 18769;
+    static final int ELASTICSEARCH_PORT = 18768;
 
     @Autowired
     private EsUtils esUtils;

@@ -1,4 +1,4 @@
-package com.senacor.elasticsearch.evolution.springboot22;
+package com.senacor.elasticsearch.evolution.springboot24;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(properties = {"spring.elasticsearch.rest.uris=http://localhost:" + ApplicationTests.ELASTICSEARCH_PORT})
 class ApplicationTests {
 
-    static final int ELASTICSEARCH_PORT = 18759;
+    static final int ELASTICSEARCH_PORT = 18772;
 
     @Autowired
     private EsUtils esUtils;
@@ -40,8 +40,7 @@ class ApplicationTests {
             ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName
                     .parse("docker.elastic.co/elasticsearch/elasticsearch")
                     .withTag(esVersion)
-            )
-                    .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
+            ).withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
             container.setPortBindings(Collections.singletonList(ELASTICSEARCH_PORT + ":9200"));
             container.start();
             return container;
