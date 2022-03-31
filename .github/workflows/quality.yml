@@ -8,7 +8,8 @@ env:
 jobs:
   code-analysis:
     runs-on: ubuntu-18.04
-
+    env:
+      COVERALLS_REPO_TOKEN_EXISTS: ${{ secrets.COVERALLS_REPO_TOKEN != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -31,7 +32,7 @@ jobs:
       - name: Build and test with Maven
         run: $MVN_CMD install
       - name: Execute Maven coveralls Plugin
-        if: ${{ github.repository == 'senacor/elasticsearch-evolution' }}
+        if: ${{ env.COVERALLS_REPO_TOKEN_EXISTS == 'true' }}
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
