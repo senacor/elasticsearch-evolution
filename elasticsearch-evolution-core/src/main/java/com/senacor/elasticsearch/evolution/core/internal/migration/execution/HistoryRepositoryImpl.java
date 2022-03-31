@@ -4,8 +4,9 @@ import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
 import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
-import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -28,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -232,13 +234,44 @@ public class HistoryRepositoryImpl implements HistoryRepository {
      */
     void refresh(String... indices) {
         try {
-            RefreshResponse res = restHighLevelClient.indices().refresh(
-                    new RefreshRequest(indices)
-                            .indicesOptions(IndicesOptions.lenientExpandOpen())
-                    , DEFAULT);
-            validateHttpStatus2xxOK(res.getStatus(), "refresh");
+            String refreshParams = refreshParams(IndicesOptions.lenientExpandOpen());
+            Response res = restHighLevelClient.getLowLevelClient()
+                    .performRequest(new Request("GET",  expandIndicesForUrl(indices) + "/_refresh?" + refreshParams));
+            logger.debug("refreshing indices {} with params '{}'", Arrays.toString(indices), refreshParams);
+            int statusCode = res.getStatusLine().getStatusCode();
+            if (statusCode < 200 || statusCode >= 300)
+                throw new MigrationException(
+                        String.format("%s - response status is not OK: %s", res.getStatusLine().getReasonPhrase(), statusCode)
+                );
         } catch (IOException e) {
             throw new MigrationException("refresh failed!", e);
         }
+    }
+
+    private String expandIndicesForUrl(String... indices) {
+        String combinedIndices = String.join(",", indices);
+        return "/" + combinedIndices;
+    }
+
+    private String refreshParams(IndicesOptions indicesOptions) {
+        List<NameValuePair> nameValuePairs = new ArrayList<>();
+        nameValuePairs.add(new BasicNameValuePair("ignore_unavailable", Boolean.toString(indicesOptions.ignoreUnavailable())));
+        nameValuePairs.add(new BasicNameValuePair("allow_no_indices", Boolean.toString(indicesOptions.allowNoIndices())));
+        nameValuePairs.add(new BasicNameValuePair("ignore_throttled", Boolean.toString(indicesOptions.ignoreThrottled())));
+        String expandWildcards;
+        if (!indicesOptions.expandWildcardsOpen() && !indicesOptions.expandWildcardsClosed()) {
+            expandWildcards = "none";
+        } else {
+            StringJoiner joiner = new StringJoiner(",");
+            if (indicesOptions.expandWildcardsOpen()) {
+                joiner.add("open");
+            }
+            if (indicesOptions.expandWildcardsClosed()) {
+                joiner.add("closed");
+            }
+            expandWildcards = joiner.toString();
+        }
+        nameValuePairs.add(new BasicNameValuePair("expand_wildcards", expandWildcards));
+        return URLEncodedUtils.format(nameValuePairs, StandardCharsets.UTF_8);
     }
 }
