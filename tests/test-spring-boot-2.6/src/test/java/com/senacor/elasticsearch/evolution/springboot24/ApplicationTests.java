@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(properties = {"spring.elasticsearch.rest.uris=http://localhost:" + ApplicationTests.ELASTICSEARCH_PORT})
+@SpringBootTest(properties = {"spring.elasticsearch.uris=http://localhost:" + ApplicationTests.ELASTICSEARCH_PORT})
 class ApplicationTests {
 
     static final int ELASTICSEARCH_PORT = 18772;
