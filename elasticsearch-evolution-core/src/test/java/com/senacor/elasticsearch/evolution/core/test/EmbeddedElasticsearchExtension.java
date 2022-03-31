@@ -35,7 +35,7 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
     private static final SortedSet<String> SUPPORTED_ES_VERSIONS = Collections.unmodifiableSortedSet(new TreeSet<>(Arrays.asList(
-            "7.17.1",
+            "7.17.2",
             "7.16.3",
             "7.15.2",
             "7.14.2",
