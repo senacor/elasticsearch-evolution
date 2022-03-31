@@ -234,12 +234,15 @@ public class HistoryRepositoryImpl implements HistoryRepository {
      */
     void refresh(String... indices) {
         try {
-            System.out.println(refreshParams(IndicesOptions.lenientExpandOpen()));
-            Response res_ = restHighLevelClient.getLowLevelClient()
-                    .performRequest(new Request("GET",  expandIndicesForUrl(indices) + "/_refresh?" + refreshParams(IndicesOptions.lenientExpandOpen()) ));
-            int statusCode = res_.getStatusLine().getStatusCode();
+            String refreshParams = refreshParams(IndicesOptions.lenientExpandOpen());
+            Response res = restHighLevelClient.getLowLevelClient()
+                    .performRequest(new Request("GET",  expandIndicesForUrl(indices) + "/_refresh?" + refreshParams));
+            logger.debug("refreshing indices {} with params '{}'", Arrays.toString(indices), refreshParams);
+            int statusCode = res.getStatusLine().getStatusCode();
             if (statusCode < 200 || statusCode >= 300)
-                throw new MigrationException(String.format("%s - response status is not OK: %s", res_.getStatusLine().getReasonPhrase(), statusCode));
+                throw new MigrationException(
+                        String.format("%s - response status is not OK: %s", res.getStatusLine().getReasonPhrase(), statusCode)
+                );
         } catch (IOException e) {
             throw new MigrationException("refresh failed!", e);
         }

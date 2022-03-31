@@ -106,8 +106,6 @@ class HistoryRepositoryImplTest {
                     restHighLevelClient.getLowLevelClient().performRequest(any()).getStatusLine().getStatusCode()
             ).thenReturn(200);
 
-            when(restHighLevelClient.indices().refresh(any(), eq(RequestOptions.DEFAULT)).getStatus())
-                    .thenReturn(RestStatus.OK);
             when(restHighLevelClient.updateByQuery(any(), eq(RequestOptions.DEFAULT)))
                     .thenThrow(new IOException("test error"));
 
