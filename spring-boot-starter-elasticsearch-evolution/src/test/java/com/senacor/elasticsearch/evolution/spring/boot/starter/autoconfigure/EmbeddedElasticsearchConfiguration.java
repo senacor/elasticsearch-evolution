@@ -17,7 +17,7 @@ public class EmbeddedElasticsearchConfiguration {
 
     @Bean(destroyMethod = "stop")
     public ElasticsearchContainer elasticsearchContainer() {
-        ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch-oss:7.5.2")
+        ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:7.5.2")
                 .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
         logger.info("starting embedded ElasticSearch...");
         container.start();

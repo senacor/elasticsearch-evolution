@@ -132,14 +132,14 @@ class HistoryRepositoryImplTest {
         @ParameterizedTest
         @ArgumentsSource(ArgumentProviders.SuccessHttpCodesProvider.class)
         void isOK(RestStatus status) {
-            underTest.validateHttpStatus2xxOK(status, "isOK");
+            underTest.validateHttpStatusIs2xx(status, "isOK");
         }
 
         @ParameterizedTest
         @ArgumentsSource(ArgumentProviders.FailingHttpCodesProvider.class)
         void failed(RestStatus status) {
             String description = "failed";
-            assertThatThrownBy(() -> underTest.validateHttpStatus2xxOK(status, description))
+            assertThatThrownBy(() -> underTest.validateHttpStatusIs2xx(status, description))
                     .isInstanceOf(MigrationException.class)
                     .hasMessage("%s - response status is not OK: %s", description, status.getStatus());
         }
