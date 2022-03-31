@@ -287,7 +287,7 @@ ElasticsearchEvolution.configure()
 
 ### v0.3.3-SNAPSHOT
 
-- version updates (spring-boot 2.6.5)
+- version updates (spring-boot 2.6.6)
 - added spring boot 2.5 and 2.6 compatibility tests
 - added java 17 and 18 compatibility tests
 - added Elasticsearch 7.17, 7.16, 7.15, 7.14 and 7.13 compatibility tests
