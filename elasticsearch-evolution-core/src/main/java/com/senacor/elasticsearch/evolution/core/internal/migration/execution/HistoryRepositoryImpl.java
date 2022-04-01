@@ -1,5 +1,7 @@
 package com.senacor.elasticsearch.evolution.core.internal.migration.execution;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
 import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
@@ -51,6 +53,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     private final String historyIndex;
     private final MigrationScriptProtocolMapper migrationScriptProtocolMapper;
     private final int querySize;
+    private final ObjectMapper objectMapper;
 
     public HistoryRepositoryImpl(RestHighLevelClient restHighLevelClient,
                                  String historyIndex,
@@ -60,6 +63,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
         this.historyIndex = requireNotBlank(historyIndex, "historyIndex must not be blank: {}", historyIndex);
         this.migrationScriptProtocolMapper = requireNonNull(migrationScriptProtocolMapper, "migrationScriptProtocolMapper must not be null");
         this.querySize = querySize;
+        this.objectMapper = new ObjectMapper();
     }
 
     @Override
@@ -72,7 +76,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
                             .indicesOptions(IndicesOptions.lenientExpandOpen()),
                     DEFAULT);
             logger.debug("findAll res: {}", searchResponse);
-            validateHttpStatus2xxOK(searchResponse.status(), "findAll");
+            validateHttpStatusIs2xx(searchResponse.status(), "findAll");
 
             // map and order
             TreeSet<MigrationScriptProtocol> res = new TreeSet<>();
@@ -98,7 +102,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
                             .source(source),
                     DEFAULT);
             logger.debug("saveOrUpdate res: {}", res);
-            validateHttpStatus2xxOK(res.status(), "saveOrUpdate");
+            validateHttpStatusIs2xx(res.status(), "saveOrUpdate");
         } catch (IOException e) {
             throw new MigrationException(String.format("saveOrUpdate of '%s' failed!", migrationScriptProtocol), e);
         }
@@ -108,17 +112,23 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     public boolean isLocked() throws MigrationException {
         try {
             refresh(historyIndex);
-            CountRequest countRequest = new CountRequest(historyIndex)
-                    .query(QueryBuilders.termQuery(MigrationScriptProtocolMapper.LOCKED_FIELD_NAME, true))
-                    .indicesOptions(IndicesOptions.lenientExpandOpen());
-            CountResponse countResponse = restHighLevelClient.count(countRequest, DEFAULT);
-            validateHttpStatus2xxOK(countResponse.status(), "isLocked");
 
-            if (countResponse.getCount() == 0L) {
+            String indicesOptions = indicesOptions(IndexOptions.lenientExpandOpen());
+            final Request countRequest = new Request("GET", "/" + historyIndex + "/_count?" + indicesOptions);
+            countRequest.setJsonEntity("{\"query\":{\"term\":{\"" + MigrationScriptProtocolMapper.LOCKED_FIELD_NAME + "\":{\"value\":true}}}}");
+            final Response countResponse = restHighLevelClient.getLowLevelClient().performRequest(countRequest);
+
+            validateHttpStatusIs2xx(countResponse, "isLocked");
+
+            final JsonNode countResBody = objectMapper.readValue(countResponse.getEntity().getContent(), JsonNode.class);
+            final int count = countResBody.get("count").asInt();
+
+            if (count == 0) {
                 logger.debug("index '{}' is not locked: no locked documents in index.", historyIndex);
                 return false;
             }
-            logger.debug("index '{}' is locked: {} locked documents found.", historyIndex, countResponse.getCount());
+
+            logger.debug("index '{}' is locked: {} locked documents found.", historyIndex, count);
             return true;
         } catch (IOException e) {
             throw new MigrationException("isLocked check failed!", e);
@@ -131,7 +141,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
             CountRequest countAllReq = new CountRequest(historyIndex)
                     .indicesOptions(IndicesOptions.lenientExpandOpen());
             CountResponse countAllRes = restHighLevelClient.count(countAllReq, DEFAULT);
-            validateHttpStatus2xxOK(countAllRes.status(), "lock.count");
+            validateHttpStatusIs2xx(countAllRes.status(), "lock.count");
 
             if (countAllRes.getCount() == 0L) {
                 saveOrUpdate(new MigrationScriptProtocol()
@@ -204,7 +214,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
 
             // create index
             Response createRes = restHighLevelClient.getLowLevelClient().performRequest(new Request("PUT", "/" + historyIndex));
-            if (existsRes.getStatusLine().getStatusCode() < 200 || createRes.getStatusLine().getStatusCode() > 299) {
+            if (hasNotStatusCode2xx(createRes)) {
                 throw new IllegalStateException("Could not create Elasticsearch-Evolution history index '" + historyIndex + "'. Create res=" + createRes);
             }
             logger.debug("created Elasticsearch-Evolution history index '{}'", historyIndex);
@@ -214,6 +224,18 @@ public class HistoryRepositoryImpl implements HistoryRepository {
         }
     }
 
+    private boolean hasNotStatusCode2xx(Response response) {
+        return isNotStatusCode2xx(response.getStatusLine().getStatusCode());
+    }
+
+    private boolean isNotStatusCode2xx(int statusCode) {
+        return statusCode < 200 || statusCode > 299;
+    }
+
+    private void validateHttpStatusIs2xx(Response response, String description) throws MigrationException {
+        validateHttpStatusIs2xx(response.getStatusLine().getStatusCode(), description + " (" + response.getStatusLine().getReasonPhrase() + ")");
+    }
+
     /**
      * validates that HTTP status code is a 2xx code.
      *
@@ -221,9 +243,12 @@ public class HistoryRepositoryImpl implements HistoryRepository {
      * @param description is used in case of a non 2xx status code in the exception message.
      * @throws MigrationException when the given status code is not a 2xx code.
      */
-    void validateHttpStatus2xxOK(RestStatus status, String description) throws MigrationException {
-        int statusCode = status.getStatus();
-        if (statusCode < 200 || statusCode >= 300) {
+    void validateHttpStatusIs2xx(RestStatus status, String description) throws MigrationException {
+        validateHttpStatusIs2xx(status.getStatus(), description);
+    }
+
+    private void validateHttpStatusIs2xx(int statusCode, String description) throws MigrationException {
+        if (isNotStatusCode2xx(statusCode)) {
             throw new MigrationException(String.format("%s - response status is not OK: %s", description, statusCode));
         }
     }
@@ -234,15 +259,13 @@ public class HistoryRepositoryImpl implements HistoryRepository {
      */
     void refresh(String... indices) {
         try {
-            String refreshParams = refreshParams(IndicesOptions.lenientExpandOpen());
+            String refreshParams = indicesOptions(IndexOptions.lenientExpandOpen());
             Response res = restHighLevelClient.getLowLevelClient()
-                    .performRequest(new Request("GET",  expandIndicesForUrl(indices) + "/_refresh?" + refreshParams));
-            logger.debug("refreshing indices {} with params '{}'", Arrays.toString(indices), refreshParams);
-            int statusCode = res.getStatusLine().getStatusCode();
-            if (statusCode < 200 || statusCode >= 300)
-                throw new MigrationException(
-                        String.format("%s - response status is not OK: %s", res.getStatusLine().getReasonPhrase(), statusCode)
-                );
+                    .performRequest(new Request("GET", expandIndicesForUrl(indices) + "/_refresh?" + refreshParams));
+            if (logger.isDebugEnabled()) {
+                logger.debug("refreshing indices {} with params '{}'", Arrays.toString(indices), refreshParams);
+            }
+            validateHttpStatusIs2xx(res, "refresh");
         } catch (IOException e) {
             throw new MigrationException("refresh failed!", e);
         }
@@ -253,7 +276,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
         return "/" + combinedIndices;
     }
 
-    private String refreshParams(IndicesOptions indicesOptions) {
+    private String indicesOptions(IndexOptions indicesOptions) {
         List<NameValuePair> nameValuePairs = new ArrayList<>();
         nameValuePairs.add(new BasicNameValuePair("ignore_unavailable", Boolean.toString(indicesOptions.ignoreUnavailable())));
         nameValuePairs.add(new BasicNameValuePair("allow_no_indices", Boolean.toString(indicesOptions.allowNoIndices())));
@@ -273,5 +296,60 @@ public class HistoryRepositoryImpl implements HistoryRepository {
         }
         nameValuePairs.add(new BasicNameValuePair("expand_wildcards", expandWildcards));
         return URLEncodedUtils.format(nameValuePairs, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * simple replacement for {@link org.elasticsearch.action.support.IndicesOptions}
+     */
+    private static final class IndexOptions {
+
+        private static final IndexOptions LENIENT_EXPAND_OPEN = new IndexOptions(
+                true,
+                true,
+                false,
+                true,
+                false);
+
+        private final boolean ignoreUnavailable;
+        private final boolean allowNoIndices;
+        private final boolean ignoreThrottled;
+        private final boolean expandWildcardsOpen;
+        private final boolean expandWildcardsClosed;
+
+        public IndexOptions(boolean ignoreUnavailable,
+                            boolean allowNoIndices,
+                            boolean ignoreThrottled,
+                            boolean expandWildcardsOpen,
+                            boolean expandWildcardsClosed) {
+            this.ignoreUnavailable = ignoreUnavailable;
+            this.allowNoIndices = allowNoIndices;
+            this.ignoreThrottled = ignoreThrottled;
+            this.expandWildcardsOpen = expandWildcardsOpen;
+            this.expandWildcardsClosed = expandWildcardsClosed;
+        }
+
+        public static IndexOptions lenientExpandOpen() {
+            return LENIENT_EXPAND_OPEN;
+        }
+
+        public boolean ignoreUnavailable() {
+            return ignoreUnavailable;
+        }
+
+        public boolean allowNoIndices() {
+            return allowNoIndices;
+        }
+
+        public boolean ignoreThrottled() {
+            return ignoreThrottled;
+        }
+
+        public boolean expandWildcardsOpen() {
+            return expandWildcardsOpen;
+        }
+
+        public boolean expandWildcardsClosed() {
+            return expandWildcardsClosed;
+        }
     }
 }
