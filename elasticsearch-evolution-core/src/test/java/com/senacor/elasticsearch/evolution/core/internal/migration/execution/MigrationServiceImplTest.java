@@ -59,8 +59,8 @@ class MigrationServiceImplTest {
     @Mock
     private RestClient restClient;
 
-    private Charset encoding = StandardCharsets.UTF_8;
-    private ContentType defaultContentType = ContentType.APPLICATION_JSON;
+    private final Charset encoding = StandardCharsets.UTF_8;
+    private final ContentType defaultContentType = ContentType.APPLICATION_JSON;
 
     @Nested
     class waitUntilUnlocked {

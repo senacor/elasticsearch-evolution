@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.HashMap;
+import java.util.Map;
 
 import static com.senacor.elasticsearch.evolution.core.internal.migration.execution.MigrationScriptProtocolMapper.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,7 +27,7 @@ class MigrationScriptProtocolMapperTest {
         void emptyProtocol() {
             MigrationScriptProtocol protocol = new MigrationScriptProtocol();
 
-            HashMap<String, Object> res = underTest.mapToMap(protocol);
+            Map<String, Object> res = underTest.mapToMap(protocol);
 
             assertThat(res).hasSize(9)
                     .containsEntry(CHECKSUM_FIELD_NAME, 0)
@@ -53,7 +54,7 @@ class MigrationScriptProtocolMapperTest {
                     .setIndexName("index")
                     .setScriptName("foo.http");
 
-            HashMap<String, Object> res = underTest.mapToMap(protocol);
+            Map<String, Object> res = underTest.mapToMap(protocol);
 
             assertThat(res).hasSize(9)
                     .containsEntry(CHECKSUM_FIELD_NAME, 1)

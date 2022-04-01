@@ -6,19 +6,13 @@ import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
 import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
+import org.apache.http.util.EntityUtils;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.core.CountRequest;
-import org.elasticsearch.client.core.CountResponse;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.UpdateByQueryRequest;
@@ -31,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -95,14 +88,17 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     @Override
     public void saveOrUpdate(MigrationScriptProtocol migrationScriptProtocol) throws MigrationException {
         try {
-            HashMap<String, Object> source = migrationScriptProtocolMapper.mapToMap(migrationScriptProtocol);
-            IndexResponse res = restHighLevelClient.index(
-                    new IndexRequest(historyIndex)
-                            .id(requireNonNull(migrationScriptProtocol.getVersion(), "migrationScriptProtocol.version must not be null").getVersion())
-                            .source(source),
-                    DEFAULT);
-            logger.debug("saveOrUpdate res: {}", res);
-            validateHttpStatusIs2xx(res.status(), "saveOrUpdate");
+            final String id = requireNonNull(migrationScriptProtocol.getVersion(), "migrationScriptProtocol.version must not be null").getVersion();
+            final Request indexRequest = new Request("PUT", "/" + historyIndex + "/_doc/" + id);
+            indexRequest.addParameter("timeout", "1m");
+            final Map<String, Object> source = migrationScriptProtocolMapper.mapToMap(migrationScriptProtocol);
+            indexRequest.setJsonEntity(objectMapper.writeValueAsString(source));
+            final Response res = restHighLevelClient.getLowLevelClient().performRequest(indexRequest);
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("saveOrUpdate res: {} (body={})", res, EntityUtils.toString(res.getEntity()));
+            }
+            validateHttpStatusIs2xx(res, "saveOrUpdate");
         } catch (IOException e) {
             throw new MigrationException(String.format("saveOrUpdate of '%s' failed!", migrationScriptProtocol), e);
         }
@@ -113,17 +109,10 @@ public class HistoryRepositoryImpl implements HistoryRepository {
         try {
             refresh(historyIndex);
 
-            String indicesOptions = indicesOptions(IndexOptions.lenientExpandOpen());
-            final Request countRequest = new Request("GET", "/" + historyIndex + "/_count?" + indicesOptions);
-            countRequest.setJsonEntity("{\"query\":{\"term\":{\"" + MigrationScriptProtocolMapper.LOCKED_FIELD_NAME + "\":{\"value\":true}}}}");
-            final Response countResponse = restHighLevelClient.getLowLevelClient().performRequest(countRequest);
+            final String countQuery = "{\"query\":{\"term\":{\"" + MigrationScriptProtocolMapper.LOCKED_FIELD_NAME + "\":{\"value\":true}}}}";
+            final long count = executeCountRequest(Optional.of(countQuery));
 
-            validateHttpStatusIs2xx(countResponse, "isLocked");
-
-            final JsonNode countResBody = objectMapper.readValue(countResponse.getEntity().getContent(), JsonNode.class);
-            final int count = countResBody.get("count").asInt();
-
-            if (count == 0) {
+            if (count == 0L) {
                 logger.debug("index '{}' is not locked: no locked documents in index.", historyIndex);
                 return false;
             }
@@ -135,15 +124,23 @@ public class HistoryRepositoryImpl implements HistoryRepository {
         }
     }
 
+    private long executeCountRequest(Optional<String> countQuery) throws IOException {
+        final Request countRequest = new Request("GET", "/" + historyIndex + "/_count");
+        countRequest.addParameters(indicesOptions(IndexOptions.lenientExpandOpen()));
+        countQuery.ifPresent(countRequest::setJsonEntity);
+        final Response countResponse = restHighLevelClient.getLowLevelClient().performRequest(countRequest);
+
+        validateHttpStatusIs2xx(countResponse, "isLocked");
+
+        final JsonNode countResBody = objectMapper.readValue(countResponse.getEntity().getContent(), JsonNode.class);
+        return countResBody.get("count").asLong();
+    }
+
     @Override
     public boolean lock() {
         try {
-            CountRequest countAllReq = new CountRequest(historyIndex)
-                    .indicesOptions(IndicesOptions.lenientExpandOpen());
-            CountResponse countAllRes = restHighLevelClient.count(countAllReq, DEFAULT);
-            validateHttpStatusIs2xx(countAllRes.status(), "lock.count");
-
-            if (countAllRes.getCount() == 0L) {
+            final long countAll = executeCountRequest(Optional.empty());
+            if (countAll == 0L) {
                 saveOrUpdate(new MigrationScriptProtocol()
                         .setVersion(INTERNAL_LOCK_VERSION)
                         .setScriptName("-")
@@ -155,8 +152,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
                         .setIndexName(historyIndex)
                         .setLocked(true));
             } else {
-                BulkByScrollResponse bulkByScrollResponse = restHighLevelClient.updateByQuery(createLockQuery(true), DEFAULT);
-                logger.debug("lock res: {}", bulkByScrollResponse);
+                executeLockRequest(true, "lock");
             }
             return true;
         } catch (IOException e) {
@@ -181,8 +177,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
                     DEFAULT);
             logger.debug("unlock.deleteLockEntry res: {}", deleteInternalLockRes);
 
-            BulkByScrollResponse bulkByScrollResponse = restHighLevelClient.updateByQuery(createLockQuery(false), DEFAULT);
-            logger.debug("unlock.removeLock res: {}", bulkByScrollResponse);
+            executeLockRequest(false, "unlock.removeLock");
             return true;
         } catch (IOException e) {
             logger.warn("unlock failed", e);
@@ -190,15 +185,25 @@ public class HistoryRepositoryImpl implements HistoryRepository {
         }
     }
 
-    private UpdateByQueryRequest createLockQuery(boolean lock) {
-        return new UpdateByQueryRequest(historyIndex)
-                .setRefresh(true)
-                .setIndicesOptions(IndicesOptions.lenientExpandOpen())
-                .setQuery(QueryBuilders.termQuery(MigrationScriptProtocolMapper.LOCKED_FIELD_NAME, !lock))
-                .setScript(new Script(ScriptType.INLINE,
-                        "painless",
-                        "ctx._source." + MigrationScriptProtocolMapper.LOCKED_FIELD_NAME + " = params.lock",
-                        Collections.singletonMap("lock", lock)));
+    private void executeLockRequest(boolean lock, String debugContext) throws IOException {
+        final Request updateByQueryRequest = new Request("POST", "/" + historyIndex + "/_update_by_query");
+        updateByQueryRequest.addParameters(indicesOptions(IndexOptions.lenientExpandOpen()));
+        updateByQueryRequest.addParameter("requests_per_second", "-1");
+        updateByQueryRequest.addParameter("refresh", "true");
+        updateByQueryRequest.addParameter("timeout", "1m");
+        updateByQueryRequest.setJsonEntity("{\"script\":" +
+                "{\"source\":\"ctx._source." + MigrationScriptProtocolMapper.LOCKED_FIELD_NAME + " = params.lock\"," +
+                "\"lang\":\"painless\"," +
+                "\"params\":{\"lock\":" + lock + "}" +
+                "}," +
+                "\"size\":1000," +
+                "\"query\":{\"term\":{\"" + MigrationScriptProtocolMapper.LOCKED_FIELD_NAME + "\":{\"value\":" + !lock + "}}}}");
+
+        final Response updateByQueryResponse = restHighLevelClient.getLowLevelClient().performRequest(updateByQueryRequest);
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("{} res: {} (body={})", debugContext, updateByQueryResponse, EntityUtils.toString(updateByQueryResponse.getEntity()));
+        }
     }
 
     @Override
@@ -259,12 +264,11 @@ public class HistoryRepositoryImpl implements HistoryRepository {
      */
     void refresh(String... indices) {
         try {
-            String refreshParams = indicesOptions(IndexOptions.lenientExpandOpen());
-            Response res = restHighLevelClient.getLowLevelClient()
-                    .performRequest(new Request("GET", expandIndicesForUrl(indices) + "/_refresh?" + refreshParams));
-            if (logger.isDebugEnabled()) {
-                logger.debug("refreshing indices {} with params '{}'", Arrays.toString(indices), refreshParams);
-            }
+            final Request refreshRequest = new Request("GET", "/" + expandIndicesForUrl(indices) + "/_refresh");
+            refreshRequest.addParameters(indicesOptions(IndexOptions.lenientExpandOpen()));
+
+            Response res = restHighLevelClient.getLowLevelClient().performRequest(refreshRequest);
+
             validateHttpStatusIs2xx(res, "refresh");
         } catch (IOException e) {
             throw new MigrationException("refresh failed!", e);
@@ -272,15 +276,14 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     }
 
     private String expandIndicesForUrl(String... indices) {
-        String combinedIndices = String.join(",", indices);
-        return "/" + combinedIndices;
+        return String.join(",", indices);
     }
 
-    private String indicesOptions(IndexOptions indicesOptions) {
-        List<NameValuePair> nameValuePairs = new ArrayList<>();
-        nameValuePairs.add(new BasicNameValuePair("ignore_unavailable", Boolean.toString(indicesOptions.ignoreUnavailable())));
-        nameValuePairs.add(new BasicNameValuePair("allow_no_indices", Boolean.toString(indicesOptions.allowNoIndices())));
-        nameValuePairs.add(new BasicNameValuePair("ignore_throttled", Boolean.toString(indicesOptions.ignoreThrottled())));
+    private Map<String, String> indicesOptions(IndexOptions indicesOptions) {
+        Map<String, String> nameValuePairs = new HashMap<>();
+        nameValuePairs.put("ignore_unavailable", Boolean.toString(indicesOptions.ignoreUnavailable()));
+        nameValuePairs.put("allow_no_indices", Boolean.toString(indicesOptions.allowNoIndices()));
+        nameValuePairs.put("ignore_throttled", Boolean.toString(indicesOptions.ignoreThrottled()));
         String expandWildcards;
         if (!indicesOptions.expandWildcardsOpen() && !indicesOptions.expandWildcardsClosed()) {
             expandWildcards = "none";
@@ -294,8 +297,8 @@ public class HistoryRepositoryImpl implements HistoryRepository {
             }
             expandWildcards = joiner.toString();
         }
-        nameValuePairs.add(new BasicNameValuePair("expand_wildcards", expandWildcards));
-        return URLEncodedUtils.format(nameValuePairs, StandardCharsets.UTF_8);
+        nameValuePairs.put("expand_wildcards", expandWildcards);
+        return nameValuePairs;
     }
 
     /**

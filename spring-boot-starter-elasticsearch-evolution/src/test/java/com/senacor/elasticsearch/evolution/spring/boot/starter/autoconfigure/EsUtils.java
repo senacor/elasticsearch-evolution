@@ -18,7 +18,7 @@ public class EsUtils {
 
     public void refreshIndices() {
         try {
-            restClient.performRequest(new Request("POST", "/_refresh"));
+            restClient.performRequest(new Request("GET", "/_refresh"));
         } catch (IOException e) {
             throw new IllegalStateException("refreshIndices failed", e);
         }
