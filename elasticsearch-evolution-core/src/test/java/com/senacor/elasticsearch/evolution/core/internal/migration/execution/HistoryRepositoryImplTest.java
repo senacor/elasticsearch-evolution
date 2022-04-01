@@ -59,7 +59,7 @@ class HistoryRepositoryImplTest {
     class saveOrUpdate {
         @Test
         void failed() throws IOException {
-            when(restHighLevelClient.index(any(), eq(RequestOptions.DEFAULT)))
+            when(restHighLevelClient.getLowLevelClient().performRequest(any()))
                     .thenThrow(new IOException("test error"));
             MigrationScriptProtocol protocol = new MigrationScriptProtocol().setVersion("1");
 
@@ -91,7 +91,7 @@ class HistoryRepositoryImplTest {
     class lock {
         @Test
         void failed() throws IOException {
-            when(restHighLevelClient.count(any(), eq(RequestOptions.DEFAULT)))
+            when(restHighLevelClient.getLowLevelClient().performRequest(any()))
                     .thenThrow(new IOException("test error"));
 
             assertThat(underTest.lock()).isFalse();
