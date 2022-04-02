@@ -3,7 +3,6 @@ package com.senacor.elasticsearch.evolution.spring.boot.starter.autoconfigure;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -25,13 +24,13 @@ public class EmbeddedElasticsearchConfiguration {
     }
 
     @Bean
-    public RestHighLevelClient restHighLevelClient(ElasticsearchContainer elasticsearchContainer) {
+    public RestClient restClient(ElasticsearchContainer elasticsearchContainer) {
         RestClientBuilder builder = RestClient.builder(HttpHost.create(elasticsearchContainer.getHttpHostAddress()));
-        return new RestHighLevelClient(builder);
+        return builder.build();
     }
 
     @Bean
-    public EsUtils esUtils(RestHighLevelClient restHighLevelClient) {
-        return new EsUtils(restHighLevelClient.getLowLevelClient());
+    public EsUtils esUtils(RestClient restClient) {
+        return new EsUtils(restClient);
     }
 }

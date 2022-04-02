@@ -1,5 +1,7 @@
 package com.senacor.elasticsearch.evolution.core.internal.migration.execution;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.test.ArgumentProviders;
@@ -22,8 +24,7 @@ import org.mockito.Mock;
 
 import java.io.IOException;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -43,14 +44,16 @@ class HistoryRepositoryImplTest {
 
     @BeforeEach
     void setUp() {
-        underTest = new HistoryRepositoryImpl(restHighLevelClient, INDEX, new MigrationScriptProtocolMapper(), 1000);
+        final ObjectMapper objectMapper = new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        underTest = new HistoryRepositoryImpl(restHighLevelClient.getLowLevelClient(), INDEX, new MigrationScriptProtocolMapper(), 1000, objectMapper);
     }
 
     @Nested
     class findAll {
         @Test
         void failed() throws IOException {
-            when(restHighLevelClient.search(any(), eq(RequestOptions.DEFAULT)))
+            when(restHighLevelClient.getLowLevelClient().performRequest(any()))
                     .thenThrow(new IOException("test error"));
 
             assertThatThrownBy(() -> underTest.findAll())
@@ -137,17 +140,18 @@ class HistoryRepositoryImplTest {
     class validateStatus2xxOK {
         @ParameterizedTest
         @ArgumentsSource(ArgumentProviders.SuccessHttpCodesProvider.class)
-        void isOK(RestStatus status) {
-            underTest.validateHttpStatusIs2xx(status, "isOK");
+        void isOK(int httpStatusCode) {
+            assertThatCode(() -> underTest.validateHttpStatusIs2xx(httpStatusCode, "isOK"))
+                    .doesNotThrowAnyException();
         }
 
         @ParameterizedTest
         @ArgumentsSource(ArgumentProviders.FailingHttpCodesProvider.class)
-        void failed(RestStatus status) {
+        void failed(int httpStatusCode) {
             String description = "failed";
-            assertThatThrownBy(() -> underTest.validateHttpStatusIs2xx(status, description))
+            assertThatThrownBy(() -> underTest.validateHttpStatusIs2xx(httpStatusCode, description))
                     .isInstanceOf(MigrationException.class)
-                    .hasMessage("%s - response status is not OK: %s", description, status.getStatus());
+                    .hasMessage("%s - response status is not OK: %s", description, httpStatusCode);
         }
     }
 

@@ -14,7 +14,6 @@ import org.apache.http.StatusLine;
 import org.apache.http.entity.ContentType;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
-import org.elasticsearch.rest.RestStatus;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -130,7 +129,7 @@ class MigrationServiceImplTest {
 
             List<ParsedMigrationScript> res = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
 
-            assertThat(res).hasSize(0);
+            assertThat(res).isEmpty();
             InOrder order = inOrder(historyRepository);
             order.verify(historyRepository).findAll();
             order.verifyNoMoreInteractions();
@@ -178,7 +177,7 @@ class MigrationServiceImplTest {
 
             List<ParsedMigrationScript> res = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
 
-            assertThat(res).hasSize(0);
+            assertThat(res).isEmpty();
             InOrder order = inOrder(historyRepository);
             order.verify(historyRepository).findAll();
             order.verifyNoMoreInteractions();
@@ -440,9 +439,9 @@ class MigrationServiceImplTest {
 
         @ParameterizedTest
         @ArgumentsSource(FailingHttpCodesProvider.class)
-        void executeScript_failed_status(RestStatus status) throws IOException {
+        void executeScript_failed_status(int httpStatusCode) throws IOException {
             ParsedMigrationScript script = createParsedMigrationScript("1.1");
-            Response responseMock = createResponseMock(status.getStatus());
+            Response responseMock = createResponseMock(httpStatusCode);
             doReturn(responseMock).when(restClient).performRequest(any());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
@@ -456,15 +455,15 @@ class MigrationServiceImplTest {
                     .isInstanceOf(MigrationException.class)
                     .hasMessage("execution of script '%s' failed with HTTP status %s: Response(%s)",
                             script.getFileNameInfo(),
-                            status.getStatus(),
-                            status.getStatus());
+                            httpStatusCode,
+                            httpStatusCode);
         }
 
         @ParameterizedTest
         @ArgumentsSource(ArgumentProviders.SuccessHttpCodesProvider.class)
-        void executeScript_OK_status(RestStatus status) throws IOException {
+        void executeScript_OK_status(int httpStatusCode) throws IOException {
             ParsedMigrationScript script = createParsedMigrationScript("1.1");
-            Response responseMock = createResponseMock(status.getStatus());
+            Response responseMock = createResponseMock(httpStatusCode);
             doReturn(responseMock).when(restClient).performRequest(any());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
@@ -608,7 +607,7 @@ class MigrationServiceImplTest {
 
             List<MigrationScriptProtocol> res = underTest.executePendingScripts(emptyList());
 
-            assertThat(res).hasSize(0);
+            assertThat(res).isEmpty();
             InOrder order = inOrder(historyRepository, restClient);
             order.verifyNoMoreInteractions();
         }

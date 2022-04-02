@@ -54,7 +54,7 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 </dependency>
 ```
 
-Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and requires at minimum version 7.5.2. Spring boot could use a older version, depending on your Spring Boot version, so update it in your pom.xml:
+Elasticsearch-Evolution uses internally Elastics `RestClient` and requires at minimum version 7.5.2. Spring boot could use an older version, depending on your Spring Boot version, so update it in your pom.xml:
 
 ```xml
 <properties>
@@ -83,12 +83,11 @@ Place your migration scripts in your application classpath at `es/evolution`
 Create a `ElasticsearchEvolution` instance and execute the migration.
 
 ```java
-// first create a Elastic RestHighLevelClient
-RestHighLevelClient restHighLevelClient = new RestHighLevelClient(
-        RestClient.builder(HttpHost.create("http://localhost:9200")));
+// first create a Elastic RestClient
+RestClient restClient = RestClient.builder(HttpHost.create("http://localhost:9200")).build();
 // then create a ElasticsearchEvolution configuration and create a instance of ElasticsearchEvolution with that configuration
 ElasticsearchEvolution elasticsearchEvolution = ElasticsearchEvolution.configure()
-        .load(restHighLevelClient);
+        .load(restClient);
 // execute the migration
 elasticsearchEvolution.migrate();
 ```
@@ -194,7 +193,7 @@ Elasticsearch-Evolution can be configured to your needs:
 
 ### 5.1 Spring Boot
 
-You can set the above configurations via Spring Boots default configuration way. Just use the prefix `spring.elasticsearch.evolution`. Here is a example `application.properties`:
+You can set the above configurations via Spring Boots default configuration way. Just use the prefix `spring.elasticsearch.evolution`. Here is an example `application.properties`:
 
 ```properties
 spring.elasticsearch.evolution.locations[0]=classpath:es/migration
@@ -208,8 +207,8 @@ spring.elasticsearch.evolution.historyIndex=es_evolution
 
 #### 5.1.1 Elasticsearch AutoConfiguration (since spring boot 2.1)
 
-Since spring boot 2.1 AutoConfiguration for Elasticsearchs REST client is provided (see org.springframework.boot.autoconfigure.elasticsearch.rest.RestClientAutoConfiguration).
-You can configure the RestHighLevelClient, required for Elasticsearch-Evolution, just like that in your `application.properties`:
+Since spring boot 2.1 AutoConfiguration for Elasticsearchs REST client is provided (see org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration).
+You can configure the `RestClient`, required for Elasticsearch-Evolution, just like that in your `application.properties`:
 
 ##### 5.1.1.1 spring boot 2.6+
 ```properties
@@ -228,14 +227,14 @@ spring.elasticsearch.rest.password=my-secret-pw
 
 #### 5.1.2 Customize Elasticsearch-Evolutions AutoConfiguration
 
-##### 5.1.2.1 Custom RestHighLevelClient
+##### 5.1.2.1 Custom RestClient
 
-Elasticsearch-Evolutions just needs a `RestHighLevelClient` as spring bean. 
-If you don't have spring boot 2.1 or later or you need a special `RestHighLevelClient` configuration e.g. to accept self signed certificates or disable hostname validation, you can provide a custom `RestHighLevelClient` like this:   
+Elasticsearch-Evolutions just needs a `RestClient` as spring bean. 
+If you don't have spring boot 2.1 or later or you need a special `RestClient` configuration e.g. to accept self signed certificates or disable hostname validation, you can provide a custom `RestClient` like this:   
 
 ```java
 @Bean
-public RestHighLevelClient restHighLevelClient() {
+public RestClient restClient() {
     RestClientBuilder builder = RestClient.builder(HttpHost.create("https://localhost:9200"))
             .setHttpClientConfigCallback(httpClientBuilder -> {
                         CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
@@ -251,13 +250,13 @@ public RestHighLevelClient restHighLevelClient() {
                         return httpClientBuilder;
                     }
             );
-    return new RestHighLevelClient(builder);
+    return builder.build();
 }
 ```
 
 ##### 5.1.2.2 Custom ElasticsearchEvolutionInitializer
 
-Maybe you want to provide a customised Initializer for Elasticsearch-Evolution e.g with another Order:
+Maybe you want to provide a customised Initializer for Elasticsearch-Evolution e.g with another order:
 
 ```java
 @Bean
@@ -285,8 +284,9 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.3.3-SNAPSHOT
+### v0.4.0-SNAPSHOT
 
+- **breaking change**: drop `org.elasticsearch.client.RestHighLevelClient` and replace with `org.elasticsearch.client.RestClient` (LowLevelClient). This will drop the big transitive dependency `org.elasticsearch:elasticsearch` and opens compatibility to Elasticsearch 8 and OpenSearch.
 - version updates (spring-boot 2.6.6)
 - added spring boot 2.5 and 2.6 compatibility tests
 - added java 17 and 18 compatibility tests

@@ -1,5 +1,7 @@
 package com.senacor.elasticsearch.evolution.core.internal.migration.execution;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension;
@@ -25,7 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.NavigableSet;
 
-import static com.senacor.elasticsearch.evolution.core.internal.migration.execution.HistoryRepositoryImpl.INDEX_TYPE_DOC;
 import static com.senacor.elasticsearch.evolution.core.internal.migration.execution.MigrationScriptProtocolMapper.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
@@ -42,6 +43,27 @@ class HistoryRepositoryImplIT {
 
     @Nested
     class findAll {
+        @ParameterizedTest(name = "esVersion: {0}")
+        @ArgumentsSource(ElasticsearchArgumentsProvider.class)
+        void can_handle_empty_search_result(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+            HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
+            underTest.refresh(INDEX);
+
+            NavigableSet<MigrationScriptProtocol> all = underTest.findAll();
+
+            assertThat(all).isEmpty();
+        }
+
+        @ParameterizedTest(name = "esVersion: {0}")
+        @ArgumentsSource(ElasticsearchArgumentsProvider.class)
+        void can_handle_when_index_does_not_exist(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+            HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
+
+            NavigableSet<MigrationScriptProtocol> all = underTest.findAll();
+
+            assertThat(all).isEmpty();
+        }
+
         @ParameterizedTest(name = "esVersion: {0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
         void doesNotReturnProtocolsWithMajorVersion0(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
@@ -418,6 +440,8 @@ class HistoryRepositoryImplIT {
     }
 
     private HistoryRepositoryImpl createHistoryRepositoryImpl(RestHighLevelClient restHighLevelClient) {
-        return new HistoryRepositoryImpl(restHighLevelClient, INDEX, new MigrationScriptProtocolMapper(), 1000);
+        final ObjectMapper objectMapper = new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return new HistoryRepositoryImpl(restHighLevelClient.getLowLevelClient(), INDEX, new MigrationScriptProtocolMapper(), 1000, objectMapper);
     }
 }
