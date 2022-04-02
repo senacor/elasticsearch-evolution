@@ -10,7 +10,6 @@ import com.senacor.elasticsearch.evolution.core.test.EsUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -428,12 +427,7 @@ class HistoryRepositoryImplIT {
     private void indexDocumentWithLock(boolean locked, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
         HashMap<String, Object> source = new HashMap<>();
         source.put(LOCKED_FIELD_NAME, locked);
-
-        restHighLevelClient.index(
-                new IndexRequest(INDEX)
-                        .id(RandomStringUtils.randomNumeric(5))
-                        .source(source),
-                DEFAULT);
+        esUtils.indexDocument(INDEX, RandomStringUtils.randomNumeric(5), source);
 
         esUtils.refreshIndices();
         logger.debug("all documents in index '{}': {}", INDEX, esUtils.fetchAllDocuments(INDEX));

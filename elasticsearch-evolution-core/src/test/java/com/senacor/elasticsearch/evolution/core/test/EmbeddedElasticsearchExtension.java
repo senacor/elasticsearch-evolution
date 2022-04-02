@@ -2,7 +2,10 @@ package com.senacor.elasticsearch.evolution.core.test;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.*;
+import org.elasticsearch.client.indices.GetIndexRequest;
+import org.elasticsearch.client.indices.GetIndexResponse;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
 import org.junit.jupiter.api.extension.TestInstancePostProcessor;
@@ -35,6 +38,8 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
     private static final SortedSet<String> SUPPORTED_ES_VERSIONS = Collections.unmodifiableSortedSet(new TreeSet<>(Arrays.asList(
+            "8.1.2",
+            "8.0.1",
             "7.17.2",
             "7.16.3",
             "7.15.2",
@@ -59,7 +64,7 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
 
     private static RestHighLevelClient createRestHighLevelClient(String esVersion, ElasticsearchContainer elasticsearchContainer) {
         HttpHost host = HttpHost.create(elasticsearchContainer.getHttpHostAddress());
-        logger.debug("create RestHighLevelClient for ES {} at {}", esVersion, host);
+        logger.debug("create RestClient for ES {} at {}", esVersion, host);
         RestClientBuilder builder = RestClient.builder(host);
         return new RestHighLevelClient(builder);
     }
@@ -68,7 +73,9 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
         logger.info("creating ElasticsearchContainer {} ...", esVersion);
         ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch")
                 .withTag(esVersion))
-                .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
+                .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m")
+                // since elasticsearch 8 security / https is enabled per default - but for testing it should be disabled
+                .withEnv("xpack.security.enabled", "false");
         int esHttpPort = SocketUtils.findAvailableTcpPort(5000, 30000);
         int esTransportPort = SocketUtils.findAvailableTcpPort(30001, 65535);
         container.setPortBindings(Arrays.asList(esHttpPort + ":9200", esTransportPort + ":9300"));
@@ -88,7 +95,13 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     private static void cleanup(EsUtils esUtils, String esVersion, RestHighLevelClient restHighLevelClient) {
         logger.debug("cleanup ElasticsearchContainer {}", esVersion);
         try {
-            restHighLevelClient.indices().delete(new DeleteIndexRequest("*"), DEFAULT);
+            // get all indices
+            final GetIndexResponse allIndices = restHighLevelClient.indices().get(new GetIndexRequest("_all")
+                    .indicesOptions(IndicesOptions.lenientExpandOpen()), DEFAULT);
+            if (allIndices.getIndices().length > 0) {
+                logger.debug("delete indices {}", Arrays.toString(allIndices.getIndices()));
+                restHighLevelClient.indices().delete(new DeleteIndexRequest(allIndices.getIndices()), DEFAULT);
+            }
             Response deleteRes = restHighLevelClient.getLowLevelClient().performRequest(new Request("DELETE", "/_template/*"));
             logger.debug("deleted all templates: {}", deleteRes);
         } catch (IOException e) {
