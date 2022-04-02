@@ -2,6 +2,9 @@ name: Maven Matrix Build
 
 on:
   push:
+    branches:
+      - master
+      - release
   # pull_request to run the pipeline on PRs from external, because "push" does not create this pipeline on external PRs
   pull_request:
   schedule:
