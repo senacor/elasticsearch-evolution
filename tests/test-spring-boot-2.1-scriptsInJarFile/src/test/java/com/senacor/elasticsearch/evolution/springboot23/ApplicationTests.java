@@ -42,8 +42,10 @@ public class ApplicationTests {
         public ElasticsearchContainer elasticsearchContainer(@Value("${elasticsearch.version:7.5.2}") String esVersion) {
             ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName
                     .parse("docker.elastic.co/elasticsearch/elasticsearch")
-                    .withTag(esVersion)
-            ).withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
+                    .withTag(esVersion))
+                    .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m")
+                    // since elasticsearch 8 security / https is enabled per default - but for testing it should be disabled
+                    .withEnv("xpack.security.enabled", "false");
             container.setPortBindings(Collections.singletonList(ELASTICSEARCH_PORT + ":9200"));
             container.start();
             return container;

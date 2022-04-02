@@ -17,7 +17,9 @@ public class EmbeddedElasticsearchConfiguration {
     @Bean(destroyMethod = "stop")
     public ElasticsearchContainer elasticsearchContainer() {
         ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:7.5.2")
-                .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
+                .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m")
+                // since elasticsearch 8 security / https is enabled per default - but for testing it should be disabled
+                .withEnv("xpack.security.enabled", "false");
         logger.info("starting embedded ElasticSearch...");
         container.start();
         return container;
