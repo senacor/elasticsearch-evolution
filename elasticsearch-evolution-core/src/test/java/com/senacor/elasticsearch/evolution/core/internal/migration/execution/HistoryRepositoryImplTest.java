@@ -4,8 +4,11 @@ import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.test.ArgumentProviders;
 import com.senacor.elasticsearch.evolution.core.test.MockitoExtension;
+import org.apache.http.ProtocolVersion;
+import org.apache.http.message.BasicStatusLine;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.rest.RestStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -102,12 +106,14 @@ class HistoryRepositoryImplTest {
     class unlock {
         @Test
         void failed() throws IOException {
-            when(
-                    restHighLevelClient.getLowLevelClient().performRequest(any()).getStatusLine().getStatusCode()
-            ).thenReturn(200);
-
-            when(restHighLevelClient.updateByQuery(any(), eq(RequestOptions.DEFAULT)))
+            final Response responseMock = mock(Response.class);
+            when(restHighLevelClient.getLowLevelClient().performRequest(any()))
+                    // first call is refresh, which must succeed
+                    .thenReturn(responseMock)
+                    // second call is updateByQuery which should fail
                     .thenThrow(new IOException("test error"));
+            when(responseMock.getStatusLine())
+                    .thenReturn(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "OK"));
 
             assertThat(underTest.unlock()).isFalse();
         }

@@ -13,12 +13,7 @@ import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.reindex.BulkByScrollResponse;
-import org.elasticsearch.index.reindex.UpdateByQueryRequest;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
@@ -165,17 +160,23 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     public boolean unlock() {
         try {
             refresh(historyIndex);
-            BulkByScrollResponse deleteInternalLockRes = restHighLevelClient.updateByQuery(
-                    new UpdateByQueryRequest(historyIndex)
-                            .setRefresh(true)
-                            .setIndicesOptions(IndicesOptions.lenientExpandOpen())
-                            .setQuery(QueryBuilders.termQuery(MigrationScriptProtocolMapper.VERSION_FIELD_NAME, INTERNAL_LOCK_VERSION))
-                            .setScript(new Script(ScriptType.INLINE,
-                                    "painless",
-                                    "ctx.op = \"delete\"",
-                                    Collections.emptyMap())),
-                    DEFAULT);
-            logger.debug("unlock.deleteLockEntry res: {}", deleteInternalLockRes);
+
+            final Request updateByQueryRequest = new Request("POST", "/" + historyIndex + "/_update_by_query");
+            updateByQueryRequest.addParameters(indicesOptions(IndexOptions.lenientExpandOpen()));
+            updateByQueryRequest.addParameter("requests_per_second", "-1");
+            updateByQueryRequest.addParameter("refresh", "true");
+            updateByQueryRequest.addParameter("timeout", "1m");
+            updateByQueryRequest.setJsonEntity("{\"script\":{" +
+                    "\"source\":\"ctx.op = \\\"delete\\\"\"," +
+                    "\"lang\":\"painless\"}," +
+                    "\"size\":1000," +
+                    "\"query\":{\"term\":{\"" + MigrationScriptProtocolMapper.VERSION_FIELD_NAME + "\":{\"value\":\"" + INTERNAL_LOCK_VERSION + "\"}}}}");
+
+            final Response deleteInternalLockRes = restHighLevelClient.getLowLevelClient().performRequest(updateByQueryRequest);
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("unlock.deleteLockEntry res: {} (body={})", deleteInternalLockRes, EntityUtils.toString(deleteInternalLockRes.getEntity()));
+            }
 
             executeLockRequest(false, "unlock.removeLock");
             return true;
