@@ -286,7 +286,7 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.4.0-SNAPSHOT
+### v0.4.1-SNAPSHOT
 
 - ...
 
