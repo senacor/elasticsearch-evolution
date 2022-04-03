@@ -52,7 +52,7 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.3.2</version>
+    <version>0.4.0</version>
 </dependency>
 ```
 
@@ -76,7 +76,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.3.2</version>
+    <version>0.4.0</version>
 </dependency>
 ```
 
@@ -287,6 +287,10 @@ ElasticsearchEvolution.configure()
 ## 6 changelog
 
 ### v0.4.0-SNAPSHOT
+
+- ...
+
+### v0.4.0
 
 - **breaking change**: drop `org.elasticsearch.client.RestHighLevelClient` and replace with `org.elasticsearch.client.RestClient` (LowLevelClient). This will drop the big transitive dependency `org.elasticsearch:elasticsearch` and opens compatibility to Elasticsearch 8 and OpenSearch.
 - version updates (spring-boot 2.6.6)
