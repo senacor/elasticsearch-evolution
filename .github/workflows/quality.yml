@@ -1,6 +1,11 @@
 name: Quality analysis
 
-on: [ "push", "pull_request" ]
+on:
+  push:
+    branches:
+      - master
+      - release
+  pull_request:
 
 env:
   MVN_CMD: "./mvnw --settings .cicd.settings.xml -e -B -V"

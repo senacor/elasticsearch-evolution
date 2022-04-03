@@ -5,7 +5,7 @@
 
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-parent</artifactId>
-    <version>0.3.3-SNAPSHOT</version>
+    <version>0.4.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -106,6 +106,7 @@
         <elasticsearch.version>7.5.2</elasticsearch.version>
         <reflections.version>0.9.12</reflections.version>
         <testcontainers.elasticsearch.version>1.16.3</testcontainers.elasticsearch.version>
+        <lombok.version>1.18.22</lombok.version>
     </properties>
 
     <dependencyManagement>
@@ -140,6 +141,17 @@
                 </exclusions>
             </dependency>
             <dependency>
+                <groupId>org.elasticsearch.client</groupId>
+                <artifactId>elasticsearch-rest-client</artifactId>
+                <version>${elasticsearch.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>elasticsearch</artifactId>
                 <version>${testcontainers.elasticsearch.version}</version>
@@ -150,6 +162,13 @@
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commons-io.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

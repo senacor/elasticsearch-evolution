@@ -45,14 +45,14 @@ class ElasticsearchEvolutionTest {
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_OK"))
                 .setHistoryIndex(indexName)
                 .setHistoryMaxQuerySize(historyMaxQuerySize)
-                .load(restHighLevelClient);
+                .load(restHighLevelClient.getLowLevelClient());
 
         assertThatThrownBy(underTest::migrate)
                 .isInstanceOf(MigrationException.class)
                 .hasMessage("configured historyMaxQuerySize of '%s' is to low for the number of migration scripts of '%s'", historyMaxQuerySize, 7);
 
         InOrder order = inOrder(restHighLevelClient, restClient);
-        order.verify(restHighLevelClient, times(3)).getLowLevelClient();
+        order.verify(restHighLevelClient, times(2)).getLowLevelClient();
         order.verify(restClient).getNodes();
         order.verifyNoMoreInteractions();
     }
@@ -61,7 +61,7 @@ class ElasticsearchEvolutionTest {
     void migrate_empty_location() {
         ElasticsearchEvolution underTest = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/empty_location"))
-                .load(restHighLevelClient);
+                .load(restHighLevelClient.getLowLevelClient());
 
         assertThatCode(underTest::migrate)
                 .doesNotThrowAnyException();
@@ -71,7 +71,7 @@ class ElasticsearchEvolutionTest {
     void migrate_non_existing_location() {
         ElasticsearchEvolution underTest = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/does_not_exist"))
-                .load(restHighLevelClient);
+                .load(restHighLevelClient.getLowLevelClient());
 
         assertThatCode(underTest::migrate)
                 .doesNotThrowAnyException();
@@ -81,13 +81,13 @@ class ElasticsearchEvolutionTest {
     void elasticsearchEvolutionIsNotEnabled() {
         int migrations = ElasticsearchEvolution.configure()
                 .setEnabled(false)
-                .load(restHighLevelClient)
+                .load(restHighLevelClient.getLowLevelClient())
                 .migrate();
 
-        assertThat(migrations).isEqualTo(0);
+        assertThat(migrations).isZero();
 
         InOrder order = inOrder(restHighLevelClient, restClient);
-        order.verify(restHighLevelClient, times(3)).getLowLevelClient();
+        order.verify(restHighLevelClient, times(2)).getLowLevelClient();
         order.verify(restClient).getNodes();
         order.verifyNoMoreInteractions();
     }

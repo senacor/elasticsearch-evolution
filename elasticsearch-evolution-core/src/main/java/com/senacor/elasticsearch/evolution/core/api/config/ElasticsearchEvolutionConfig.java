@@ -1,7 +1,7 @@
 package com.senacor.elasticsearch.evolution.core.api.config;
 
 import com.senacor.elasticsearch.evolution.core.ElasticsearchEvolution;
-import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.RestClient;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.nio.charset.Charset;
@@ -86,11 +86,11 @@ public class ElasticsearchEvolutionConfig {
     /**
      * Loads this configuration into a new ElasticsearchEvolution instance.
      *
-     * @param restHighLevelClient REST client to interact with Elasticsearch
+     * @param restClient REST client to interact with Elasticsearch
      * @return The new fully-configured ElasticsearchEvolution instance.
      */
-    public ElasticsearchEvolution load(RestHighLevelClient restHighLevelClient) {
-        return new ElasticsearchEvolution(this, restHighLevelClient);
+    public ElasticsearchEvolution load(RestClient restClient) {
+        return new ElasticsearchEvolution(this, restClient);
     }
 
     /**

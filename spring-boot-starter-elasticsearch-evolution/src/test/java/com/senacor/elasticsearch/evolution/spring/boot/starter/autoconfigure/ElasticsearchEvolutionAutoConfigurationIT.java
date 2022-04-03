@@ -2,9 +2,12 @@ package com.senacor.elasticsearch.evolution.spring.boot.starter.autoconfigure;
 
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.Node;
+import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +32,16 @@ import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFOR
 class ElasticsearchEvolutionAutoConfigurationIT {
 
     @Autowired
+    private RestClient restClient;
     private RestHighLevelClient restHighLevelClient;
 
     @Autowired
     private EsUtils esUtils;
+
+    @BeforeEach
+    void setUp() {
+        restHighLevelClient = new RestHighLevelClient(RestClient.builder(restClient.getNodes().toArray(new Node[0])));
+    }
 
     @Test
     void migrateOnApplicationStartViaInitializer() throws IOException {

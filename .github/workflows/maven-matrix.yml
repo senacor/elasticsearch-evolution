@@ -2,6 +2,9 @@ name: Maven Matrix Build
 
 on:
   push:
+    branches:
+      - master
+      - release
   # pull_request to run the pipeline on PRs from external, because "push" does not create this pipeline on external PRs
   pull_request:
   schedule:
@@ -43,8 +46,8 @@ jobs:
   build-and-test-with-es-version:
     strategy:
       matrix:
-        elasticsearchVersion: [ "7.17.2", "7.16.3", "7.15.2", "7.14.2", "7.13.4", "7.12.1", "7.11.2", "7.10.2",
-                                "7.9.3", "7.8.1", "7.7.1", "7.6.2", "7.5.2" ]
+        elasticsearchVersion: [ "8.1.2", "8.0.1", "7.17.2", "7.16.3", "7.15.2", "7.14.2",
+                                "7.13.4", "7.12.1", "7.11.2", "7.10.2", "7.9.3", "7.8.1", "7.7.1", "7.6.2", "7.5.2" ]
       fail-fast: false
     runs-on: ubuntu-18.04
     steps:

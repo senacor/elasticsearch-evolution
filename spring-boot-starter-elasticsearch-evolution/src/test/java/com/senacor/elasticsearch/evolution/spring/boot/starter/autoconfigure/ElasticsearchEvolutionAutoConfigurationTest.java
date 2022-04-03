@@ -1,7 +1,7 @@
 package com.senacor.elasticsearch.evolution.spring.boot.starter.autoconfigure;
 
 import com.senacor.elasticsearch.evolution.core.ElasticsearchEvolution;
-import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.RestClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -33,8 +33,8 @@ class ElasticsearchEvolutionAutoConfigurationTest {
     }
 
     @Test
-    void restHighLevelClient_existsAsBean() {
-        assertThat(applicationContext.getBean(RestHighLevelClient.class)).isNotNull();
+    void restClient_existsAsBean() {
+        assertThat(applicationContext.getBean(RestClient.class)).isNotNull();
     }
 
     @Test

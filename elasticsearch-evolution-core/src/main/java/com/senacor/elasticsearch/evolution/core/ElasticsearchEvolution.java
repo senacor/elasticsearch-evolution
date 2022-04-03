@@ -1,5 +1,7 @@
 package com.senacor.elasticsearch.evolution.core;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
@@ -15,7 +17,7 @@ import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.Migrati
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 import org.apache.http.entity.ContentType;
-import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +34,7 @@ import static java.util.Objects.requireNonNull;
  * <p>To get started all you need to do is</p>
  * <pre>
  * ElasticsearchEvolution esEvolution = ElasticsearchEvolution.configure()
- *   .load(new RestHighLevelClient(RestClient.builder(HttpHost.create(esUrl))));
+ *   .load(RestClient.builder(HttpHost.create(esUrl)).build());
  * esEvolution.migrate();
  * </pre>
  * <p>
@@ -44,7 +46,7 @@ public class ElasticsearchEvolution {
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchEvolution.class);
 
     private final ElasticsearchEvolutionConfig config;
-    private final RestHighLevelClient restHighLevelClient;
+    private final RestClient restClient;
 
     private final MigrationScriptReader migrationScriptReader;
     private final MigrationScriptParser migrationScriptParser;
@@ -56,7 +58,7 @@ public class ElasticsearchEvolution {
      * <p>In its simplest form, this is how you configure Flyway with all defaults to get started:</p>
      * <pre>
      * ElasticsearchEvolution esEvolution = ElasticsearchEvolution.configure()
-     *     .load(new RestHighLevelClient(RestClient.builder(HttpHost.create(esUrl))));
+     *     .load(RestClient.builder(HttpHost.create(esUrl)).build());
      *  </pre>
      * <p>After that you have a fully-configured ElasticsearchEvolution instance at your disposal which can be used to
      * invoke ElasticsearchEvolution functionality such as migrate().</p>
@@ -71,20 +73,20 @@ public class ElasticsearchEvolution {
      * Create ElasticsearchEvolution
      *
      * @param elasticsearchEvolutionConfig configuration
-     * @param restHighLevelClient          REST client to interact with Elasticsearch
+     * @param restClient                   REST client to interact with Elasticsearch
      */
     public ElasticsearchEvolution(ElasticsearchEvolutionConfig elasticsearchEvolutionConfig,
-                                  RestHighLevelClient restHighLevelClient) {
+                                  RestClient restClient) {
         this.config = requireNonNull(elasticsearchEvolutionConfig, "elasticsearchEvolutionConfig must not be null")
                 .validate();
-        this.restHighLevelClient = requireNonNull(restHighLevelClient, "restHighLevelClient must not be null");
+        this.restClient = requireNonNull(restClient, "restClient must not be null");
 
         this.migrationScriptReader = createMigrationScriptReader();
         this.migrationScriptParser = createMigrationScriptParser();
         this.migrationService = createMigrationService();
 
         logger.info("Created ElasticsearchEvolution with config='{}' and client='{}'",
-                this.getConfig(), this.getRestHighLevelClient().getLowLevelClient().getNodes());
+                this.getConfig(), this.getRestClient().getNodes());
     }
 
     /**
@@ -121,8 +123,14 @@ public class ElasticsearchEvolution {
         return config;
     }
 
-    protected RestHighLevelClient getRestHighLevelClient() {
-        return restHighLevelClient;
+    protected RestClient getRestClient() {
+        return restClient;
+    }
+
+    protected ObjectMapper createObjectMapper(){
+        return new ObjectMapper()
+                // not all search response properties are mapped, so they must be ignored
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     protected MigrationScriptParser createMigrationScriptParser() {
@@ -146,10 +154,11 @@ public class ElasticsearchEvolution {
 
     protected HistoryRepository createHistoryRepository() {
         return new HistoryRepositoryImpl(
-                getRestHighLevelClient(),
+                getRestClient(),
                 getConfig().getHistoryIndex(),
                 new MigrationScriptProtocolMapper(),
-                getConfig().getHistoryMaxQuerySize());
+                getConfig().getHistoryMaxQuerySize(),
+                createObjectMapper());
     }
 
     protected MigrationService createMigrationService() {
@@ -157,7 +166,7 @@ public class ElasticsearchEvolution {
                 createHistoryRepository(),
                 1_000,
                 10_000,
-                getRestHighLevelClient().getLowLevelClient(),
+                getRestClient(),
                 ContentType.parse(getConfig().getDefaultContentType()),
                 getConfig().getEncoding());
     }

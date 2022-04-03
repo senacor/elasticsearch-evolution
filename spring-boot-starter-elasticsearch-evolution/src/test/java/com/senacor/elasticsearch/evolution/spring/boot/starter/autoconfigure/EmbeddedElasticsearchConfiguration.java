@@ -3,7 +3,6 @@ package com.senacor.elasticsearch.evolution.spring.boot.starter.autoconfigure;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -18,20 +17,22 @@ public class EmbeddedElasticsearchConfiguration {
     @Bean(destroyMethod = "stop")
     public ElasticsearchContainer elasticsearchContainer() {
         ElasticsearchContainer container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:7.5.2")
-                .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m");
+                .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m")
+                // since elasticsearch 8 security / https is enabled per default - but for testing it should be disabled
+                .withEnv("xpack.security.enabled", "false");
         logger.info("starting embedded ElasticSearch...");
         container.start();
         return container;
     }
 
     @Bean
-    public RestHighLevelClient restHighLevelClient(ElasticsearchContainer elasticsearchContainer) {
+    public RestClient restClient(ElasticsearchContainer elasticsearchContainer) {
         RestClientBuilder builder = RestClient.builder(HttpHost.create(elasticsearchContainer.getHttpHostAddress()));
-        return new RestHighLevelClient(builder);
+        return builder.build();
     }
 
     @Bean
-    public EsUtils esUtils(RestHighLevelClient restHighLevelClient) {
-        return new EsUtils(restHighLevelClient.getLowLevelClient());
+    public EsUtils esUtils(RestClient restClient) {
+        return new EsUtils(restClient);
     }
 }

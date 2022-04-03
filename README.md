@@ -15,25 +15,27 @@
 
 ## 1 Evolve your Elasticsearch mapping easily and reliable across all your instances
 
-Elasticsearch-Evolution executes versioned migration scripts reliable and persists the execution state in an internal Elasticsearch index.
+Elasticsearch-Evolution executes versioned migration scripts reliable and persists the execution state in an internal Elasticsearch/Opensearch index.
 Successful executed migration scripts will not be executed again! 
 
 ## 2 Features
 
--   tested on Java 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 and 18
--   runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5 and 2.6 (and of course without Spring-Boot)
--   runs on Elasticsearch version 7.5.x - 7.17.x
--   highly configurable (e.g. location(s) of your migration files, migration files format pattern)
--   placeholder substitution in migration scripts
--   easily extendable to your needs
--   supports microservices / multiple parallel running instances via logical database locks
--   ready to use default configuration
--   line comments in migration files
+- tested on Java 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 and 18
+- runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5 and 2.6 (and of course without Spring-Boot)
+- runs on Elasticsearch version 7.5.x - 8.1.x
+- runs on Opensearch version 1.x
+- highly configurable (e.g. location(s) of your migration files, migration files format pattern)
+- placeholder substitution in migration scripts
+- easily extendable to your needs
+- supports microservices / multiple parallel running instances via logical database locks
+- ready to use default configuration
+- line comments in migration files
 
-| Compatibility                    | Spring Boot                  | Elasticsearch        |
-|----------------------------------|------------------------------|----------------------|
-| elasticsearch-evolution >= 0.3.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 | 7.5.x - 7.17.x       |
-| elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4 | 7.0.x - 7.4.x, 6.8.x |
+| Compatibility                    | Spring Boot                  | Elasticsearch        | Opensearch |
+|----------------------------------|------------------------------|----------------------|------------|
+| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 | 7.5.x - 8.1.x        | 1.x        |
+| elasticsearch-evolution >= 0.3.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 | 7.5.x - 7.17.x       |            |
+| elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4 | 7.0.x - 7.4.x, 6.8.x |            |
 
 NOTE: When you run on Java 11 and using spring-boot 2.2 or 2.3 and you hit [this issue](https://github.com/ronmamo/reflections/issues/279), you have 2 options: 
 
@@ -54,7 +56,7 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 </dependency>
 ```
 
-Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and requires at minimum version 7.5.2. Spring boot could use a older version, depending on your Spring Boot version, so update it in your pom.xml:
+Elasticsearch-Evolution uses internally Elastics `RestClient` and requires at minimum version 7.5.2. Spring boot could use an older version, depending on your Spring Boot version, so update it in your pom.xml:
 
 ```xml
 <properties>
@@ -64,7 +66,7 @@ Elasticsearch-Evolution uses internally Elastics RestHighLevelClient and require
 
 Place your migration scripts in your application classpath at `es/evolution`
 
-That's it. Elasticsearch-Evolution runs at application startup and expects your Elasticsearch at <http://localhost:9200>
+That's it. Elasticsearch-Evolution runs at application startup and expects your Elasticsearch/Opensearch at <http://localhost:9200>
 
 ### 3.2 Quickstart with core library
 
@@ -83,12 +85,11 @@ Place your migration scripts in your application classpath at `es/evolution`
 Create a `ElasticsearchEvolution` instance and execute the migration.
 
 ```java
-// first create a Elastic RestHighLevelClient
-RestHighLevelClient restHighLevelClient = new RestHighLevelClient(
-        RestClient.builder(HttpHost.create("http://localhost:9200")));
+// first create a Elastic RestClient
+RestClient restClient = RestClient.builder(HttpHost.create("http://localhost:9200")).build();
 // then create a ElasticsearchEvolution configuration and create a instance of ElasticsearchEvolution with that configuration
 ElasticsearchEvolution elasticsearchEvolution = ElasticsearchEvolution.configure()
-        .load(restHighLevelClient);
+        .load(restClient);
 // execute the migration
 elasticsearchEvolution.migrate();
 ```
@@ -127,7 +128,7 @@ Content-Type: application/json
 }
 ```
 
-The first line defines the HTTP method `PUT` and the relative path to the Elasticsearch endpoint `_template/my_template` to create a new mapping template.
+The first line defines the HTTP method `PUT` and the relative path to the Elasticsearch/Opensearch endpoint `_template/my_template` to create a new mapping template.
 Followed by a HTTP Header `Content-Type: application/json`.
 After a blank line the HTTP body is defined.
 
@@ -135,15 +136,15 @@ The pattern is strongly oriented in ordinary HTTP requests and consist of 4 part
 
 1.  **The HTTP method (required)**. Supported HTTP methods are `GET`, `HEAD`, `POST`, `PUT`, `DELETE`, `OPTIONS` and `PATCH`. 
     The First non-comment line must always start with a HTTP method.
-2.  **The path to the Elasticsearch endpoint to call (required)**. The path is separated by a _blank_ from the HTTP method. 
+2.  **The path to the Elasticsearch/Opensearch endpoint to call (required)**. The path is separated by a _blank_ from the HTTP method. 
     You can provide any query parameters like in a ordinary browser like this `/my_index_1/_doc/1?refresh=true&op_type=create`
 3.  **HTTP Header(s) (optional)**. All non-comment lines after the _HTTP method_ line will be interpreted as HTTP headers. Header name and content are separated by `:`.
-4.  **HTTP Body (optional)**. The HTTP Body is separated by a blank line and can contain any content you want to sent to Elasticsearch.
+4.  **HTTP Body (optional)**. The HTTP Body is separated by a blank line and can contain any content you want to sent to Elasticsearch/Opensearch.
 
 #### 4.1.1 Comments
 
 Elasticsearch-Evolution supports line-comments in its migration scripts. Every line starting with `#` or `//` will be interpreted as a comment-line.
-Comment-lines are not send to Elasticsearch, they will be filtered by Elasticsearch-Evolution.
+Comment-lines are not send to Elasticsearch/Opensearch, they will be filtered by Elasticsearch-Evolution.
 
 #### 4.1.2 Placeholders
 
@@ -194,7 +195,7 @@ Elasticsearch-Evolution can be configured to your needs:
 
 ### 5.1 Spring Boot
 
-You can set the above configurations via Spring Boots default configuration way. Just use the prefix `spring.elasticsearch.evolution`. Here is a example `application.properties`:
+You can set the above configurations via Spring Boots default configuration way. Just use the prefix `spring.elasticsearch.evolution`. Here is an example `application.properties`:
 
 ```properties
 spring.elasticsearch.evolution.locations[0]=classpath:es/migration
@@ -208,8 +209,8 @@ spring.elasticsearch.evolution.historyIndex=es_evolution
 
 #### 5.1.1 Elasticsearch AutoConfiguration (since spring boot 2.1)
 
-Since spring boot 2.1 AutoConfiguration for Elasticsearchs REST client is provided (see org.springframework.boot.autoconfigure.elasticsearch.rest.RestClientAutoConfiguration).
-You can configure the RestHighLevelClient, required for Elasticsearch-Evolution, just like that in your `application.properties`:
+Since spring boot 2.1 AutoConfiguration for Elasticsearchs REST client is provided (see org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration).
+You can configure the `RestClient`, required for Elasticsearch-Evolution, just like that in your `application.properties`:
 
 ##### 5.1.1.1 spring boot 2.6+
 ```properties
@@ -228,14 +229,14 @@ spring.elasticsearch.rest.password=my-secret-pw
 
 #### 5.1.2 Customize Elasticsearch-Evolutions AutoConfiguration
 
-##### 5.1.2.1 Custom RestHighLevelClient
+##### 5.1.2.1 Custom RestClient
 
-Elasticsearch-Evolutions just needs a `RestHighLevelClient` as spring bean. 
-If you don't have spring boot 2.1 or later or you need a special `RestHighLevelClient` configuration e.g. to accept self signed certificates or disable hostname validation, you can provide a custom `RestHighLevelClient` like this:   
+Elasticsearch-Evolutions just needs a `RestClient` as spring bean. 
+If you don't have spring boot 2.1 or later or you need a special `RestClient` configuration e.g. to accept self signed certificates or disable hostname validation, you can provide a custom `RestClient` like this:   
 
 ```java
 @Bean
-public RestHighLevelClient restHighLevelClient() {
+public RestClient restClient() {
     RestClientBuilder builder = RestClient.builder(HttpHost.create("https://localhost:9200"))
             .setHttpClientConfigCallback(httpClientBuilder -> {
                         CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
@@ -251,13 +252,13 @@ public RestHighLevelClient restHighLevelClient() {
                         return httpClientBuilder;
                     }
             );
-    return new RestHighLevelClient(builder);
+    return builder.build();
 }
 ```
 
 ##### 5.1.2.2 Custom ElasticsearchEvolutionInitializer
 
-Maybe you want to provide a customised Initializer for Elasticsearch-Evolution e.g with another Order:
+Maybe you want to provide a customised Initializer for Elasticsearch-Evolution e.g with another order:
 
 ```java
 @Bean
@@ -285,12 +286,15 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.3.3-SNAPSHOT
+### v0.4.0-SNAPSHOT
 
+- **breaking change**: drop `org.elasticsearch.client.RestHighLevelClient` and replace with `org.elasticsearch.client.RestClient` (LowLevelClient). This will drop the big transitive dependency `org.elasticsearch:elasticsearch` and opens compatibility to Elasticsearch 8 and OpenSearch.
 - version updates (spring-boot 2.6.6)
 - added spring boot 2.5 and 2.6 compatibility tests
 - added java 17 and 18 compatibility tests
-- added Elasticsearch 7.17, 7.16, 7.15, 7.14 and 7.13 compatibility tests
+- added Elasticsearch 8.1, 8.0, 7.17, 7.16, 7.15, 7.14 and 7.13 compatibility tests
+- added Opensearch 1.0, 1.1, 1.2 and 1.3 compatibility tests
+- fixed issue [#114](https://github.com/senacor/elasticsearch-evolution/issues/114)
 
 ### v0.3.2
 

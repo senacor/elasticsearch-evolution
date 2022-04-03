@@ -1,6 +1,7 @@
 package com.senacor.elasticsearch.evolution.core;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
@@ -44,17 +45,19 @@ class ElasticsearchEvolutionIT {
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchEvolutionIT.class);
 
     private HistoryRepository historyRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-    @ParameterizedTest(name = "esVersion: {0}")
+    @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-    void migrate_OK(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
+    void migrate_OK(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
 
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_OK"));
         String historyIndex = elasticsearchEvolutionConfig.getHistoryIndex();
-        historyRepository = new HistoryRepositoryImpl(restHighLevelClient, historyIndex, new MigrationScriptProtocolMapper(), 1000);
+        historyRepository = new HistoryRepositoryImpl(restHighLevelClient.getLowLevelClient(), historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
         ElasticsearchEvolution underTest = elasticsearchEvolutionConfig
-                .load(restHighLevelClient);
+                .load(restHighLevelClient.getLowLevelClient());
 
         assertSoftly(softly -> {
             softly.assertThat(underTest.migrate())
@@ -117,16 +120,16 @@ class ElasticsearchEvolutionIT {
                 .isEqualTo(3);
     }
 
-    @ParameterizedTest(name = "esVersion: {0}")
+    @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-    void migrate_failed_then_fixed_script_and_re_execute(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+    void migrate_failed_then_fixed_script_and_re_execute(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
 
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_failed_step1"));
-        historyRepository = new HistoryRepositoryImpl(restHighLevelClient, elasticsearchEvolutionConfig.getHistoryIndex(), new MigrationScriptProtocolMapper(), 1000);
+        historyRepository = new HistoryRepositoryImpl(restHighLevelClient.getLowLevelClient(), elasticsearchEvolutionConfig.getHistoryIndex(), new MigrationScriptProtocolMapper(), 1000, objectMapper);
 
         assertSoftly(softly -> {
-            softly.assertThatThrownBy(() -> elasticsearchEvolutionConfig.load(restHighLevelClient).migrate())
+            softly.assertThatThrownBy(() -> elasticsearchEvolutionConfig.load(restHighLevelClient.getLowLevelClient()).migrate())
                     .isInstanceOf(MigrationException.class)
                     .hasMessage("execution of script 'FileNameInfoImpl{version=1.1, description='addDocument', scriptName='V001.01__addDocument.http'}' failed");
             NavigableSet<MigrationScriptProtocol> protocols = historyRepository.findAll();
@@ -144,7 +147,7 @@ class ElasticsearchEvolutionIT {
         elasticsearchEvolutionConfig.setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_failed_step2_fixed"));
 
         assertSoftly(softly -> {
-            softly.assertThat(elasticsearchEvolutionConfig.load(restHighLevelClient).migrate())
+            softly.assertThat(elasticsearchEvolutionConfig.load(restHighLevelClient.getLowLevelClient()).migrate())
                     .as("# of successful executed scripts")
                     .isEqualTo(1);
             NavigableSet<MigrationScriptProtocol> protocols = historyRepository.findAll();
