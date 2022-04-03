@@ -48,9 +48,9 @@ class ElasticsearchEvolutionIT {
     private final ObjectMapper objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-    @ParameterizedTest(name = "esVersion: {0}")
+    @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-    void migrate_OK(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
+    void migrate_OK(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
 
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_OK"));
@@ -120,9 +120,9 @@ class ElasticsearchEvolutionIT {
                 .isEqualTo(3);
     }
 
-    @ParameterizedTest(name = "esVersion: {0}")
+    @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-    void migrate_failed_then_fixed_script_and_re_execute(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+    void migrate_failed_then_fixed_script_and_re_execute(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
 
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_failed_step1"));

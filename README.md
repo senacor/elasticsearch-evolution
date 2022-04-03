@@ -15,26 +15,27 @@
 
 ## 1 Evolve your Elasticsearch mapping easily and reliable across all your instances
 
-Elasticsearch-Evolution executes versioned migration scripts reliable and persists the execution state in an internal Elasticsearch index.
+Elasticsearch-Evolution executes versioned migration scripts reliable and persists the execution state in an internal Elasticsearch/Opensearch index.
 Successful executed migration scripts will not be executed again! 
 
 ## 2 Features
 
--   tested on Java 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 and 18
--   runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5 and 2.6 (and of course without Spring-Boot)
--   runs on Elasticsearch version 7.5.x - 8.1.x
--   highly configurable (e.g. location(s) of your migration files, migration files format pattern)
--   placeholder substitution in migration scripts
--   easily extendable to your needs
--   supports microservices / multiple parallel running instances via logical database locks
--   ready to use default configuration
--   line comments in migration files
+- tested on Java 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 and 18
+- runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5 and 2.6 (and of course without Spring-Boot)
+- runs on Elasticsearch version 7.5.x - 8.1.x
+- runs on Opensearch version 1.x
+- highly configurable (e.g. location(s) of your migration files, migration files format pattern)
+- placeholder substitution in migration scripts
+- easily extendable to your needs
+- supports microservices / multiple parallel running instances via logical database locks
+- ready to use default configuration
+- line comments in migration files
 
-| Compatibility                    | Spring Boot                  | Elasticsearch        |
-|----------------------------------|------------------------------|----------------------|
-| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 | 7.5.x - 8.1.x        |
-| elasticsearch-evolution >= 0.3.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 | 7.5.x - 7.17.x       |
-| elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4 | 7.0.x - 7.4.x, 6.8.x |
+| Compatibility                    | Spring Boot                  | Elasticsearch        | Opensearch |
+|----------------------------------|------------------------------|----------------------|------------|
+| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 | 7.5.x - 8.1.x        | 1.x        |
+| elasticsearch-evolution >= 0.3.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 | 7.5.x - 7.17.x       |            |
+| elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4 | 7.0.x - 7.4.x, 6.8.x |            |
 
 NOTE: When you run on Java 11 and using spring-boot 2.2 or 2.3 and you hit [this issue](https://github.com/ronmamo/reflections/issues/279), you have 2 options: 
 
@@ -65,7 +66,7 @@ Elasticsearch-Evolution uses internally Elastics `RestClient` and requires at mi
 
 Place your migration scripts in your application classpath at `es/evolution`
 
-That's it. Elasticsearch-Evolution runs at application startup and expects your Elasticsearch at <http://localhost:9200>
+That's it. Elasticsearch-Evolution runs at application startup and expects your Elasticsearch/Opensearch at <http://localhost:9200>
 
 ### 3.2 Quickstart with core library
 
@@ -127,7 +128,7 @@ Content-Type: application/json
 }
 ```
 
-The first line defines the HTTP method `PUT` and the relative path to the Elasticsearch endpoint `_template/my_template` to create a new mapping template.
+The first line defines the HTTP method `PUT` and the relative path to the Elasticsearch/Opensearch endpoint `_template/my_template` to create a new mapping template.
 Followed by a HTTP Header `Content-Type: application/json`.
 After a blank line the HTTP body is defined.
 
@@ -135,15 +136,15 @@ The pattern is strongly oriented in ordinary HTTP requests and consist of 4 part
 
 1.  **The HTTP method (required)**. Supported HTTP methods are `GET`, `HEAD`, `POST`, `PUT`, `DELETE`, `OPTIONS` and `PATCH`. 
     The First non-comment line must always start with a HTTP method.
-2.  **The path to the Elasticsearch endpoint to call (required)**. The path is separated by a _blank_ from the HTTP method. 
+2.  **The path to the Elasticsearch/Opensearch endpoint to call (required)**. The path is separated by a _blank_ from the HTTP method. 
     You can provide any query parameters like in a ordinary browser like this `/my_index_1/_doc/1?refresh=true&op_type=create`
 3.  **HTTP Header(s) (optional)**. All non-comment lines after the _HTTP method_ line will be interpreted as HTTP headers. Header name and content are separated by `:`.
-4.  **HTTP Body (optional)**. The HTTP Body is separated by a blank line and can contain any content you want to sent to Elasticsearch.
+4.  **HTTP Body (optional)**. The HTTP Body is separated by a blank line and can contain any content you want to sent to Elasticsearch/Opensearch.
 
 #### 4.1.1 Comments
 
 Elasticsearch-Evolution supports line-comments in its migration scripts. Every line starting with `#` or `//` will be interpreted as a comment-line.
-Comment-lines are not send to Elasticsearch, they will be filtered by Elasticsearch-Evolution.
+Comment-lines are not send to Elasticsearch/Opensearch, they will be filtered by Elasticsearch-Evolution.
 
 #### 4.1.2 Placeholders
 
@@ -292,6 +293,8 @@ ElasticsearchEvolution.configure()
 - added spring boot 2.5 and 2.6 compatibility tests
 - added java 17 and 18 compatibility tests
 - added Elasticsearch 8.1, 8.0, 7.17, 7.16, 7.15, 7.14 and 7.13 compatibility tests
+- added Opensearch 1.0, 1.1, 1.2 and 1.3 compatibility tests
+- fixed issue [#114](https://github.com/senacor/elasticsearch-evolution/issues/114)
 
 ### v0.3.2
 

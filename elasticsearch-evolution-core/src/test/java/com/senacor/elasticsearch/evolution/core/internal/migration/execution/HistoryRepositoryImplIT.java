@@ -42,9 +42,9 @@ class HistoryRepositoryImplIT {
 
     @Nested
     class findAll {
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void can_handle_empty_search_result(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+        void can_handle_empty_search_result(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.refresh(INDEX);
 
@@ -53,9 +53,9 @@ class HistoryRepositoryImplIT {
             assertThat(all).isEmpty();
         }
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void can_handle_when_index_does_not_exist(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+        void can_handle_when_index_does_not_exist(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             NavigableSet<MigrationScriptProtocol> all = underTest.findAll();
@@ -63,9 +63,9 @@ class HistoryRepositoryImplIT {
             assertThat(all).isEmpty();
         }
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void doesNotReturnProtocolsWithMajorVersion0(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+        void doesNotReturnProtocolsWithMajorVersion0(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("0.1"));
             underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.0"));
@@ -77,9 +77,9 @@ class HistoryRepositoryImplIT {
             assertThat(all.first().getVersion()).isEqualTo(MigrationVersion.fromVersion("1.0"));
         }
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void returnsProtocolsInVersionOrder(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+        void returnsProtocolsInVersionOrder(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("1.1"));
             underTest.saveOrUpdate(new MigrationScriptProtocol().setVersion("2.0"));
@@ -110,9 +110,9 @@ class HistoryRepositoryImplIT {
             assertThat(all.last().getVersion()).isEqualTo(MigrationVersion.fromVersion("2.0"));
         }
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void returnsFullProtocol(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+        void returnsFullProtocol(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             OffsetDateTime executionTimestamp = OffsetDateTime.of(2019, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
             MigrationScriptProtocol protocol = new MigrationScriptProtocol()
@@ -147,9 +147,9 @@ class HistoryRepositoryImplIT {
 
     @Nested
     class saveOrUpdate {
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void saveFullDocument(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
+        void saveFullDocument(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             OffsetDateTime now = OffsetDateTime.now();
@@ -194,9 +194,9 @@ class HistoryRepositoryImplIT {
                     .containsEntry(SUCCESS_FIELD_NAME, true);
         }
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void save2DocumentsWithDifferentVersions(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
+        void save2DocumentsWithDifferentVersions(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             underTest.saveOrUpdate(new MigrationScriptProtocol()
@@ -209,9 +209,9 @@ class HistoryRepositoryImplIT {
             assertThat(res).hasSize(2);
         }
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void updateDocument(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
+        void updateDocument(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             underTest.saveOrUpdate(new MigrationScriptProtocol()
@@ -235,9 +235,9 @@ class HistoryRepositoryImplIT {
 
     @Nested
     class isLocked {
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void emptyIndex_IsNotLocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+        void emptyIndex_IsNotLocked(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.createIndexIfAbsent();
 
@@ -247,9 +247,9 @@ class HistoryRepositoryImplIT {
                     .isFalse();
         }
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void noIndex_IsNotLocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+        void noIndex_IsNotLocked(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             esUtils.refreshIndices();
@@ -258,9 +258,9 @@ class HistoryRepositoryImplIT {
                     .isFalse();
         }
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void existingDocuments_IsNotLocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
+        void existingDocuments_IsNotLocked(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.createIndexIfAbsent();
             indexDocumentWithLock(false, esUtils, restHighLevelClient);
@@ -271,9 +271,9 @@ class HistoryRepositoryImplIT {
                     .isFalse();
         }
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void existingDocuments_IsLocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
+        void existingDocuments_IsLocked(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.createIndexIfAbsent();
             indexDocumentWithLock(true, esUtils, restHighLevelClient);
@@ -288,9 +288,9 @@ class HistoryRepositoryImplIT {
     @Nested
     class lock {
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void noDocumentsInIndex(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+        void noDocumentsInIndex(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.createIndexIfAbsent();
             esUtils.refreshIndices();
@@ -301,9 +301,9 @@ class HistoryRepositoryImplIT {
             assertThat(underTest.isLocked()).isTrue();
         }
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void indexDoesNotExist(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+        void indexDoesNotExist(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             assertThat(underTest.lock()).isTrue();
@@ -312,9 +312,9 @@ class HistoryRepositoryImplIT {
             assertThat(underTest.isLocked()).isTrue();
         }
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void allExistingLockedDocumentsStayLocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
+        void allExistingLockedDocumentsStayLocked(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             indexDocumentWithLock(true, esUtils, restHighLevelClient);
@@ -329,9 +329,9 @@ class HistoryRepositoryImplIT {
             assertThat(underTest.isLocked()).isTrue();
         }
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void allExistingUnlockedDocumentsGetsLocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
+        void allExistingUnlockedDocumentsGetsLocked(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             indexDocumentWithLock(false, esUtils, restHighLevelClient);
@@ -349,9 +349,9 @@ class HistoryRepositoryImplIT {
 
     @Nested
     class unlock {
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void noDocumentsInIndex(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+        void noDocumentsInIndex(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.createIndexIfAbsent();
             esUtils.refreshIndices();
@@ -362,9 +362,9 @@ class HistoryRepositoryImplIT {
             assertThat(underTest.isLocked()).isFalse();
         }
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void indexDoesNotExist(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+        void indexDoesNotExist(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             assertThat(underTest.unlock()).isTrue();
@@ -373,9 +373,9 @@ class HistoryRepositoryImplIT {
             assertThat(underTest.isLocked()).isFalse();
         }
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void allExistingLockedDocumentsGetsUnlocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
+        void allExistingLockedDocumentsGetsUnlocked(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             underTest.lock();
             indexDocumentWithLock(true, esUtils, restHighLevelClient);
@@ -391,9 +391,9 @@ class HistoryRepositoryImplIT {
             assertThat(underTest.isLocked()).isFalse();
         }
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void allExistingNonLockedDocumentsStayUnlocked(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
+        void allExistingNonLockedDocumentsStayUnlocked(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws Exception {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
             indexDocumentWithLock(false, esUtils, restHighLevelClient);
             esUtils.refreshIndices();
@@ -410,9 +410,9 @@ class HistoryRepositoryImplIT {
 
     @Nested
     class createIndexIfAbsent {
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void indexDoesNotExistsYet_indexWillBeCreated(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+        void indexDoesNotExistsYet_indexWillBeCreated(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
             HistoryRepositoryImpl underTest = createHistoryRepositoryImpl(restHighLevelClient);
 
             assertThat(underTest.createIndexIfAbsent()).as("new index created").isTrue();

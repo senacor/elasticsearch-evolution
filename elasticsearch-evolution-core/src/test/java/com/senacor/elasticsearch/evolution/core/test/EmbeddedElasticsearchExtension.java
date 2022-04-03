@@ -1,11 +1,15 @@
 package com.senacor.elasticsearch.evolution.core.test;
 
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.Value;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.*;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.GetIndexResponse;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
 import org.junit.jupiter.api.extension.TestInstancePostProcessor;
@@ -15,16 +19,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.SocketUtils;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
+import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.SearchContainer.ofElasticsearch;
+import static com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.SearchContainer.ofOpensearch;
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
 
 /**
@@ -37,63 +40,67 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
 
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
-    private static final SortedSet<String> SUPPORTED_ES_VERSIONS = Collections.unmodifiableSortedSet(new TreeSet<>(Arrays.asList(
-            "8.1.2",
-            "8.0.1",
-            "7.17.2",
-            "7.16.3",
-            "7.15.2",
-            "7.14.2",
-            "7.13.4",
-            "7.12.1",
-            "7.11.2",
-            "7.10.2",
-            "7.9.3",
-            "7.8.1",
-            "7.7.1",
-            "7.6.2",
-            "7.5.2"
+    private static final SortedSet<SearchContainer> SUPPORTED_SEARCH_VERSIONS = Collections.unmodifiableSortedSet(new TreeSet<>(Arrays.asList(
+            ofOpensearch("1.3.1"),
+            ofOpensearch("1.2.4"),
+            ofOpensearch("1.1.0"),
+            ofOpensearch("1.0.1"),
+
+            ofElasticsearch("8.1.2"),
+            ofElasticsearch("8.0.1"),
+            ofElasticsearch("7.17.2"),
+            ofElasticsearch("7.16.3"),
+            ofElasticsearch("7.15.2"),
+            ofElasticsearch("7.14.2"),
+            ofElasticsearch("7.13.4"),
+            ofElasticsearch("7.12.1"),
+            ofElasticsearch("7.11.2"),
+            ofElasticsearch("7.10.2"),
+            ofElasticsearch("7.9.3"),
+            ofElasticsearch("7.8.1"),
+            ofElasticsearch("7.7.1"),
+            ofElasticsearch("7.6.2"),
+            ofElasticsearch("7.5.2")
     )));
 
     @Override
     public void postProcessTestInstance(Object testInstance, ExtensionContext context) {
-        SUPPORTED_ES_VERSIONS.parallelStream()
-                .forEach(esVersion -> getStore(context)
-                        .getOrComputeIfAbsent(esVersion, EmbeddedElasticsearchExtension::createElasticsearchContainer, ElasticsearchContainer.class));
+        SUPPORTED_SEARCH_VERSIONS.parallelStream()
+                .forEach(searchContainer -> getStore(context)
+                        .getOrComputeIfAbsent(searchContainer, EmbeddedElasticsearchExtension::createElasticsearchContainer, ElasticsearchContainer.class));
     }
 
-    private static RestHighLevelClient createRestHighLevelClient(String esVersion, ElasticsearchContainer elasticsearchContainer) {
+    private static RestHighLevelClient createRestHighLevelClient(String versionInfo, ElasticsearchContainer elasticsearchContainer) {
         HttpHost host = HttpHost.create(elasticsearchContainer.getHttpHostAddress());
-        logger.debug("create RestClient for ES {} at {}", esVersion, host);
+        logger.debug("create RestClient for {} at {}", versionInfo, host);
         RestClientBuilder builder = RestClient.builder(host);
         return new RestHighLevelClient(builder);
     }
 
-    private static ElasticsearchContainer createElasticsearchContainer(String esVersion) {
-        logger.info("creating ElasticsearchContainer {} ...", esVersion);
-        ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch")
-                .withTag(esVersion))
-                .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m")
-                // since elasticsearch 8 security / https is enabled per default - but for testing it should be disabled
-                .withEnv("xpack.security.enabled", "false");
-        int esHttpPort = SocketUtils.findAvailableTcpPort(5000, 30000);
-        int esTransportPort = SocketUtils.findAvailableTcpPort(30001, 65535);
-        container.setPortBindings(Arrays.asList(esHttpPort + ":9200", esTransportPort + ":9300"));
-        start(container, esVersion);
+    private static ElasticsearchContainer createElasticsearchContainer(SearchContainer searchContainer) {
+        logger.info("creating ElasticsearchContainer for {} ...", searchContainer.getInfo());
+        ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName.parse(searchContainer.getContainerImage())
+                .asCompatibleSubstituteFor("docker.elastic.co/elasticsearch/elasticsearch")
+                .withTag(searchContainer.getVersion()))
+                .withEnv(searchContainer.getEnv());
+        int httpPort = SocketUtils.findAvailableTcpPort(5000, 30000);
+        int transportPort = SocketUtils.findAvailableTcpPort(30001, 65535);
+        container.setPortBindings(Arrays.asList(httpPort + ":9200", transportPort + ":" + searchContainer.transportPort));
+        start(container, searchContainer.getInfo());
         logger.info("ElasticsearchContainer {} started with HttpPort={} and TransportTcpPort={}!",
-                esVersion,
-                esHttpPort,
-                esTransportPort);
+                searchContainer.getInfo(),
+                httpPort,
+                transportPort);
         return container;
     }
 
-    private static void start(ElasticsearchContainer elasticsearchContainer, String esVersion) {
-        logger.debug("starting ElasticsearchContainer {}", esVersion);
+    private static void start(ElasticsearchContainer elasticsearchContainer, String versionInfo) {
+        logger.debug("starting ElasticsearchContainer {}", versionInfo);
         elasticsearchContainer.start();
     }
 
-    private static void cleanup(EsUtils esUtils, String esVersion, RestHighLevelClient restHighLevelClient) {
-        logger.debug("cleanup ElasticsearchContainer {}", esVersion);
+    private static void cleanup(EsUtils esUtils, String versionInfo, RestHighLevelClient restHighLevelClient) {
+        logger.debug("cleanup ElasticsearchContainer {}", versionInfo);
         try {
             // get all indices
             final GetIndexResponse allIndices = restHighLevelClient.indices().get(new GetIndexRequest("_all")
@@ -116,42 +123,83 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
 
     /**
      * provides in this order:
-     * - Elasticsearch Version
+     * - Short Version Info
      * - EsUtils
      * - RestHighLevelClient
      */
     public static class ElasticsearchArgumentsProvider implements ArgumentsProvider {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-            Optional<String> versionFilterPattern = context.getTestMethod()
-                    .map(method -> method.getDeclaredAnnotation(IgnoreEsVersion.class))
-                    .map(IgnoreEsVersion::value);
-
-
-            return SUPPORTED_ES_VERSIONS.stream()
-                    .filter(version -> versionFilterPattern
-                            .map(filterPattern -> !version.matches(filterPattern))
-                            .orElse(true)
-                    )
-                    .map(esVersion -> {
+            return SUPPORTED_SEARCH_VERSIONS.stream()
+                    .map(searchContainer -> {
                         ElasticsearchContainer elasticsearchContainer = getStore(context)
-                                .getOrComputeIfAbsent(esVersion, EmbeddedElasticsearchExtension::createElasticsearchContainer, ElasticsearchContainer.class);
-                        start(elasticsearchContainer, esVersion);
-                        RestHighLevelClient restHighLevelClient = createRestHighLevelClient(esVersion, elasticsearchContainer);
+                                .getOrComputeIfAbsent(searchContainer, EmbeddedElasticsearchExtension::createElasticsearchContainer, ElasticsearchContainer.class);
+                        start(elasticsearchContainer, searchContainer.getInfo());
+                        RestHighLevelClient restHighLevelClient = createRestHighLevelClient(searchContainer.getInfo(), elasticsearchContainer);
                         EsUtils esUtils = new EsUtils(restHighLevelClient.getLowLevelClient());
-                        cleanup(esUtils, esVersion, restHighLevelClient);
-                        return Arguments.of(esVersion, esUtils, restHighLevelClient);
+                        cleanup(esUtils, searchContainer.getInfo(), restHighLevelClient);
+                        return Arguments.of(searchContainer.getShortInfo(), esUtils, restHighLevelClient);
                     });
         }
     }
 
-    @Target(ElementType.METHOD)
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface IgnoreEsVersion {
+    @Value
+    @Builder
+    public static class SearchContainer implements Comparable<SearchContainer> {
+        @NonNull
+        String vendor;
+        @NonNull
+        String vendorShort;
+        @NonNull
+        String version;
+        @NonNull
+        String containerImage;
+        @NonNull
+        Map<String, String> env;
+        int transportPort;
 
-        /**
-         * The version pattern (regex) to ignore
-         */
-        String value();
+        public static SearchContainer ofElasticsearch(String version) {
+            return SearchContainer.builder()
+                    .vendor("Elasticsearch")
+                    .vendorShort("ES")
+                    .containerImage("docker.elastic.co/elasticsearch/elasticsearch")
+                    .version(version)
+                    .env(ImmutableMap.of(
+                            "ES_JAVA_OPTS", "-Xms128m -Xmx128m",
+                            // since elasticsearch 8 security / https is enabled per default - but for testing it should be disabled
+                            "xpack.security.enabled", "false"
+                    ))
+                    .transportPort(9300)
+                    .build();
+        }
+
+        public static SearchContainer ofOpensearch(String version) {
+            return SearchContainer.builder()
+                    .vendor("Opensearch")
+                    .vendorShort("OS")
+                    .containerImage("opensearchproject/opensearch")
+                    .version(version)
+                    .env(ImmutableMap.of(
+                            "OPENSEARCH_JAVA_OPTS", "-Xms128m -Xmx128m",
+                            // disable security / https for testing
+                            "plugins.security.disabled", "true",
+                            "DISABLE_INSTALL_DEMO_CONFIG", "true"
+                    ))
+                    .transportPort(9600)
+                    .build();
+        }
+
+        public String getInfo() {
+            return vendor + " " + version;
+        }
+
+        public String getShortInfo() {
+            return vendorShort + " " + version;
+        }
+
+        @Override
+        public int compareTo(@NotNull SearchContainer other) {
+            return version.compareTo(other.version);
+        }
     }
 }
