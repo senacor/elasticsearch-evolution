@@ -5,12 +5,12 @@
 
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-parent</artifactId>
-    <version>0.3.2</version>
+    <version>0.4.0</version>
     <packaging>pom</packaging>
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>2.4.4</version>
+        <version>2.6.6</version>
     </parent>
 
     <name>elasticsearch-evolution</name>
@@ -35,6 +35,19 @@
         <developerConnection>scm:git@github.com:senacor/elasticsearch-evolution.git</developerConnection>
         <url>https://github.com/senacor/elasticsearch-evolution</url>
     </scm>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>oss.sonatype.org-snapshot</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 
     <distributionManagement>
         <site>
@@ -80,18 +93,20 @@
 
         <!-- Plugin Versions -->
         <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
-        <jacoco-maven-plugin.version>0.8.6</jacoco-maven-plugin.version>
-        <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+        <!--jacoco snapshot to support java 17/18-->
+        <jacoco-maven-plugin.version>0.8.8-SNAPSHOT</jacoco-maven-plugin.version>
+        <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
         <!-- maven-javadoc-plugin.version 3.1.1 does not work on travis -->
-        <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
-        <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
+        <maven-javadoc-plugin.version>3.3.2</maven-javadoc-plugin.version>
+        <nexus-staging-maven-plugin.version>1.6.12</nexus-staging-maven-plugin.version>
 
         <!-- Dependency Versions -->
-        <commons-io.version>2.8.0</commons-io.version>
+        <commons-io.version>2.11.0</commons-io.version>
         <!--when updating elasticsearch versions, also update "ElasticsearchContainer" version in EmbeddedElasticsearchExtension-->
         <elasticsearch.version>7.5.2</elasticsearch.version>
         <reflections.version>0.9.12</reflections.version>
-        <testcontainers.elasticsearch.version>1.15.2</testcontainers.elasticsearch.version>
+        <testcontainers.elasticsearch.version>1.16.3</testcontainers.elasticsearch.version>
+        <lombok.version>1.18.22</lombok.version>
     </properties>
 
     <dependencyManagement>
@@ -126,6 +141,17 @@
                 </exclusions>
             </dependency>
             <dependency>
+                <groupId>org.elasticsearch.client</groupId>
+                <artifactId>elasticsearch-rest-client</artifactId>
+                <version>${elasticsearch.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>elasticsearch</artifactId>
                 <version>${testcontainers.elasticsearch.version}</version>
@@ -136,6 +162,13 @@
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commons-io.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -43,15 +43,15 @@ class MigrationServiceImplIT {
     @Mock
     private HistoryRepository historyRepositoryMock;
 
-    private Charset encoding = StandardCharsets.UTF_8;
-    private ContentType defaultContentType = ContentType.APPLICATION_JSON;
+    private final Charset encoding = StandardCharsets.UTF_8;
+    private final ContentType defaultContentType = ContentType.APPLICATION_JSON;
 
     @Nested
     class executeScript {
 
-        @ParameterizedTest(name = "esVersion: {0}")
+        @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void OK_indexDocumentIsWrittenToElasticsearch(String esVersion, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
+        void OK_indexDocumentIsWrittenToElasticsearch(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
             String index = "myindex";
             ParsedMigrationScript script = createParsedMigrationScript("1.1", index);
 

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="ConsoleAppender" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%d [%t] %-5level %logger{36} - %msg%n%throwable"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <!--set to DEBUG to enable simple rest client request (http method + url) logging-->
+        <Logger name="org.elasticsearch" level="WARN">
+            <AppenderRef ref="ConsoleAppender"/>
+        </Logger>
+        <!--set to DEBUG to enable curl like detailed rest client request/response logging-->
+        <Logger name="org.apache.http" level="WARN">
+            <AppenderRef ref="ConsoleAppender"/>
+        </Logger>
+        <Root level="ERROR">
+            <AppenderRef ref="ConsoleAppender"/>
+        </Root>
+    </Loggers>
+</Configuration>

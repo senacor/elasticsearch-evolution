@@ -9,6 +9,7 @@ import org.elasticsearch.client.RestClient;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -29,7 +30,7 @@ public class EsUtils {
 
     public void refreshIndices() {
         try {
-            restClient.performRequest(new Request("POST", "/_refresh"));
+            restClient.performRequest(new Request("GET", "/_refresh"));
         } catch (IOException e) {
             throw new IllegalStateException("refreshIndices failed", e);
         }
@@ -66,6 +67,21 @@ public class EsUtils {
                     .map(JsonNode::toString);
         } catch (IOException e) {
             throw new IllegalStateException("parseDocuments failed. body=" + body, e);
+        }
+    }
+
+    public void indexDocument(String index, String id, HashMap<String, Object> source) {
+        try {
+            final Request indexRequest = new Request("PUT", "/" + index + "/_doc/" + id);
+            indexRequest.setJsonEntity(OBJECT_MAPPER.writeValueAsString(source));
+            final Response res = restClient.performRequest(indexRequest);
+            if (res.getStatusLine().getStatusCode() != 201) {
+                throw new IllegalStateException(String.format("indexDocument failed with status code %s: %s",
+                        res.getStatusLine().getStatusCode(),
+                        res.getStatusLine().getReasonPhrase()));
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("indexDocument failed", e);
         }
     }
 }
