@@ -177,7 +177,7 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
             return SearchContainer.builder()
                     .vendor("Opensearch")
                     .vendorShort("OS")
-                    .containerImage("opensearchproject/opensearch")
+                    .containerImage("quay.io/xtermi2/opensearch")
                     .version(version)
                     .env(ImmutableMap.of(
                             "OPENSEARCH_JAVA_OPTS", "-Xms128m -Xmx128m",
