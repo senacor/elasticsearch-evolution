@@ -5,8 +5,12 @@ on:
     branches:
       - master
       - release
+    paths-ignore:
+      - 'README.md'
   # pull_request to run the pipeline on PRs from external, because "push" does not create this pipeline on external PRs
   pull_request:
+    paths-ignore:
+      - 'README.md'
   schedule:
     # * is a special character in YAML so you have to quote this string
     - cron: '30 5 * * *'

@@ -5,7 +5,11 @@ on:
     branches:
       - master
       - release
+    paths-ignore:
+      - 'README.md'
   pull_request:
+    paths-ignore:
+      - 'README.md'
 
 env:
   MVN_CMD: "./mvnw --settings .cicd.settings.xml -e -B -V"
