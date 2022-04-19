@@ -106,7 +106,7 @@
         <elasticsearch.version>7.5.2</elasticsearch.version>
         <reflections.version>0.9.12</reflections.version>
         <testcontainers.elasticsearch.version>1.16.3</testcontainers.elasticsearch.version>
-        <lombok.version>1.18.22</lombok.version>
+        <lombok.version>1.18.24</lombok.version>
     </properties>
 
     <dependencyManagement>
