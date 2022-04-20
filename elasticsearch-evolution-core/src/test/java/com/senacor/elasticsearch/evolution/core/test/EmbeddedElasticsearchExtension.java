@@ -1,5 +1,6 @@
 package com.senacor.elasticsearch.evolution.core.test;
 
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -18,7 +19,6 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.SocketUtils;
-import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 import org.testcontainers.utility.DockerImageName;
@@ -29,9 +29,6 @@ import java.util.stream.Stream;
 
 import static com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.SearchContainer.ofElasticsearch;
 import static com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.SearchContainer.ofOpensearch;
-import static java.net.HttpURLConnection.HTTP_OK;
-import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
-import static java.time.Duration.ofMinutes;
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
 
 /**
@@ -50,9 +47,9 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
             ofOpensearch("1.1.0"),
             ofOpensearch("1.0.1"),
 
-            ofElasticsearch("8.1.2"),
+            ofElasticsearch("8.1.3"),
             ofElasticsearch("8.0.1"),
-            ofElasticsearch("7.17.2"),
+            ofElasticsearch("7.17.3"),
             ofElasticsearch("7.16.3"),
             ofElasticsearch("7.15.2"),
             ofElasticsearch("7.14.2"),
@@ -85,15 +82,25 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
         logger.info("creating ElasticsearchContainer for {} ...", searchContainer.getInfo());
         ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName.parse(searchContainer.getContainerImage())
                 .asCompatibleSubstituteFor("docker.elastic.co/elasticsearch/elasticsearch")
-                .withTag(searchContainer.getVersion()))
-                .withEnv(searchContainer.getEnv());
+                .withTag(searchContainer.getVersion())) {
+            @Override
+            protected void containerIsStarted(InspectContainerResponse containerInfo) {
+                // since testcontainers 1.17 it detects if ES 8.x is running and copies a certificate in this case
+                // but we don't want security
+            }
+        }
+                .withEnv(searchContainer.getEnv())
+                .withEnv("cluster.routing.allocation.disk.watermark.low", "97%")
+                .withEnv("cluster.routing.allocation.disk.watermark.high", "98%")
+                .withEnv("cluster.routing.allocation.disk.watermark.flood_stage", "99%");
         int httpPort = SocketUtils.findAvailableTcpPort(5000, 30000);
         int transportPort = SocketUtils.findAvailableTcpPort(30001, 65535);
         container.setPortBindings(Arrays.asList(httpPort + ":9200", transportPort + ":" + searchContainer.transportPort));
-        container.setWaitStrategy(new HttpWaitStrategy()
-                .forPort(9200)
-                .forStatusCodeMatching(response -> response == HTTP_OK || response == HTTP_UNAUTHORIZED)
-                .withStartupTimeout(ofMinutes(5)));
+        // use default (since testcontainers 1.17 LogMessageWaitStrategy)
+//        container.setWaitStrategy(new HttpWaitStrategy()
+//                .forPort(9200)
+//                .forStatusCodeMatching(response -> response == HTTP_OK || response == HTTP_UNAUTHORIZED)
+//                .withStartupTimeout(ofMinutes(5)));
         start(container, searchContainer.getInfo());
         logger.info("ElasticsearchContainer {} started with HttpPort={} and TransportTcpPort={}!",
                 searchContainer.getInfo(),
