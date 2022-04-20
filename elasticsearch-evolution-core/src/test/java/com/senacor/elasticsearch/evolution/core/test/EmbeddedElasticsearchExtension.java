@@ -47,7 +47,7 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
             ofOpensearch("1.1.0"),
             ofOpensearch("1.0.1"),
 
-            ofElasticsearch("8.1.2"),
+            ofElasticsearch("8.1.3"),
             ofElasticsearch("8.0.1"),
             ofElasticsearch("7.17.3"),
             ofElasticsearch("7.16.3"),
