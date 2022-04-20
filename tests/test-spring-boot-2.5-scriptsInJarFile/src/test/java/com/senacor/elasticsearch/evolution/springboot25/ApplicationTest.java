@@ -1,5 +1,6 @@
 package com.senacor.elasticsearch.evolution.springboot25;
 
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.junit.jupiter.api.Test;
@@ -39,10 +40,19 @@ class ApplicationTest {
         public ElasticsearchContainer elasticsearchContainer(@Value("${elasticsearch.version:7.5.2}") String esVersion) {
             ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName
                     .parse("docker.elastic.co/elasticsearch/elasticsearch")
-                    .withTag(esVersion))
+                    .withTag(esVersion)) {
+                @Override
+                protected void containerIsStarted(InspectContainerResponse containerInfo) {
+                    // since testcontainers 1.17 it detects if ES 8.x is running and copies a certificate in this case
+                    // but we don't want security
+                }
+            }
                     .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m")
                     // since elasticsearch 8 security / https is enabled per default - but for testing it should be disabled
-                    .withEnv("xpack.security.enabled", "false");
+                    .withEnv("xpack.security.enabled", "false")
+                    .withEnv("cluster.routing.allocation.disk.watermark.low", "97%")
+                    .withEnv("cluster.routing.allocation.disk.watermark.high", "98%")
+                    .withEnv("cluster.routing.allocation.disk.watermark.flood_stage", "99%");
             container.setPortBindings(Collections.singletonList(ELASTICSEARCH_PORT + ":9200"));
             container.start();
             return container;

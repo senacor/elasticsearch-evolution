@@ -1,15 +1,14 @@
-package com.senacor.elasticsearch.evolution.springboot23;
+package com.senacor.elasticsearch.evolution.springboot26;
 
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -18,17 +17,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(properties = {"spring.elasticsearch.rest.uris=http://localhost:" + ApplicationTests.ELASTICSEARCH_PORT})
-public class ApplicationTests {
+@SpringBootTest(properties = {"spring.elasticsearch.uris=http://localhost:" + ApplicationTests.ELASTICSEARCH_PORT})
+class ApplicationTests {
 
-    static final int ELASTICSEARCH_PORT = 18769;
+    static final int ELASTICSEARCH_PORT = 18772;
 
     @Autowired
     private EsUtils esUtils;
 
     @Test
-    public void contextLoads() {
+    void contextLoads() {
         esUtils.refreshIndices();
 
         List<String> documents = esUtils.fetchAllDocuments("test_1");
@@ -42,10 +40,19 @@ public class ApplicationTests {
         public ElasticsearchContainer elasticsearchContainer(@Value("${elasticsearch.version:7.5.2}") String esVersion) {
             ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName
                     .parse("docker.elastic.co/elasticsearch/elasticsearch")
-                    .withTag(esVersion))
+                    .withTag(esVersion)) {
+                @Override
+                protected void containerIsStarted(InspectContainerResponse containerInfo) {
+                    // since testcontainers 1.17 it detects if ES 8.x is running and copies a certificate in this case
+                    // but we don't want security
+                }
+            }
                     .withEnv("ES_JAVA_OPTS", "-Xms128m -Xmx128m")
                     // since elasticsearch 8 security / https is enabled per default - but for testing it should be disabled
-                    .withEnv("xpack.security.enabled", "false");
+                    .withEnv("xpack.security.enabled", "false")
+                    .withEnv("cluster.routing.allocation.disk.watermark.low", "97%")
+                    .withEnv("cluster.routing.allocation.disk.watermark.high", "98%")
+                    .withEnv("cluster.routing.allocation.disk.watermark.flood_stage", "99%");
             container.setPortBindings(Collections.singletonList(ELASTICSEARCH_PORT + ":9200"));
             container.start();
             return container;

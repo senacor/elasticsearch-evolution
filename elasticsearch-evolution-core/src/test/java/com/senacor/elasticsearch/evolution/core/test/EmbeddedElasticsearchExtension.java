@@ -1,5 +1,6 @@
 package com.senacor.elasticsearch.evolution.core.test;
 
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -85,8 +86,17 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
         logger.info("creating ElasticsearchContainer for {} ...", searchContainer.getInfo());
         ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName.parse(searchContainer.getContainerImage())
                 .asCompatibleSubstituteFor("docker.elastic.co/elasticsearch/elasticsearch")
-                .withTag(searchContainer.getVersion()))
-                .withEnv(searchContainer.getEnv());
+                .withTag(searchContainer.getVersion())) {
+            @Override
+            protected void containerIsStarted(InspectContainerResponse containerInfo) {
+                // since testcontainers 1.17 it detects if ES 8.x is running and copies a certificate in this case
+                // but we don't want security
+            }
+        }
+                .withEnv(searchContainer.getEnv())
+                .withEnv("cluster.routing.allocation.disk.watermark.low", "97%")
+                .withEnv("cluster.routing.allocation.disk.watermark.high", "98%")
+                .withEnv("cluster.routing.allocation.disk.watermark.flood_stage", "99%");
         int httpPort = SocketUtils.findAvailableTcpPort(5000, 30000);
         int transportPort = SocketUtils.findAvailableTcpPort(30001, 65535);
         container.setPortBindings(Arrays.asList(httpPort + ":9200", transportPort + ":" + searchContainer.transportPort));
