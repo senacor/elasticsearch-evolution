@@ -80,7 +80,7 @@ jobs:
   release-dry-run:
     # this will just build like the real release job, but not do a release (dry run)
     needs: [ build-and-test-with-jdk, build-and-test-with-es-version ]
-    if: ${{ github.event_name != 'pull_request' && github.ref != 'refs/heads/release' }}
+    if: ${{ github.ref != 'refs/heads/release' }}
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout

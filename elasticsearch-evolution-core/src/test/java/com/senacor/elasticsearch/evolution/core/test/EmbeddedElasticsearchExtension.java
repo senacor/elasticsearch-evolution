@@ -19,6 +19,7 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.SocketUtils;
+import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 import org.testcontainers.utility.DockerImageName;
@@ -29,6 +30,7 @@ import java.util.stream.Stream;
 
 import static com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.SearchContainer.ofElasticsearch;
 import static com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.SearchContainer.ofOpensearch;
+import static java.time.Duration.ofMinutes;
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
 
 /**
@@ -96,11 +98,13 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
         int httpPort = SocketUtils.findAvailableTcpPort(5000, 30000);
         int transportPort = SocketUtils.findAvailableTcpPort(30001, 65535);
         container.setPortBindings(Arrays.asList(httpPort + ":9200", transportPort + ":" + searchContainer.transportPort));
-        // use default (since testcontainers 1.17 LogMessageWaitStrategy)
 //        container.setWaitStrategy(new HttpWaitStrategy()
 //                .forPort(9200)
 //                .forStatusCodeMatching(response -> response == HTTP_OK || response == HTTP_UNAUTHORIZED)
 //                .withStartupTimeout(ofMinutes(5)));
+        container.setWaitStrategy(new LogMessageWaitStrategy()
+                .withRegEx(".*(\"message\":\\s?\"started\".*|] started\n$)")
+                .withStartupTimeout(ofMinutes(5)));
         start(container, searchContainer.getInfo());
         logger.info("ElasticsearchContainer {} started with HttpPort={} and TransportTcpPort={}!",
                 searchContainer.getInfo(),
