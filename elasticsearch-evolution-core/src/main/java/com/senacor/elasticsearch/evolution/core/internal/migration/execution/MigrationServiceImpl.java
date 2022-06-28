@@ -8,10 +8,7 @@ import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedM
 import com.senacor.elasticsearch.evolution.core.internal.utils.RandomUtils;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,6 +125,13 @@ public class MigrationServiceImpl implements MigrationService {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode >= 200 && statusCode < 300) {
                 success = true;
+            } else if (scriptToExecute.getMigrationScriptExecuteOptions() != null &&
+                    !scriptToExecute.getMigrationScriptExecuteOptions().getIgnoredHttpStatusCodes().isEmpty() &&
+                    scriptToExecute.getMigrationScriptExecuteOptions().getIgnoredHttpStatusCodes().contains(statusCode)) {
+                logger.warn("executing script {} returned with status code {} - but was configured to be ignored",
+                        scriptToExecute.getFileNameInfo().getScriptName(),
+                        statusCode);
+                success = true;
             } else {
                 error = Optional.of(new MigrationException(String.format(
                         "execution of script '%s' failed with HTTP status %s: %s",
@@ -136,7 +140,19 @@ public class MigrationServiceImpl implements MigrationService {
                         response.toString())));
             }
         } catch (RuntimeException | IOException e) {
-            error = Optional.of(new MigrationException(String.format("execution of script '%s' failed", scriptToExecute.getFileNameInfo()), e));
+            if (scriptToExecute.getMigrationScriptExecuteOptions() != null &&
+                !scriptToExecute.getMigrationScriptExecuteOptions().getIgnoredHttpStatusCodes().isEmpty() &&
+                e instanceof ResponseException &&
+                scriptToExecute.getMigrationScriptExecuteOptions().getIgnoredHttpStatusCodes().contains(((ResponseException)e).getResponse().getStatusLine().getStatusCode())) {
+                    // don't fail if http status code is set to be ignored for this migration script
+                    logger.warn("executing script {} failed with status code {} - but was configured to be ignored",
+                            scriptToExecute.getFileNameInfo().getScriptName(),
+                            ((ResponseException)e).getResponse().getStatusLine().getStatusCode());
+                    success = true;
+                }
+            else {
+                error = Optional.of(new MigrationException(String.format("execution of script '%s' failed", scriptToExecute.getFileNameInfo()), e));
+            }
         }
 
         return new ExecutionResult(

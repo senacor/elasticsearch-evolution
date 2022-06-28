@@ -28,6 +28,7 @@ public class ParsedMigrationScript {
      * non-null
      */
     private MigrationScriptRequest migrationScriptRequest;
+    private MigrationScriptExecuteOptions migrationScriptExecuteOptions;
 
     public FileNameInfo getFileNameInfo() {
         return fileNameInfo;
@@ -56,18 +57,27 @@ public class ParsedMigrationScript {
         return this;
     }
 
+    public MigrationScriptExecuteOptions getMigrationScriptExecuteOptions() {
+        return migrationScriptExecuteOptions;
+    }
+
+    public void setMigrationScriptExecuteOptions(MigrationScriptExecuteOptions migrationScriptExecuteOptions) {
+        this.migrationScriptExecuteOptions = migrationScriptExecuteOptions;
+    }
+
     @Override
     public String toString() {
         return "ParsedMigrationScript{" +
                 "fileNameInfo=" + fileNameInfo +
                 ", checksum=" + checksum +
                 ", migrationScriptRequest=" + migrationScriptRequest +
+                ", migrationScriptExecuteOptions=" + migrationScriptExecuteOptions +
                 '}';
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(fileNameInfo, checksum, migrationScriptRequest);
+        return Objects.hash(fileNameInfo, checksum, migrationScriptRequest, migrationScriptExecuteOptions);
     }
 
     @Override
@@ -81,6 +91,7 @@ public class ParsedMigrationScript {
         final ParsedMigrationScript other = (ParsedMigrationScript) obj;
         return Objects.equals(this.fileNameInfo, other.fileNameInfo)
                 && Objects.equals(this.checksum, other.checksum)
+                && Objects.equals(this.migrationScriptExecuteOptions, other.migrationScriptExecuteOptions)
                 && Objects.equals(this.migrationScriptRequest, other.migrationScriptRequest);
     }
 }

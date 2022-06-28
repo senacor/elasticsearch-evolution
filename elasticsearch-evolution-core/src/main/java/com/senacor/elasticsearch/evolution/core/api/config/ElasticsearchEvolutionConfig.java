@@ -31,6 +31,12 @@ public class ElasticsearchEvolutionConfig {
             Collections.singletonList("classpath:es/migration"));
 
     /**
+     * Location of migrations scripts execution options. Supported is classpath:some/path/filename and file:/some/path/filename
+     */
+    private String scriptExecuteOptionsFileLocation = "classpath:es/config";
+    private String scriptExecuteOptionsFileName = "migrationOptions.json";
+
+    /**
      * Encoding of migration files.
      */
     private Charset encoding = StandardCharsets.UTF_8;
@@ -103,6 +109,8 @@ public class ElasticsearchEvolutionConfig {
     public ElasticsearchEvolutionConfig validate() throws IllegalStateException, NullPointerException {
         if (enabled) {
             requireNotEmpty(locations, "locations must not be empty");
+            requireNotEmpty(scriptExecuteOptionsFileLocation, "scriptExecuteOptionsFileLocation must not be empty");
+            requireNotEmpty(scriptExecuteOptionsFileName, "scriptExecuteOptionsFileName must not be empty");
             requireNonNull(encoding, "encoding must not be null");
             requireNotBlank(esMigrationPrefix, "esMigrationPrefix must not be empty");
             requireNotEmpty(esMigrationSuffixes, "esMigrationSuffixes must not be empty");
@@ -141,8 +149,20 @@ public class ElasticsearchEvolutionConfig {
         return locations;
     }
 
+    public String getScriptExecuteOptionsFileLocation() {
+        return scriptExecuteOptionsFileLocation;
+    }
+    public String getScriptExecuteOptionsFileName() {
+        return scriptExecuteOptionsFileName;
+    }
+
     public ElasticsearchEvolutionConfig setLocations(List<String> locations) {
         this.locations = locations;
+        return this;
+    }
+
+    public ElasticsearchEvolutionConfig setScriptExecuteOptionsFileLocation(String scriptExecuteOptionsFileLocation) {
+        this.scriptExecuteOptionsFileLocation = scriptExecuteOptionsFileLocation;
         return this;
     }
 
@@ -241,6 +261,8 @@ public class ElasticsearchEvolutionConfig {
         return "ElasticsearchEvolutionConfig{" +
                 "enabled=" + enabled +
                 ", locations=" + locations +
+                ", scriptExecuteOptionsFileLocation=" + scriptExecuteOptionsFileLocation +
+                ", scriptExecuteOptionsFileName=" + scriptExecuteOptionsFileName +
                 ", encoding=" + encoding +
                 ", defaultContentType='" + defaultContentType + '\'' +
                 ", esMigrationPrefix='" + esMigrationPrefix + '\'' +

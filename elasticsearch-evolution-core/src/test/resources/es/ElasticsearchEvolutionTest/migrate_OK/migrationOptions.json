@@ -1,0 +1,11 @@
+{
+  "migrationScriptsOptions": [
+    {
+      "fileName": "V001.00__createTemplateWithIndexMapping.http",
+      "ignoredHttpStatusCodes": [
+        404,
+        409
+      ]
+    }
+  ]
+}
