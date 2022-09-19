@@ -204,6 +204,55 @@ class MigrationServiceImplTest {
                     .isInstanceOf(MigrationException.class)
                     .hasMessage("The logged execution in the Elasticsearch-Evolution history index at position 1 is version 1.1 and in the same position in the given migration scripts is version 1.0.1! Out of order execution is not supported. Or maybe you have added new migration scripts in between or have to cleanup the Elasticsearch-Evolution history index manually");
         }
+
+        @Test
+        void failingScriptWasEdited_shouldReturnAllScriptsInclFailing() {
+            doReturn(new TreeSet<>(asList(
+                    createMigrationScriptProtocol("1.0", true, 1),
+                    createMigrationScriptProtocol("1.1", false, 2)
+            ))).when(historyRepository).findAll();
+            MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
+                                                                      0, 0, restClient, defaultContentType, encoding);
+
+            ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0", 1);
+            ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1", 3);
+            ParsedMigrationScript parsedMigrationScript1_2 = createParsedMigrationScript("1.2", 4);
+            List<ParsedMigrationScript> parsedMigrationScripts = asList(
+                    parsedMigrationScript1_1,
+                    parsedMigrationScript1_0,
+                    parsedMigrationScript1_2);
+
+            List<ParsedMigrationScript> res = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+
+            assertThat(res).hasSize(2);
+            assertThat(res.get(0)).isSameAs(parsedMigrationScript1_1);
+            assertThat(res.get(1)).isSameAs(parsedMigrationScript1_2);
+            InOrder order = inOrder(historyRepository);
+            order.verify(historyRepository).findAll();
+            order.verifyNoMoreInteractions();
+        }
+
+        @Test
+        void successfulScriptWasEdited_shouldThrowChecksumMismatchException() {
+            doReturn(new TreeSet<>(asList(
+                    createMigrationScriptProtocol("1.0", true, 1),
+                    createMigrationScriptProtocol("1.1", true, 2)
+            ))).when(historyRepository).findAll();
+            MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
+                                                                      0, 0, restClient, defaultContentType, encoding);
+
+            ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0", 1);
+            ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1", 3);
+            List<ParsedMigrationScript> parsedMigrationScripts = asList(
+                    parsedMigrationScript1_1,
+                    parsedMigrationScript1_0);
+
+            assertThatThrownBy(() -> underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts))
+                    .isInstanceOf(MigrationException.class)
+                    .hasMessage("The logged execution for the migration script at position 1 (V1.1__1.1.http) " +
+                                        "has a different checksum from the given migration script! " +
+                                        "Modifying already-executed scripts is not supported.");
+        }
     }
 
     @Nested
@@ -622,9 +671,13 @@ class MigrationServiceImplTest {
     }
 
     private MigrationScriptProtocol createMigrationScriptProtocol(String version, boolean success) {
+        return createMigrationScriptProtocol(version, success, 1);
+    }
+
+    private MigrationScriptProtocol createMigrationScriptProtocol(String version, boolean success, int checksum) {
         return new MigrationScriptProtocol()
                 .setVersion(version)
-                .setChecksum(1)
+                .setChecksum(checksum)
                 .setSuccess(success)
                 .setLocked(true)
                 .setDescription(version)
@@ -632,13 +685,17 @@ class MigrationServiceImplTest {
     }
 
     private ParsedMigrationScript createParsedMigrationScript(String version) {
+        return createParsedMigrationScript(version, 1);
+    }
+
+    private ParsedMigrationScript createParsedMigrationScript(String version, int checksum) {
         return new ParsedMigrationScript()
                 .setFileNameInfo(
                         new FileNameInfoImpl(fromVersion(version), version, createDefaultScriptName(version)))
-                .setChecksum(1)
+                .setChecksum(checksum)
                 .setMigrationScriptRequest(new MigrationScriptRequest()
-                        .setHttpMethod(DELETE)
-                        .setPath("/"));
+                                                   .setHttpMethod(DELETE)
+                                                   .setPath("/"));
     }
 
     private String createDefaultScriptName(String version) {
