@@ -84,6 +84,11 @@ public class ElasticsearchEvolutionConfig {
     private int historyMaxQuerySize = 1_000;
 
     /**
+     * Whether to fail when a previously applied migration script has been modified after it was applied.
+     */
+    private boolean rejectModifiedScripts = true;
+
+    /**
      * Loads this configuration into a new ElasticsearchEvolution instance.
      *
      * @param restClient REST client to interact with Elasticsearch
@@ -236,6 +241,15 @@ public class ElasticsearchEvolutionConfig {
         return this;
     }
 
+    public boolean getRejectModifiedScripts() {
+        return rejectModifiedScripts;
+    }
+
+    public ElasticsearchEvolutionConfig setRejectModifiedModifiedScripts(boolean rejectModifiedScripts) {
+        this.rejectModifiedScripts = rejectModifiedScripts;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "ElasticsearchEvolutionConfig{" +
@@ -251,6 +265,7 @@ public class ElasticsearchEvolutionConfig {
                 ", placeholderReplacement=" + placeholderReplacement +
                 ", historyIndex='" + historyIndex + '\'' +
                 ", historyMaxQuerySize=" + historyMaxQuerySize +
+                ", rejectModifiedScripts=" + rejectModifiedScripts +
                 '}';
     }
 }

@@ -57,7 +57,7 @@ class MigrationServiceImplIT {
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepositoryMock,
                     0, 0, restHighLevelClient.getLowLevelClient(),
-                    defaultContentType, encoding);
+                    defaultContentType, encoding, true);
 
             MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
 

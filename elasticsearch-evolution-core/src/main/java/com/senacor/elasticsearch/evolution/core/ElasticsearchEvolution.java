@@ -168,6 +168,7 @@ public class ElasticsearchEvolution {
                 10_000,
                 getRestClient(),
                 ContentType.parse(getConfig().getDefaultContentType()),
-                getConfig().getEncoding());
+                getConfig().getEncoding(),
+                getConfig().getRejectModifiedScripts());
     }
 }
