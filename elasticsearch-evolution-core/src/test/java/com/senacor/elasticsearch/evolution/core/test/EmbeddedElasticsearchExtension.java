@@ -90,6 +90,9 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
                 .withEnv("cluster.routing.allocation.disk.watermark.low", "97%")
                 .withEnv("cluster.routing.allocation.disk.watermark.high", "98%")
                 .withEnv("cluster.routing.allocation.disk.watermark.flood_stage", "99%");
+        // SocketUtils replacement: https://github.com/spring-projects/spring-framework/issues/28210
+        // https://github.com/spring-cloud/spring-cloud-function/issues/825
+        // https://github.com/spring-cloud/spring-cloud-deployer-local/pull/214
         int httpPort = SocketUtils.findAvailableTcpPort(5000, 30000);
         int transportPort = SocketUtils.findAvailableTcpPort(30001, 65535);
         container.setPortBindings(Arrays.asList(httpPort + ":9200", transportPort + ":" + searchContainer.transportPort));
@@ -99,7 +102,7 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
 //                .withStartupTimeout(ofMinutes(5)));
         container.setWaitStrategy(new LogMessageWaitStrategy()
                 .withRegEx(".*(\"message\":\\s?\"started[\\s?|\"].*|] started\n$)")
-                .withStartupTimeout(ofMinutes(5)));
+                .withStartupTimeout(ofMinutes(15)));
         start(container, searchContainer.getInfo());
         logger.info("ElasticsearchContainer {} started with HttpPort={} and TransportTcpPort={}!",
                 searchContainer.getInfo(),
