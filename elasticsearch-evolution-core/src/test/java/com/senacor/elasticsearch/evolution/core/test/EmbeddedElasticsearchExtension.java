@@ -98,7 +98,7 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
 //                .forStatusCodeMatching(response -> response == HTTP_OK || response == HTTP_UNAUTHORIZED)
 //                .withStartupTimeout(ofMinutes(5)));
         container.setWaitStrategy(new LogMessageWaitStrategy()
-                .withRegEx(".*(\"message\":\\s?\"started\".*|] started\n$)")
+                .withRegEx(".*(\"message\":\\s?\"started[\\s?|\"].*|] started\n$)")
                 .withStartupTimeout(ofMinutes(5)));
         start(container, searchContainer.getInfo());
         logger.info("ElasticsearchContainer {} started with HttpPort={} and TransportTcpPort={}!",
