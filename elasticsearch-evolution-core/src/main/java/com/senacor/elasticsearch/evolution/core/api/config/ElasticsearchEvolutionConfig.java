@@ -86,7 +86,7 @@ public class ElasticsearchEvolutionConfig {
     /**
      * Whether to fail when a previously applied migration script has been modified after it was applied.
      */
-    private boolean rejectModifiedScripts = true;
+    private boolean validateOnMigrate = true;
 
     /**
      * Loads this configuration into a new ElasticsearchEvolution instance.
@@ -241,12 +241,12 @@ public class ElasticsearchEvolutionConfig {
         return this;
     }
 
-    public boolean getRejectModifiedScripts() {
-        return rejectModifiedScripts;
+    public boolean getValidateOnMigrate() {
+        return validateOnMigrate;
     }
 
-    public ElasticsearchEvolutionConfig setRejectModifiedModifiedScripts(boolean rejectModifiedScripts) {
-        this.rejectModifiedScripts = rejectModifiedScripts;
+    public ElasticsearchEvolutionConfig setValidateOnMigrate(boolean validateOnMigrate) {
+        this.validateOnMigrate = validateOnMigrate;
         return this;
     }
 
@@ -265,7 +265,7 @@ public class ElasticsearchEvolutionConfig {
                 ", placeholderReplacement=" + placeholderReplacement +
                 ", historyIndex='" + historyIndex + '\'' +
                 ", historyMaxQuerySize=" + historyMaxQuerySize +
-                ", rejectModifiedScripts=" + rejectModifiedScripts +
+                ", validateOnMigrate=" + validateOnMigrate +
                 '}';
     }
 }

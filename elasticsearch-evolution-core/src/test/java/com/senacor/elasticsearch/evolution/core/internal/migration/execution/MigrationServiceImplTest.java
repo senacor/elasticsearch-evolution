@@ -255,7 +255,7 @@ class MigrationServiceImplTest {
         }
 
         @Test
-        void successfulScriptWasEdited_shouldContinueIfRejectModifiedScriptsIsDisabled() {
+        void successfulScriptWasEdited_shouldContinueIfValidateOnMigrateIsDisabled() {
             doReturn(new TreeSet<>(asList(
                     createMigrationScriptProtocol("1.0", true, 1),
                     createMigrationScriptProtocol("1.1", true, 2)

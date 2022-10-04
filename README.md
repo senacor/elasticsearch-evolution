@@ -192,7 +192,7 @@ Elasticsearch-Evolution can be configured to your needs:
 -   **placeholderSuffix** (default=}): Suffix of placeholders in migration scripts.
 -   **historyIndex** (default=es_evolution): Name of the history index that will be used by Elasticsearch-Evolution. In this index Elasticsearch-Evolution will persist his internal state and tracks which migration script has already been executed.
 -   **historyMaxQuerySize** (default=1000): The maximum query size while validating already executed scripts. This query size have to be higher than the total count of your migration scripts.
--   **rejectModifiedScripts** (default=true): Whether to fail when a previously applied migration script has been modified after it was applied.
+-   **validateOnMigrate** (default=true): Whether to fail when a previously applied migration script has been modified after it was applied.
 
 ### 5.1 Spring Boot
 
@@ -289,7 +289,7 @@ ElasticsearchEvolution.configure()
 
 ### v0.4.1-SNAPSHOT
 
-- Previously applied migration scripts are now checked for modifications and rejected if they've been modified after they were applied. The old behaviour can be restored with the new configuration parameter `rejectModifiedScripts` (default true).
+- Previously applied migration scripts are now checked for modifications and rejected if they've been modified after they were applied. The old behaviour can be restored by setting the new configuration parameter `validateOnMigrate` to false (default true).
 
 ### v0.4.0
 
