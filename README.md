@@ -20,10 +20,10 @@ Successful executed migration scripts will not be executed again!
 
 ## 2 Features
 
-- tested on Java 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 and 18
+- tested on Java 8, 11, 17, 18 and 19
 - runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5 and 2.6 (and of course without Spring-Boot)
-- runs on Elasticsearch version 7.5.x - 8.1.x
-- runs on Opensearch version 1.x
+- runs on Elasticsearch version 7.5.x - 8.4.x
+- runs on Opensearch version 1.x and 2.x
 - highly configurable (e.g. location(s) of your migration files, migration files format pattern)
 - placeholder substitution in migration scripts
 - easily extendable to your needs
@@ -33,7 +33,7 @@ Successful executed migration scripts will not be executed again!
 
 | Compatibility                    | Spring Boot                  | Elasticsearch        | Opensearch |
 |----------------------------------|------------------------------|----------------------|------------|
-| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 | 7.5.x - 8.1.x        | 1.x        |
+| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 | 7.5.x - 8.4.x        | 1.x - 2.x  |
 | elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 | 7.5.x - 7.17.x       |            |
 | elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4 | 7.0.x - 7.4.x, 6.8.x |            |
 
@@ -289,7 +289,15 @@ ElasticsearchEvolution.configure()
 
 ### v0.4.1-SNAPSHOT
 
-- Previously applied migration scripts are now checked for modifications and rejected if they've been modified after they were applied. The old behaviour can be restored by setting the new configuration parameter `validateOnMigrate` to false (default true).
+
+- Previously applied migration scripts are now checked for modifications and rejected if they've been modified after they were applied. The old behaviour can be restored by setting the new configuration parameter `validateOnMigrate` to false (default: true) ([#155](https://github.com/senacor/elasticsearch-evolution/isse/155))
+
+- version updates (spring-boot 2.7.4)
+- added java 19 compatibility tests
+- added spring boot 2.7 compatibility tests
+- added Elasticsearch 8.4, 8.3, and 8,2 compatibility test
+- added Opensearch 2.3, 2.2, 2.1 and 2.0 compatibility tests
+
 
 ### v0.4.0
 

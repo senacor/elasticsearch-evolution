@@ -44,26 +44,21 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
     private static final SortedSet<SearchContainer> SUPPORTED_SEARCH_VERSIONS = Collections.unmodifiableSortedSet(new TreeSet<>(Arrays.asList(
-            ofOpensearch("1.3.1"),
+            ofOpensearch("2.3.0"),
+            ofOpensearch("2.2.1"),
+            ofOpensearch("2.1.0"),
+            ofOpensearch("2.0.1"),
+            ofOpensearch("1.3.5"),
             ofOpensearch("1.2.4"),
             ofOpensearch("1.1.0"),
             ofOpensearch("1.0.1"),
 
+            ofElasticsearch("8.4.2"),
+            ofElasticsearch("8.3.3"),
+            ofElasticsearch("8.2.3"),
             ofElasticsearch("8.1.3"),
             ofElasticsearch("8.0.1"),
-            ofElasticsearch("7.17.3"),
-            ofElasticsearch("7.16.3"),
-            ofElasticsearch("7.15.2"),
-            ofElasticsearch("7.14.2"),
-            ofElasticsearch("7.13.4"),
-            ofElasticsearch("7.12.1"),
-            ofElasticsearch("7.11.2"),
-            ofElasticsearch("7.10.2"),
-            ofElasticsearch("7.9.3"),
-            ofElasticsearch("7.8.1"),
-            ofElasticsearch("7.7.1"),
-            ofElasticsearch("7.6.2"),
-            ofElasticsearch("7.5.2")
+            ofElasticsearch("7.17.6")
     )));
 
     @Override
@@ -95,6 +90,9 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
                 .withEnv("cluster.routing.allocation.disk.watermark.low", "97%")
                 .withEnv("cluster.routing.allocation.disk.watermark.high", "98%")
                 .withEnv("cluster.routing.allocation.disk.watermark.flood_stage", "99%");
+        // SocketUtils replacement: https://github.com/spring-projects/spring-framework/issues/28210
+        // https://github.com/spring-cloud/spring-cloud-function/issues/825
+        // https://github.com/spring-cloud/spring-cloud-deployer-local/pull/214
         int httpPort = SocketUtils.findAvailableTcpPort(5000, 30000);
         int transportPort = SocketUtils.findAvailableTcpPort(30001, 65535);
         container.setPortBindings(Arrays.asList(httpPort + ":9200", transportPort + ":" + searchContainer.transportPort));
@@ -103,8 +101,8 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
 //                .forStatusCodeMatching(response -> response == HTTP_OK || response == HTTP_UNAUTHORIZED)
 //                .withStartupTimeout(ofMinutes(5)));
         container.setWaitStrategy(new LogMessageWaitStrategy()
-                .withRegEx(".*(\"message\":\\s?\"started\".*|] started\n$)")
-                .withStartupTimeout(ofMinutes(5)));
+                .withRegEx(".*(\"message\":\\s?\"started[\\s?|\"].*|] started\n$)")
+                .withStartupTimeout(ofMinutes(15)));
         start(container, searchContainer.getInfo());
         logger.info("ElasticsearchContainer {} started with HttpPort={} and TransportTcpPort={}!",
                 searchContainer.getInfo(),
