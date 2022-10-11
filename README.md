@@ -192,6 +192,7 @@ Elasticsearch-Evolution can be configured to your needs:
 -   **placeholderSuffix** (default=}): Suffix of placeholders in migration scripts.
 -   **historyIndex** (default=es_evolution): Name of the history index that will be used by Elasticsearch-Evolution. In this index Elasticsearch-Evolution will persist his internal state and tracks which migration script has already been executed.
 -   **historyMaxQuerySize** (default=1000): The maximum query size while validating already executed scripts. This query size have to be higher than the total count of your migration scripts.
+-   **validateOnMigrate** (default=true): Whether to fail when a previously applied migration script has been modified after it was applied.
 
 ### 5.1 Spring Boot
 
@@ -288,11 +289,15 @@ ElasticsearchEvolution.configure()
 
 ### v0.4.1-SNAPSHOT
 
+
+- Previously applied migration scripts are now checked for modifications and rejected if they've been modified after they were applied. The old behaviour can be restored by setting the new configuration parameter `validateOnMigrate` to false (default: true) ([#155](https://github.com/senacor/elasticsearch-evolution/isse/155))
+
 - version updates (spring-boot 2.7.4)
 - added java 19 compatibility tests
 - added spring boot 2.7 compatibility tests
-- added Elasticsearch 8.4, 8.3, and 8,2 compatibility tests
+- added Elasticsearch 8.4, 8.3, and 8,2 compatibility test
 - added Opensearch 2.3, 2.2, 2.1 and 2.0 compatibility tests
+
 
 ### v0.4.0
 

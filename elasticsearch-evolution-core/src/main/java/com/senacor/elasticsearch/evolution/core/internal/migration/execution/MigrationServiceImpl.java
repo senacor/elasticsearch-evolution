@@ -37,17 +37,20 @@ public class MigrationServiceImpl implements MigrationService {
     private final RestClient restClient;
     private final ContentType defaultContentType;
     private final Charset encoding;
+    private final boolean validateOnMigrate;
 
     public MigrationServiceImpl(HistoryRepository historyRepository,
                                 int waitUntilUnlockedMinTimeInMillis,
                                 int waitUntilUnlockedMaxTimeInMillis,
                                 RestClient restClient,
                                 ContentType defaultContentType,
-                                Charset encoding) {
+                                Charset encoding,
+                                boolean validateOnMigrate) {
         this.historyRepository = requireNonNull(historyRepository, "historyRepository must not be null");
         this.restClient = requireNonNull(restClient, "restClient must not be null");
         this.defaultContentType = requireNonNull(defaultContentType);
         this.encoding = requireNonNull(encoding);
+        this.validateOnMigrate = validateOnMigrate;
         this.waitUntilUnlockedMinTimeInMillis = requireCondition(waitUntilUnlockedMinTimeInMillis,
                 min -> min >= 0 && min <= waitUntilUnlockedMaxTimeInMillis,
                 "waitUntilUnlockedMinTimeInMillis (%s) must not be negative and must not be greater than waitUntilUnlockedMaxTimeInMillis (%s)",
@@ -185,8 +188,19 @@ public class MigrationServiceImpl implements MigrationService {
             ParsedMigrationScript parsedMigrationScript = orderedScripts.get(i);
             if (!protocol.getVersion().equals(parsedMigrationScript.getFileNameInfo().getVersion())) {
                 throw new MigrationException(String.format(
-                        "The logged execution in the Elasticsearch-Evolution history index at position %s is version %s and in the same position in the given migration scripts is version %s! Out of order execution is not supported. Or maybe you have added new migration scripts in between or have to cleanup the Elasticsearch-Evolution history index manually",
+                        "The logged execution in the Elasticsearch-Evolution history index at position %s " +
+                                "is version %s and in the same position in the given migration scripts is version %s! " +
+                                "Out of order execution is not supported. Or maybe you have added new migration scripts " +
+                                "in between or have to cleanup the Elasticsearch-Evolution history index manually",
                         i, protocol.getVersion(), parsedMigrationScript.getFileNameInfo().getVersion()));
+            }
+            // failed scripts can be edited and retried, but successfully executed scripts may not be modified afterwards
+            if (validateOnMigrate && protocol.isSuccess() && protocol.getChecksum() != parsedMigrationScript.getChecksum()) {
+                throw new MigrationException(String.format(
+                        "The logged execution for the migration script at position %s (%s) " +
+                                "has a different checksum from the given migration script! " +
+                                "Modifying already-executed scripts is not supported.",
+                        i, protocol.getScriptName()));
             }
 
             if (protocol.isSuccess()) {
