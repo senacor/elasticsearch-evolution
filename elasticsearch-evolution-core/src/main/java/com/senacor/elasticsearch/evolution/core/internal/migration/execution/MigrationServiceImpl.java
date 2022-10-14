@@ -191,7 +191,7 @@ public class MigrationServiceImpl implements MigrationService {
             if (protocol.getChecksum() != parsedMigrationScript.getChecksum()) {
                 throw new MigrationException(String.format(
                         "The logged execution in the Elasticsearch-Evolution history index at position %s is checksum %s and in the same position in the given migration scripts is checksum %s! Update execution migration scripts  is not supported. ",
-                        i, protocol.getVersion(), parsedMigrationScript.getFileNameInfo().getVersion()));
+                        i, protocol.getChecksum(), parsedMigrationScript.getChecksum()));
             }
 
 
