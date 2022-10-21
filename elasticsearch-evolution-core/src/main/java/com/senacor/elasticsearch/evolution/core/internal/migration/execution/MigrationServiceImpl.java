@@ -39,13 +39,15 @@ public class MigrationServiceImpl implements MigrationService {
     private final Charset encoding;
     private final boolean validateOnMigrate;
 
+    private final String baselineVersion;
     public MigrationServiceImpl(HistoryRepository historyRepository,
                                 int waitUntilUnlockedMinTimeInMillis,
                                 int waitUntilUnlockedMaxTimeInMillis,
                                 RestClient restClient,
                                 ContentType defaultContentType,
                                 Charset encoding,
-                                boolean validateOnMigrate) {
+                                boolean validateOnMigrate,
+                                String baselineVersion) {
         this.historyRepository = requireNonNull(historyRepository, "historyRepository must not be null");
         this.restClient = requireNonNull(restClient, "restClient must not be null");
         this.defaultContentType = requireNonNull(defaultContentType);
@@ -56,6 +58,7 @@ public class MigrationServiceImpl implements MigrationService {
                 "waitUntilUnlockedMinTimeInMillis (%s) must not be negative and must not be greater than waitUntilUnlockedMaxTimeInMillis (%s)",
                 waitUntilUnlockedMinTimeInMillis, waitUntilUnlockedMaxTimeInMillis);
         this.waitUntilUnlockedMaxTimeInMillis = waitUntilUnlockedMaxTimeInMillis;
+        this.baselineVersion = baselineVersion;
     }
 
     @Override
@@ -166,6 +169,7 @@ public class MigrationServiceImpl implements MigrationService {
     List<ParsedMigrationScript> getPendingScriptsToBeExecuted(Collection<ParsedMigrationScript> migrationScripts) {
         // order migrationScripts by version
         List<ParsedMigrationScript> orderedScripts = new ArrayList<>(migrationScripts.stream()
+                .filter(script -> script.getFileNameInfo().getVersion().isAtLeast(baselineVersion))
                 .collect(Collectors.toMap(
                         script -> script.getFileNameInfo().getVersion(),
                         script -> script,
