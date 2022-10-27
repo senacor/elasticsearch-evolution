@@ -193,6 +193,7 @@ Elasticsearch-Evolution can be configured to your needs:
 -   **historyIndex** (default=es_evolution): Name of the history index that will be used by Elasticsearch-Evolution. In this index Elasticsearch-Evolution will persist his internal state and tracks which migration script has already been executed.
 -   **historyMaxQuerySize** (default=1000): The maximum query size while validating already executed scripts. This query size have to be higher than the total count of your migration scripts.
 -   **validateOnMigrate** (default=true): Whether to fail when a previously applied migration script has been modified after it was applied.
+-   **baselineVersion** (default=1.0): Version to use as a baseline. versions lower than it will not be applied.
 
 ### 5.1 Spring Boot
 
@@ -297,7 +298,7 @@ ElasticsearchEvolution.configure()
 - added spring boot 2.7 compatibility tests
 - added Elasticsearch 8.4, 8.3, and 8,2 compatibility test
 - added Opensearch 2.3, 2.2, 2.1 and 2.0 compatibility tests
-
+- It is now possible to set a `baselineVersion` to skip migrations with versions lower than the defined `baselineVersion` ([#164](https://github.com/senacor/elasticsearch-evolution/issues/164))
 
 ### v0.4.0
 
