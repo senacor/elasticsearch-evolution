@@ -201,11 +201,18 @@ public class MigrationServiceImpl implements MigrationService {
      * wait until the elasticsearch-evolution history index is unlocked
      */
     void waitUntilUnlocked() {
+        int waitTimeTotolMax = 0;
         while (historyRepository.isLocked()) {
             try {
+                if(waitTimeTotolMax > waitUntilUnlockedMaxTimeInMillis * 6){
+                    logger.info("waitUntilUnlocked timeout ? , need force release logical index lock . Maybe application lastTime abnormal exit, doesnot  execute release logical index lock of finally program block.",waitUntilUnlockedMaxTimeInMillis * 6 );
+                    historyRepository.unlock();
+                    return;
+                }
                 int waitTime = RandomUtils.getRandomInt(waitUntilUnlockedMinTimeInMillis, waitUntilUnlockedMaxTimeInMillis);
                 logger.info("Elasticsearch-Evolution history index is locked, waiting {}ms until retry...", waitTime);
                 Thread.sleep(waitTime);
+                waitTimeTotolMax += waitTime;
             } catch (InterruptedException e) {
                 logger.warn("waitUntilUnlocked was interrupted!", e);
             }
