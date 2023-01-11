@@ -24,6 +24,7 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -45,7 +46,13 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.withSettings;
 
 /**
  * @author Andreas Keefer
@@ -295,6 +302,17 @@ class MigrationServiceImplTest {
             InOrder order = inOrder(historyRepository);
             order.verify(historyRepository).findAll();
             order.verifyNoMoreInteractions();
+        }
+
+        @Test
+        void noPendingScriptsIfMigrationScriptListIsEmpty() {
+            MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
+                                                                      0, 0, restClient, defaultContentType, encoding, true, "2.0");
+
+            List<ParsedMigrationScript> res = underTest.getPendingScriptsToBeExecuted(emptyList());
+
+            assertThat(res).isEmpty();
+            Mockito.verifyNoInteractions(historyRepository);
         }
     }
 
@@ -675,6 +693,7 @@ class MigrationServiceImplTest {
             doReturn(false).when(historyRepository).isLocked();
             doReturn(false).when(historyRepository).lock();
             doReturn(true).when(historyRepository).unlock();
+            doReturn(new TreeSet<>()).when(historyRepository).findAll();
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding, true, "1.0");
@@ -701,6 +720,26 @@ class MigrationServiceImplTest {
 
             assertThat(res).isEmpty();
             InOrder order = inOrder(historyRepository, restClient);
+            order.verifyNoMoreInteractions();
+        }
+
+        @Test
+        void noPendingScripts_shouldNotLockRepository() {
+            List<ParsedMigrationScript> scripts = asList(
+                    createParsedMigrationScript("1.0"),
+                    createParsedMigrationScript("1.1"));
+            doReturn(new TreeSet<>(asList(
+                    createMigrationScriptProtocol("1.0", true),
+                    createMigrationScriptProtocol("1.1", true)
+            ))).when(historyRepository).findAll();
+            MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
+                                                                      0, 0, restClient, defaultContentType, encoding, true, "1.0");
+
+            List<MigrationScriptProtocol> res = underTest.executePendingScripts(scripts);
+
+            assertThat(res).isEmpty();
+            InOrder order = inOrder(historyRepository, restClient);
+            order.verify(historyRepository).findAll();
             order.verifyNoMoreInteractions();
         }
     }
