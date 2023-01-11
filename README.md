@@ -290,7 +290,7 @@ ElasticsearchEvolution.configure()
 
 ### v0.4.1-SNAPSHOT
 
-
+- Optimization: Don't acquire lock if no scripts need to be executed ([#172](https://github.com/senacor/elasticsearch-evolution/issues/172))
 - Previously applied migration scripts are now checked for modifications and rejected if they've been modified after they were applied. The old behaviour can be restored by setting the new configuration parameter `validateOnMigrate` to false (default: true) ([#155](https://github.com/senacor/elasticsearch-evolution/issues/155))
 - version updates (spring-boot 2.7.7)
 - added java 19 compatibility tests
