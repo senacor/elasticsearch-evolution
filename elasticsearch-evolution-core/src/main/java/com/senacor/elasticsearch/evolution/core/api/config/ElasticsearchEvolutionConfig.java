@@ -1,6 +1,7 @@
 package com.senacor.elasticsearch.evolution.core.api.config;
 
 import com.senacor.elasticsearch.evolution.core.ElasticsearchEvolution;
+import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import org.elasticsearch.client.RestClient;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -84,6 +85,17 @@ public class ElasticsearchEvolutionConfig {
     private int historyMaxQuerySize = 1_000;
 
     /**
+     * Whether to fail when a previously applied migration script has been modified after it was applied.
+     */
+    private boolean validateOnMigrate = true;
+
+    /**
+     * version to use as a baseline.
+     * The baseline version will be the first one applied, the versions below will be ignored.
+     */
+    private String baselineVersion = "1.0";
+
+    /**
      * Loads this configuration into a new ElasticsearchEvolution instance.
      *
      * @param restClient REST client to interact with Elasticsearch
@@ -124,6 +136,11 @@ public class ElasticsearchEvolutionConfig {
             }
             requireNotBlank(historyIndex, "historyIndex must not be empty");
             requireCondition(historyMaxQuerySize, size -> size > 0, "historyMaxQuerySize value '%s' must be greater than 0", historyMaxQuerySize);
+            try {
+                MigrationVersion.fromVersion(baselineVersion);
+            } catch (RuntimeException e) {
+                throw new IllegalArgumentException("baselineVersion is invalid", e);
+            }
         }
         return this;
     }
@@ -236,6 +253,24 @@ public class ElasticsearchEvolutionConfig {
         return this;
     }
 
+    public boolean getValidateOnMigrate() {
+        return validateOnMigrate;
+    }
+
+    public ElasticsearchEvolutionConfig setValidateOnMigrate(boolean validateOnMigrate) {
+        this.validateOnMigrate = validateOnMigrate;
+        return this;
+    }
+
+    public String getBaselineVersion() {
+        return baselineVersion;
+    }
+
+    public ElasticsearchEvolutionConfig setBaselineVersion(String baselineVersion) {
+        this.baselineVersion = baselineVersion;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "ElasticsearchEvolutionConfig{" +
@@ -251,6 +286,8 @@ public class ElasticsearchEvolutionConfig {
                 ", placeholderReplacement=" + placeholderReplacement +
                 ", historyIndex='" + historyIndex + '\'' +
                 ", historyMaxQuerySize=" + historyMaxQuerySize +
+                ", validateOnMigrate=" + validateOnMigrate +
+                ", baselineVersion='" + baselineVersion + '\'' +
                 '}';
     }
 }

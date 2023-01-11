@@ -20,10 +20,10 @@ Successful executed migration scripts will not be executed again!
 
 ## 2 Features
 
-- tested on Java 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 and 18
-- runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5 and 2.6 (and of course without Spring-Boot)
-- runs on Elasticsearch version 7.5.x - 8.1.x
-- runs on Opensearch version 1.x
+- tested on Java 8, 11, 17, 18 and 19
+- runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 and 2.7 (and of course without Spring-Boot)
+- runs on Elasticsearch version 7.5.x - 8.4.x
+- runs on Opensearch version 1.x and 2.x
 - highly configurable (e.g. location(s) of your migration files, migration files format pattern)
 - placeholder substitution in migration scripts
 - easily extendable to your needs
@@ -33,8 +33,8 @@ Successful executed migration scripts will not be executed again!
 
 | Compatibility                    | Spring Boot                  | Elasticsearch        | Opensearch |
 |----------------------------------|------------------------------|----------------------|------------|
-| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 | 7.5.x - 8.1.x        | 1.x        |
-| elasticsearch-evolution >= 0.3.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 | 7.5.x - 7.17.x       |            |
+| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 | 7.5.x - 8.4.x        | 1.x - 2.x  |
+| elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 | 7.5.x - 7.17.x       |            |
 | elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4 | 7.0.x - 7.4.x, 6.8.x |            |
 
 NOTE: When you run on Java 11 and using spring-boot 2.2 or 2.3 and you hit [this issue](https://github.com/ronmamo/reflections/issues/279), you have 2 options: 
@@ -52,7 +52,7 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.3.2</version>
+    <version>0.4.0</version>
 </dependency>
 ```
 
@@ -76,7 +76,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.3.2</version>
+    <version>0.4.0</version>
 </dependency>
 ```
 
@@ -192,6 +192,8 @@ Elasticsearch-Evolution can be configured to your needs:
 -   **placeholderSuffix** (default=}): Suffix of placeholders in migration scripts.
 -   **historyIndex** (default=es_evolution): Name of the history index that will be used by Elasticsearch-Evolution. In this index Elasticsearch-Evolution will persist his internal state and tracks which migration script has already been executed.
 -   **historyMaxQuerySize** (default=1000): The maximum query size while validating already executed scripts. This query size have to be higher than the total count of your migration scripts.
+-   **validateOnMigrate** (default=true): Whether to fail when a previously applied migration script has been modified after it was applied.
+-   **baselineVersion** (default=1.0): Version to use as a baseline. versions lower than it will not be applied.
 
 ### 5.1 Spring Boot
 
@@ -286,7 +288,18 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.4.0-SNAPSHOT
+### v0.4.1-SNAPSHOT
+
+- Optimization: Don't acquire lock if no scripts need to be executed ([#172](https://github.com/senacor/elasticsearch-evolution/issues/172))
+- Previously applied migration scripts are now checked for modifications and rejected if they've been modified after they were applied. The old behaviour can be restored by setting the new configuration parameter `validateOnMigrate` to false (default: true) ([#155](https://github.com/senacor/elasticsearch-evolution/issues/155))
+- version updates (spring-boot 2.7.7)
+- added java 19 compatibility tests
+- added spring boot 2.7 compatibility tests
+- added Elasticsearch 8.6, 8.5, 8.4, 8.3, and 8,2 compatibility test
+- added Opensearch 2.3, 2.2, 2.1 and 2.0 compatibility tests
+- It is now possible to set a `baselineVersion` to skip migrations with versions lower than the defined `baselineVersion` ([#164](https://github.com/senacor/elasticsearch-evolution/issues/164))
+
+### v0.4.0
 
 - **breaking change**: drop `org.elasticsearch.client.RestHighLevelClient` and replace with `org.elasticsearch.client.RestClient` (LowLevelClient). This will drop the big transitive dependency `org.elasticsearch:elasticsearch` and opens compatibility to Elasticsearch 8 and OpenSearch.
 - version updates (spring-boot 2.6.6)

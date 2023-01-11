@@ -1,5 +1,6 @@
 package com.senacor.elasticsearch.evolution.core.test;
 
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -18,6 +19,7 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.SocketUtils;
+import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
 import org.testcontainers.utility.DockerImageName;
@@ -28,6 +30,7 @@ import java.util.stream.Stream;
 
 import static com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.SearchContainer.ofElasticsearch;
 import static com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.SearchContainer.ofOpensearch;
+import static java.time.Duration.ofMinutes;
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
 
 /**
@@ -41,26 +44,21 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
     private static final SortedSet<SearchContainer> SUPPORTED_SEARCH_VERSIONS = Collections.unmodifiableSortedSet(new TreeSet<>(Arrays.asList(
-            ofOpensearch("1.3.1"),
-            ofOpensearch("1.2.4"),
-            ofOpensearch("1.1.0"),
-            ofOpensearch("1.0.1"),
+            ofOpensearch("2.4.1"),
+            ofOpensearch("2.3.0"),
+            ofOpensearch("2.2.1"),
+            ofOpensearch("2.1.0"),
+            ofOpensearch("2.0.1"),
+            ofOpensearch("1.3.7"),
 
-            ofElasticsearch("8.1.2"),
+            ofElasticsearch("8.6.0"),
+            ofElasticsearch("8.5.3"),
+            ofElasticsearch("8.4.3"),
+            ofElasticsearch("8.3.3"),
+            ofElasticsearch("8.2.3"),
+            ofElasticsearch("8.1.3"),
             ofElasticsearch("8.0.1"),
-            ofElasticsearch("7.17.2"),
-            ofElasticsearch("7.16.3"),
-            ofElasticsearch("7.15.2"),
-            ofElasticsearch("7.14.2"),
-            ofElasticsearch("7.13.4"),
-            ofElasticsearch("7.12.1"),
-            ofElasticsearch("7.11.2"),
-            ofElasticsearch("7.10.2"),
-            ofElasticsearch("7.9.3"),
-            ofElasticsearch("7.8.1"),
-            ofElasticsearch("7.7.1"),
-            ofElasticsearch("7.6.2"),
-            ofElasticsearch("7.5.2")
+            ofElasticsearch("7.17.8")
     )));
 
     @Override
@@ -81,11 +79,30 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
         logger.info("creating ElasticsearchContainer for {} ...", searchContainer.getInfo());
         ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName.parse(searchContainer.getContainerImage())
                 .asCompatibleSubstituteFor("docker.elastic.co/elasticsearch/elasticsearch")
-                .withTag(searchContainer.getVersion()))
-                .withEnv(searchContainer.getEnv());
+                .withTag(searchContainer.getVersion())) {
+            @Override
+            protected void containerIsStarted(InspectContainerResponse containerInfo) {
+                // since testcontainers 1.17 it detects if ES 8.x is running and copies a certificate in this case
+                // but we don't want security
+            }
+        }
+                .withEnv(searchContainer.getEnv())
+                .withEnv("cluster.routing.allocation.disk.watermark.low", "97%")
+                .withEnv("cluster.routing.allocation.disk.watermark.high", "98%")
+                .withEnv("cluster.routing.allocation.disk.watermark.flood_stage", "99%");
+        // SocketUtils replacement: https://github.com/spring-projects/spring-framework/issues/28210
+        // https://github.com/spring-cloud/spring-cloud-function/issues/825
+        // https://github.com/spring-cloud/spring-cloud-deployer-local/pull/214
         int httpPort = SocketUtils.findAvailableTcpPort(5000, 30000);
         int transportPort = SocketUtils.findAvailableTcpPort(30001, 65535);
         container.setPortBindings(Arrays.asList(httpPort + ":9200", transportPort + ":" + searchContainer.transportPort));
+//        container.setWaitStrategy(new HttpWaitStrategy()
+//                .forPort(9200)
+//                .forStatusCodeMatching(response -> response == HTTP_OK || response == HTTP_UNAUTHORIZED)
+//                .withStartupTimeout(ofMinutes(5)));
+        container.setWaitStrategy(new LogMessageWaitStrategy()
+                .withRegEx(".*(\"message\":\\s?\"started[\\s?|\"].*|] started\n$)")
+                .withStartupTimeout(ofMinutes(15)));
         start(container, searchContainer.getInfo());
         logger.info("ElasticsearchContainer {} started with HttpPort={} and TransportTcpPort={}!",
                 searchContainer.getInfo(),
@@ -177,7 +194,7 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
             return SearchContainer.builder()
                     .vendor("Opensearch")
                     .vendorShort("OS")
-                    .containerImage("opensearchproject/opensearch")
+                    .containerImage("quay.io/xtermi2/opensearch")
                     .version(version)
                     .env(ImmutableMap.of(
                             "OPENSEARCH_JAVA_OPTS", "-Xms128m -Xmx128m",

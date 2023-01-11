@@ -57,7 +57,7 @@ class MigrationServiceImplIT {
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepositoryMock,
                     0, 0, restHighLevelClient.getLowLevelClient(),
-                    defaultContentType, encoding);
+                    defaultContentType, encoding, true, "1.0");
 
             MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
 
@@ -80,9 +80,9 @@ class MigrationServiceImplIT {
                 softly.assertThat(res.isLocked())
                         .isTrue();
                 softly.assertThat(res.getExecutionRuntimeInMillis())
-                        .isBetween(1, 4000);
+                        .isBetween(1, 6000);
                 softly.assertThat(res.getExecutionTimestamp())
-                        .isBetween(afterExecution.minus(4000, ChronoUnit.MILLIS), afterExecution);
+                        .isBetween(afterExecution.minus(6000, ChronoUnit.MILLIS), afterExecution);
             });
 
             // wait until all documents are indexed

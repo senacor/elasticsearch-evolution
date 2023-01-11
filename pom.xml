@@ -5,12 +5,12 @@
 
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-parent</artifactId>
-    <version>0.4.0</version>
+    <version>0.4.1</version>
     <packaging>pom</packaging>
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>2.6.6</version>
+        <version>2.7.7</version>
     </parent>
 
     <name>elasticsearch-evolution</name>
@@ -94,19 +94,19 @@
         <!-- Plugin Versions -->
         <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
         <!--jacoco snapshot to support java 17/18-->
-        <jacoco-maven-plugin.version>0.8.8-SNAPSHOT</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
         <!-- maven-javadoc-plugin.version 3.1.1 does not work on travis -->
-        <maven-javadoc-plugin.version>3.3.2</maven-javadoc-plugin.version>
-        <nexus-staging-maven-plugin.version>1.6.12</nexus-staging-maven-plugin.version>
+        <maven-javadoc-plugin.version>3.4.1</maven-javadoc-plugin.version>
+        <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
 
         <!-- Dependency Versions -->
         <commons-io.version>2.11.0</commons-io.version>
         <!--when updating elasticsearch versions, also update "ElasticsearchContainer" version in EmbeddedElasticsearchExtension-->
         <elasticsearch.version>7.5.2</elasticsearch.version>
         <reflections.version>0.9.12</reflections.version>
-        <testcontainers.elasticsearch.version>1.16.3</testcontainers.elasticsearch.version>
-        <lombok.version>1.18.22</lombok.version>
+        <testcontainers.elasticsearch.version>1.17.5</testcontainers.elasticsearch.version>
+        <lombok.version>1.18.24</lombok.version>
     </properties>
 
     <dependencyManagement>

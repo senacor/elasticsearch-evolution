@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.senacor.elasticsearch.evolution</groupId>
 	<artifactId>test-spring-boot-2.2</artifactId>
-	<version>0.4.0</version>
+	<version>0.4.1</version>
 	<description>Demo project for Spring Boot</description>
 
 	<properties>
@@ -18,7 +18,7 @@
 
 		<commons-io.version>2.11.0</commons-io.version>
 		<elasticsearch.version>7.5.2</elasticsearch.version>
-		<testcontainers.elasticsearch.version>1.16.3</testcontainers.elasticsearch.version>
+		<testcontainers.elasticsearch.version>1.17.5</testcontainers.elasticsearch.version>
 	</properties>
 
 	<dependencies>
@@ -78,7 +78,7 @@
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<!--jacoco snapshot to support java 17/18-->
-				<version>0.8.8-SNAPSHOT</version>
+				<version>0.8.8</version>
 				<executions>
 					<execution>
 						<id>prepare-agent</id>

@@ -37,57 +37,71 @@ public class MigrationServiceImpl implements MigrationService {
     private final RestClient restClient;
     private final ContentType defaultContentType;
     private final Charset encoding;
+    private final boolean validateOnMigrate;
 
+    private final String baselineVersion;
     public MigrationServiceImpl(HistoryRepository historyRepository,
                                 int waitUntilUnlockedMinTimeInMillis,
                                 int waitUntilUnlockedMaxTimeInMillis,
                                 RestClient restClient,
                                 ContentType defaultContentType,
-                                Charset encoding) {
+                                Charset encoding,
+                                boolean validateOnMigrate,
+                                String baselineVersion) {
         this.historyRepository = requireNonNull(historyRepository, "historyRepository must not be null");
         this.restClient = requireNonNull(restClient, "restClient must not be null");
         this.defaultContentType = requireNonNull(defaultContentType);
         this.encoding = requireNonNull(encoding);
+        this.validateOnMigrate = validateOnMigrate;
         this.waitUntilUnlockedMinTimeInMillis = requireCondition(waitUntilUnlockedMinTimeInMillis,
                 min -> min >= 0 && min <= waitUntilUnlockedMaxTimeInMillis,
                 "waitUntilUnlockedMinTimeInMillis (%s) must not be negative and must not be greater than waitUntilUnlockedMaxTimeInMillis (%s)",
                 waitUntilUnlockedMinTimeInMillis, waitUntilUnlockedMaxTimeInMillis);
         this.waitUntilUnlockedMaxTimeInMillis = waitUntilUnlockedMaxTimeInMillis;
+        this.baselineVersion = baselineVersion;
     }
 
     @Override
-    public List<MigrationScriptProtocol> executePendingScripts(Collection<ParsedMigrationScript> migrationScripts) throws MigrationException {
+    public List<MigrationScriptProtocol> executePendingScripts(Collection<ParsedMigrationScript> migrationScripts)
+            throws MigrationException {
+        if (!getPendingScriptsToBeExecuted(migrationScripts).isEmpty()) {
+            return executePendingScriptsWithLock(migrationScripts);
+        } else {
+            return new ArrayList<>();
+        }
+    }
+
+    private List<MigrationScriptProtocol> executePendingScriptsWithLock(Collection<ParsedMigrationScript> migrationScripts)
+            throws MigrationException {
         List<MigrationScriptProtocol> executedScripts = new ArrayList<>();
-        if (!migrationScripts.isEmpty()) {
-            try {
-                historyRepository.createIndexIfAbsent();
-                waitUntilUnlocked();
-                // set an logical index lock
-                if (!historyRepository.lock()) {
-                    throw new MigrationException("could not lock the elasticsearch-evolution history index");
-                }
+        try {
+            historyRepository.createIndexIfAbsent();
+            waitUntilUnlocked();
+            // set a logical index lock
+            if (!historyRepository.lock()) {
+                throw new MigrationException("could not lock the elasticsearch-evolution history index");
+            }
 
-                // get scripts which needs to be executed
-                List<ParsedMigrationScript> scriptsToExecute = getPendingScriptsToBeExecuted(migrationScripts);
+            // get scripts which needs to be executed
+            List<ParsedMigrationScript> scriptsToExecute = getPendingScriptsToBeExecuted(migrationScripts);
 
-                // now execute scripts and write protocols to history index
-                for (ParsedMigrationScript script : scriptsToExecute) {
-                    // execute scripts
-                    ExecutionResult res = executeScript(script);
-                    MigrationScriptProtocol executedScriptProtocol = res.getProtocol();
-                    logger.info("executed migration script {}", executedScriptProtocol);
-                    executedScripts.add(executedScriptProtocol);
-                    // write protocols to history index
-                    historyRepository.saveOrUpdate(executedScriptProtocol);
-                    if (res.getError().isPresent()) {
-                        throw res.getError().get();
-                    }
+            // now execute scripts and write protocols to history index
+            for (ParsedMigrationScript script : scriptsToExecute) {
+                // execute scripts
+                ExecutionResult res = executeScript(script);
+                MigrationScriptProtocol executedScriptProtocol = res.getProtocol();
+                logger.info("executed migration script {}", executedScriptProtocol);
+                executedScripts.add(executedScriptProtocol);
+                // write protocols to history index
+                historyRepository.saveOrUpdate(executedScriptProtocol);
+                if (res.getError().isPresent()) {
+                    throw res.getError().get();
                 }
-            } finally {
-                // release logical index lock
-                if (!historyRepository.unlock()) {
-                    throw new MigrationException("could not release the elasticsearch-evolution history index lock! Maybe you have to release it manually.");
-                }
+            }
+        } finally {
+            // release logical index lock
+            if (!historyRepository.unlock()) {
+                throw new MigrationException("could not release the elasticsearch-evolution history index lock! Maybe you have to release it manually.");
             }
         }
         return executedScripts;
@@ -161,8 +175,13 @@ public class MigrationServiceImpl implements MigrationService {
      * @return list of ordered scripts which must be executed
      */
     List<ParsedMigrationScript> getPendingScriptsToBeExecuted(Collection<ParsedMigrationScript> migrationScripts) {
+        if (migrationScripts.isEmpty()) {
+            return new ArrayList<>();
+        }
+
         // order migrationScripts by version
         List<ParsedMigrationScript> orderedScripts = new ArrayList<>(migrationScripts.stream()
+                .filter(script -> script.getFileNameInfo().getVersion().isAtLeast(baselineVersion))
                 .collect(Collectors.toMap(
                         script -> script.getFileNameInfo().getVersion(),
                         script -> script,
@@ -185,8 +204,19 @@ public class MigrationServiceImpl implements MigrationService {
             ParsedMigrationScript parsedMigrationScript = orderedScripts.get(i);
             if (!protocol.getVersion().equals(parsedMigrationScript.getFileNameInfo().getVersion())) {
                 throw new MigrationException(String.format(
-                        "The logged execution in the Elasticsearch-Evolution history index at position %s is version %s and in the same position in the given migration scripts is version %s! Out of order execution is not supported. Or maybe you have added new migration scripts in between or have to cleanup the Elasticsearch-Evolution history index manually",
+                        "The logged execution in the Elasticsearch-Evolution history index at position %s " +
+                                "is version %s and in the same position in the given migration scripts is version %s! " +
+                                "Out of order execution is not supported. Or maybe you have added new migration scripts " +
+                                "in between or have to cleanup the Elasticsearch-Evolution history index manually",
                         i, protocol.getVersion(), parsedMigrationScript.getFileNameInfo().getVersion()));
+            }
+            // failed scripts can be edited and retried, but successfully executed scripts may not be modified afterwards
+            if (validateOnMigrate && protocol.isSuccess() && protocol.getChecksum() != parsedMigrationScript.getChecksum()) {
+                throw new MigrationException(String.format(
+                        "The logged execution for the migration script at position %s (%s) " +
+                                "has a different checksum from the given migration script! " +
+                                "Modifying already-executed scripts is not supported.",
+                        i, protocol.getScriptName()));
             }
 
             if (protocol.isSuccess()) {

@@ -1,4 +1,4 @@
-package com.senacor.elasticsearch.evolution.springboot22;
+package com.senacor.elasticsearch.evolution.springboot26;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import org.apache.http.HttpHost;
@@ -17,10 +17,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(properties = {"spring.elasticsearch.rest.uris=http://localhost:" + ApplicationTests.ELASTICSEARCH_PORT})
+@SpringBootTest(properties = {"spring.elasticsearch.uris=http://localhost:" + ApplicationTests.ELASTICSEARCH_PORT})
 class ApplicationTests {
 
-    static final int ELASTICSEARCH_PORT = 18759;
+    static final int ELASTICSEARCH_PORT = 18772;
 
     @Autowired
     private EsUtils esUtils;
