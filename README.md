@@ -21,7 +21,7 @@ Successful executed migration scripts will not be executed again!
 ## 2 Features
 
 - tested on Java 8, 11, 17, 18 and 19
-- runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5 and 2.6 (and of course without Spring-Boot)
+- runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 and 2.7 (and of course without Spring-Boot)
 - runs on Elasticsearch version 7.5.x - 8.4.x
 - runs on Opensearch version 1.x and 2.x
 - highly configurable (e.g. location(s) of your migration files, migration files format pattern)
@@ -292,10 +292,10 @@ ElasticsearchEvolution.configure()
 
 
 - Previously applied migration scripts are now checked for modifications and rejected if they've been modified after they were applied. The old behaviour can be restored by setting the new configuration parameter `validateOnMigrate` to false (default: true) ([#155](https://github.com/senacor/elasticsearch-evolution/issues/155))
-- version updates (spring-boot 2.7.4)
+- version updates (spring-boot 2.7.7)
 - added java 19 compatibility tests
 - added spring boot 2.7 compatibility tests
-- added Elasticsearch 8.4, 8.3, and 8,2 compatibility test
+- added Elasticsearch 8.6, 8.5, 8.4, 8.3, and 8,2 compatibility test
 - added Opensearch 2.3, 2.2, 2.1 and 2.0 compatibility tests
 - It is now possible to set a `baselineVersion` to skip migrations with versions lower than the defined `baselineVersion` ([#164](https://github.com/senacor/elasticsearch-evolution/issues/164))
 
