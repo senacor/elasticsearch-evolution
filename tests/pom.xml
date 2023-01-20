@@ -28,4 +28,16 @@
         <module>test-spring-boot-2.1-scriptsInJarFile</module>
     </modules>
 
+    <profiles>
+        <profile>
+            <id>jdk17+</id>
+            <activation>
+                <!-- only run on JDK >= 17 -->
+                <jdk>[17,)</jdk>
+            </activation>
+            <modules>
+                <module>test-spring-boot-3.0-scriptsInJarFile</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>
