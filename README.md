@@ -292,6 +292,7 @@ ElasticsearchEvolution.configure()
 
 - version updates (spring-boot 2.7.8)
 - spring boot 3 compatibility + tests
+- added Opensearch 2.5 compatibility tests
 
 ### v0.4.1
 
