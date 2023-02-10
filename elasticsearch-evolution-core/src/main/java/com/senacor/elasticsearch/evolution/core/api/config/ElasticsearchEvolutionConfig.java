@@ -37,6 +37,17 @@ public class ElasticsearchEvolutionConfig {
     private Charset encoding = StandardCharsets.UTF_8;
 
     /**
+     * Line separator, used only temporary between reading raw migration file line-by-line and parsing it later.
+     * Only needed for backward compatibility / checksum stability!
+     * <p>
+     * Should be one of
+     * - '\n' (LF - Linux/Unix/OS X)
+     * - '\r' (CR - Classic MAC OS)
+     * - '\r\n' (CRLF - Windows)
+     */
+    private String lineSeparator = "\n";
+
+    /**
      * This content type will be used as default if no contentType header is specified in the header section of a migration script.
      * If no charset is defined, the {@link #encoding} charset is used.
      */
@@ -172,6 +183,15 @@ public class ElasticsearchEvolutionConfig {
         return this;
     }
 
+    public String getLineSeparator() {
+        return lineSeparator;
+    }
+
+    public ElasticsearchEvolutionConfig setLineSeparator(String lineSeparator) {
+        this.lineSeparator = lineSeparator;
+        return this;
+    }
+
     public String getDefaultContentType() {
         return defaultContentType;
     }
@@ -277,6 +297,7 @@ public class ElasticsearchEvolutionConfig {
                 "enabled=" + enabled +
                 ", locations=" + locations +
                 ", encoding=" + encoding +
+                ", lineSeparator='" + lineSeparator.replace("\n", "\\n").replace("\r", "\\r") + '\'' +
                 ", defaultContentType='" + defaultContentType + '\'' +
                 ", esMigrationPrefix='" + esMigrationPrefix + '\'' +
                 ", esMigrationSuffixes=" + esMigrationSuffixes +
