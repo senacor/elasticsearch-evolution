@@ -34,16 +34,6 @@ jobs:
         with:
           distribution: zulu
           java-version: ${{ matrix.java }}
-#      - name: Cache local Maven repository
-#        uses: actions/cache@v2
-#        with:
-#          path: |
-#            ~/.m2/repository
-#            !~/.m2/repository/com/senacor
-#            ~/.m2/wrapper
-#          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-#          restore-keys: |
-#            ${{ runner.os }}-maven-
       - name: Build and test with Maven
         run: $MVN_CMD install
 
@@ -57,21 +47,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Set up JDK 11
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           distribution: zulu
           java-version: 17
-#      - name: Cache local Maven repository
-#        uses: actions/cache@v3
-#        with:
-#          path: |
-#            ~/.m2/repository
-#            !~/.m2/repository/com/senacor
-#            ~/.m2/wrapper
-#          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-#          restore-keys: |
-#            ${{ runner.os }}-maven-
       - name: Build and test with Maven
         run: $MVN_CMD install -DskipTests
       - name: elasticsearch test version ${{ matrix.elasticsearchVersion }}
@@ -98,16 +78,6 @@ jobs:
         with:
           distribution: zulu
           java-version: 8
-#      - name: Cache local Maven repository
-#        uses: actions/cache@v3
-#        with:
-#          path: |
-#            ~/.m2/repository
-#            !~/.m2/repository/com/senacor
-#            ~/.m2/wrapper
-#          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-#          restore-keys: |
-#            ${{ runner.os }}-maven-
       - name: Release to maven central
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
@@ -139,16 +109,6 @@ jobs:
         with:
           distribution: zulu
           java-version: 8
-#      - name: Cache local Maven repository
-#        uses: actions/cache@v3
-#        with:
-#          path: |
-#            ~/.m2/repository
-#            !~/.m2/repository/com/senacor
-#            ~/.m2/wrapper
-#          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-#          restore-keys: |
-#            ${{ runner.os }}-maven-
       - name: Release to maven central
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
