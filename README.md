@@ -21,7 +21,7 @@ Successful executed migration scripts will not be executed again!
 ## 2 Features
 
 - tested on Java 8, 11, 17, 18 and 19
-- runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 and 2.7 (and of course without Spring-Boot)
+- runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7 and 3.0 (and of course without Spring-Boot)
 - runs on Elasticsearch version 7.5.x - 8.6.x
 - runs on Opensearch version 1.x and 2.x
 - highly configurable (e.g. location(s) of your migration files, migration files format pattern)
@@ -31,11 +31,12 @@ Successful executed migration scripts will not be executed again!
 - ready to use default configuration
 - line comments in migration files
 
-| Compatibility                    | Spring Boot                       | Elasticsearch        | Opensearch |
-|----------------------------------|-----------------------------------|----------------------|------------|
-| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7 | 7.5.x - 8.6.x        | 1.x - 2.x  |
-| elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7 | 7.5.x - 7.17.x       |            |
-| elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4      | 7.0.x - 7.4.x, 6.8.x |            |
+| Compatibility                    | Spring Boot                            | Elasticsearch        | Opensearch |
+|----------------------------------|----------------------------------------|----------------------|------------|
+| elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0 | 7.5.x - 8.6.x        | 1.x - 2.x  |
+| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7      | 7.5.x - 8.6.x        | 1.x - 2.x  |
+| elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7      | 7.5.x - 7.17.x       |            |
+| elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4           | 7.0.x - 7.4.x, 6.8.x |            |
 
 NOTE: When you run on Java 11 and using spring-boot 2.2 or 2.3 and you hit [this issue](https://github.com/ronmamo/reflections/issues/279), you have 2 options: 
 
@@ -52,7 +53,7 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.4.1</version>
+    <version>0.4.2</version>
 </dependency>
 ```
 
@@ -76,7 +77,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.4.1</version>
+    <version>0.4.2</version>
 </dependency>
 ```
 
@@ -289,7 +290,11 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.4.2-SNAPSHOT
+### v0.4.3-SNAPSHOT
+
+- ...
+
+### v0.4.2
 
 - bugfix ([#182](https://github.com/senacor/elasticsearch-evolution/issues/182)): checksum calculation was based on system dependent line separators which lead to different checksums on different operating systems (e.g. windows vs linux). The default is now `\n`. For backward compatibility you can set other line separator via `lineSeparator` config property.
 - version updates (spring-boot 2.7.8)
