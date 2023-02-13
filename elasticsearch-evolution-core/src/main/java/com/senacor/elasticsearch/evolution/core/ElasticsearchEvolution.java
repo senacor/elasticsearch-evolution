@@ -149,7 +149,8 @@ public class ElasticsearchEvolution {
                 getConfig().getLocations(),
                 getConfig().getEncoding(),
                 getConfig().getEsMigrationPrefix(),
-                getConfig().getEsMigrationSuffixes());
+                getConfig().getEsMigrationSuffixes(),
+                getConfig().getLineSeparator());
     }
 
     protected HistoryRepository createHistoryRepository() {

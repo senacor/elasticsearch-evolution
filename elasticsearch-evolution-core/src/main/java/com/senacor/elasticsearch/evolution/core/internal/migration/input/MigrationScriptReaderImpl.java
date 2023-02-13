@@ -45,22 +45,26 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
     private final Charset encoding;
     private final String esMigrationPrefix;
     private final List<String> esMigrationSuffixes;
+    private final String lineSeparator;
 
     /**
      * @param locations               Locations of migrations scripts, e.g classpath:es/migration or file:/home/migration
      * @param encoding                migrations scripts encoding
      * @param esMigrationFilePrefix   File name prefix for ES migrations.
      * @param esMigrationFileSuffixes File name suffix for ES migrations.
+     * @param lineSeparator           Line separator. should be '\n' per default and only something else for backward compatibility / hash stability
      */
 
     public MigrationScriptReaderImpl(List<String> locations,
                                      Charset encoding,
                                      String esMigrationFilePrefix,
-                                     List<String> esMigrationFileSuffixes) {
+                                     List<String> esMigrationFileSuffixes,
+                                     String lineSeparator) {
         this.locations = locations;
         this.encoding = encoding;
         this.esMigrationPrefix = esMigrationFilePrefix;
         this.esMigrationSuffixes = esMigrationFileSuffixes;
+        this.lineSeparator = lineSeparator;
     }
 
     /**
@@ -162,7 +166,8 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
 
     private Stream<RawMigrationScript> read(BufferedReader reader, String filename) {
         String content = reader.lines()
-                .collect(Collectors.joining(System.lineSeparator()));
+                // use static line separator ('\n' per default) to get predictable and system independent checksum later
+                .collect(Collectors.joining(lineSeparator));
         if (content.isEmpty()) {
             return Stream.empty();
         }

@@ -194,6 +194,7 @@ Elasticsearch-Evolution can be configured to your needs:
 -   **historyMaxQuerySize** (default=1000): The maximum query size while validating already executed scripts. This query size have to be higher than the total count of your migration scripts.
 -   **validateOnMigrate** (default=true): Whether to fail when a previously applied migration script has been modified after it was applied.
 -   **baselineVersion** (default=1.0): Version to use as a baseline. versions lower than it will not be applied.
+-   **lineSeparator** (default=\n): Line separator, used only temporary between reading raw migration file line-by-line and parsing it later. Only needed for backward compatibility / checksum stability! Should be one of `\n`, `\r` or `\r\n`
 
 ### 5.1 Spring Boot
 
@@ -290,6 +291,7 @@ ElasticsearchEvolution.configure()
 
 ### v0.4.2-SNAPSHOT
 
+- bugfix ([#182](https://github.com/senacor/elasticsearch-evolution/issues/182)): checksum calculation was based on system dependent line separators which lead to different checksums on different operating systems (e.g. windows vs linux). The default is now `\n`. For backward compatibility you can set other line separator via `lineSeparator` config property.
 - version updates (spring-boot 2.7.8)
 - spring boot 3 compatibility + tests
 - added Opensearch 2.5 compatibility tests
