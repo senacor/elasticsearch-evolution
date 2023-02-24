@@ -37,6 +37,11 @@ jobs:
           languages: 'java'
       - name: Build and test with Maven
         run: $MVN_CMD install
+      - name: Publish Test Report
+        if: success() || failure()
+        uses: scacap/action-surefire-report@v1
+        with:
+          fail_if_no_tests: false
       - name: Execute Maven coveralls Plugin
         if: ${{ env.COVERALLS_REPO_TOKEN_EXISTS == 'true' }}
         env:
