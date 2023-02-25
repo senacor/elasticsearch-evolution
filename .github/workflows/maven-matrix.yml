@@ -25,7 +25,7 @@ jobs:
       matrix:
         java: [ 8, 11, 17, 18, 19 ]
       fail-fast: false
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -43,7 +43,7 @@ jobs:
         elasticsearchVersion: [ "8.6.2", "8.5.3", "8.4.3", "8.3.3", "8.2.3", "8.1.3", "8.0.1", "7.17.9", "7.16.3", "7.15.2", "7.14.2",
                                 "7.13.4", "7.12.1", "7.11.2", "7.10.2", "7.9.3", "7.8.1", "7.7.1", "7.6.2", "7.5.2" ]
       fail-fast: false
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -61,7 +61,7 @@ jobs:
     # this will just build like the real release job, but not do a release (dry run)
     needs: [ build-and-test-with-jdk, build-and-test-with-es-version ]
     if: ${{ github.ref != 'refs/heads/release' }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -92,7 +92,7 @@ jobs:
     # Release to maven central and create Github release
     needs: [ build-and-test-with-jdk, build-and-test-with-es-version ]
     if: ${{ github.repository == 'senacor/elasticsearch-evolution' && github.event_name == 'push' && github.ref == 'refs/heads/release' }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
