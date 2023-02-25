@@ -195,6 +195,7 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
             return SearchContainer.builder()
                     .vendor("Opensearch")
                     .vendorShort("OS")
+                    // dockerhub and public.ecr.aws can run into rate limit, so stay with quay.io
                     .containerImage("quay.io/xtermi2/opensearch")
                     .version(version)
                     .env(ImmutableMap.of(
