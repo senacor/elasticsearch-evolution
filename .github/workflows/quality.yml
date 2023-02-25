@@ -1,4 +1,4 @@
-name: Quality analysis
+name: 'Quality analysis'
 
 on:
   push:
@@ -37,11 +37,12 @@ jobs:
           languages: 'java'
       - name: Build and test with Maven
         run: $MVN_CMD install
-      - name: Publish Test Report
-        if: success() || failure()
-        uses: scacap/action-surefire-report@v1
+      - name: upload test results
+        uses: actions/upload-artifact@v3  # upload test results
+        if: success() || failure()        # run this step even if previous step failed
         with:
-          fail_if_no_tests: false
+          name: test-results
+          path: '**/target/*-reports/TEST-*.xml'
       - name: Execute Maven coveralls Plugin
         if: ${{ env.COVERALLS_REPO_TOKEN_EXISTS == 'true' }}
         env:

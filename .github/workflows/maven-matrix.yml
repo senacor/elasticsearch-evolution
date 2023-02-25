@@ -36,11 +36,6 @@ jobs:
           java-version: ${{ matrix.java }}
       - name: Build and test with Maven
         run: $MVN_CMD install
-      - name: Publish Test Report
-        if: success() || failure()
-        uses: scacap/action-surefire-report@v1
-        with:
-          fail_if_no_tests: false
 
   build-and-test-with-es-version:
     strategy:
@@ -61,11 +56,6 @@ jobs:
         run: $MVN_CMD install -DskipTests
       - name: elasticsearch test version ${{ matrix.elasticsearchVersion }}
         run: $MVN_CMD --file ./tests/pom.xml clean verify -Delasticsearch.version=${{ matrix.elasticsearchVersion }}
-      - name: Publish Test Report
-        if: success() || failure()
-        uses: scacap/action-surefire-report@v1
-        with:
-          fail_if_no_tests: false
 
   release-dry-run:
     # this will just build like the real release job, but not do a release (dry run)
