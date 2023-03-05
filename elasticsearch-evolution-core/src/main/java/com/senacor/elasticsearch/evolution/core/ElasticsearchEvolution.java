@@ -170,7 +170,8 @@ public class ElasticsearchEvolution {
                 getRestClient(),
                 ContentType.parse(getConfig().getDefaultContentType()),
                 getConfig().getEncoding(),
-                getConfig().getValidateOnMigrate(),
-                getConfig().getBaselineVersion());
+                getConfig().isValidateOnMigrate(),
+                getConfig().getBaselineVersion(),
+                getConfig().isOutOfOrder());
     }
 }

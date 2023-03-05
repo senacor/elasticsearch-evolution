@@ -33,6 +33,7 @@ import java.util.NavigableSet;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
 
@@ -154,6 +155,72 @@ class ElasticsearchEvolutionIT {
             softly.assertThat(protocols)
                     .as("# of historyIndex entries and all are successful")
                     .hasSize(2)
+                    .allMatch(MigrationScriptProtocol::isSuccess);
+        });
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(ElasticsearchArgumentsProvider.class)
+    void migrate_outOfOrder_disabled_will_fail(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+        ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
+                .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_outOfOrder_1"));
+        String historyIndex = elasticsearchEvolutionConfig.getHistoryIndex();
+        historyRepository = new HistoryRepositoryImpl(restHighLevelClient.getLowLevelClient(), historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
+
+
+        assertSoftly(softly -> {
+            softly.assertThat(elasticsearchEvolutionConfig.load(restHighLevelClient.getLowLevelClient()).migrate())
+                    .as("# of successful executed scripts ")
+                    .isEqualTo(2);
+            softly.assertThat(historyRepository.findAll())
+                    .as("# of historyIndex entries and all are successful")
+                    .hasSize(2)
+                    .allMatch(MigrationScriptProtocol::isSuccess);
+        });
+        esUtils.refreshIndices();
+
+
+        elasticsearchEvolutionConfig.setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_outOfOrder_2"));
+
+
+        final ElasticsearchEvolution underTest = elasticsearchEvolutionConfig.load(restHighLevelClient.getLowLevelClient());
+        assertThatThrownBy(underTest::migrate)
+                .isInstanceOf(MigrationException.class)
+                .hasMessage("The logged execution in the Elasticsearch-Evolution history index at position 1 is version 3 and in the same position in the given migration scripts is version 2! Out of order execution is not supported. Or maybe you have added new migration scripts in between or have to cleanup the Elasticsearch-Evolution history index manually");
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(ElasticsearchArgumentsProvider.class)
+    void migrate_outOfOrder_enabled(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+        ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
+                .setOutOfOrder(true)
+                .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_outOfOrder_1"));
+        String historyIndex = elasticsearchEvolutionConfig.getHistoryIndex();
+        historyRepository = new HistoryRepositoryImpl(restHighLevelClient.getLowLevelClient(), historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
+
+
+        assertSoftly(softly -> {
+            softly.assertThat(elasticsearchEvolutionConfig.load(restHighLevelClient.getLowLevelClient()).migrate())
+                    .as("# of successful executed scripts ")
+                    .isEqualTo(2);
+            softly.assertThat(historyRepository.findAll())
+                    .as("# of historyIndex entries and all are successful")
+                    .hasSize(2)
+                    .allMatch(MigrationScriptProtocol::isSuccess);
+        });
+        esUtils.refreshIndices();
+
+
+        elasticsearchEvolutionConfig.setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_outOfOrder_2"));
+
+
+        assertSoftly(softly -> {
+            softly.assertThat(elasticsearchEvolutionConfig.load(restHighLevelClient.getLowLevelClient()).migrate())
+                    .as("# of successful executed scripts ")
+                    .isEqualTo(1);
+            softly.assertThat(historyRepository.findAll())
+                    .as("# of historyIndex entries and all are successful")
+                    .hasSize(3)
                     .allMatch(MigrationScriptProtocol::isSuccess);
         });
     }

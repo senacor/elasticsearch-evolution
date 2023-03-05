@@ -1,0 +1,38 @@
+PUT /_template/test_2
+Content-Type: application/json
+
+{
+  "index_patterns": [
+    "test_*"
+  ],
+  "order": 2,
+  "version": 2,
+  "mappings": {
+      "properties": {
+        "searchable": {
+          "properties": {
+//          new field
+            "success": {
+              "type": "boolean"
+            },
+//          Multi-index: additional index with type text to already existing keyword index
+            "version": {
+              "type": "keyword",
+              "ignore_above": 20,
+              "similarity": "boolean",
+              "fields": {
+                "text": {
+                  "type": "text",
+                  "similarity": "boolean"
+                },
+                "bm25": {
+                  "type": "text",
+                  "similarity": "BM25"
+                }
+              }
+            }
+          }
+        }
+      }
+  }
+}

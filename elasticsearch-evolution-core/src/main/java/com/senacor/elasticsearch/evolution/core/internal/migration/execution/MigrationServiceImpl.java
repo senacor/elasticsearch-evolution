@@ -3,6 +3,7 @@ package com.senacor.elasticsearch.evolution.core.internal.migration.execution;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationService;
+import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.internal.utils.RandomUtils;
@@ -38,8 +39,10 @@ public class MigrationServiceImpl implements MigrationService {
     private final ContentType defaultContentType;
     private final Charset encoding;
     private final boolean validateOnMigrate;
+    private final boolean outOfOrder;
 
     private final String baselineVersion;
+
     public MigrationServiceImpl(HistoryRepository historyRepository,
                                 int waitUntilUnlockedMinTimeInMillis,
                                 int waitUntilUnlockedMaxTimeInMillis,
@@ -47,7 +50,8 @@ public class MigrationServiceImpl implements MigrationService {
                                 ContentType defaultContentType,
                                 Charset encoding,
                                 boolean validateOnMigrate,
-                                String baselineVersion) {
+                                String baselineVersion,
+                                boolean outOfOrder) {
         this.historyRepository = requireNonNull(historyRepository, "historyRepository must not be null");
         this.restClient = requireNonNull(restClient, "restClient must not be null");
         this.defaultContentType = requireNonNull(defaultContentType);
@@ -59,6 +63,7 @@ public class MigrationServiceImpl implements MigrationService {
                 waitUntilUnlockedMinTimeInMillis, waitUntilUnlockedMaxTimeInMillis);
         this.waitUntilUnlockedMaxTimeInMillis = waitUntilUnlockedMaxTimeInMillis;
         this.baselineVersion = baselineVersion;
+        this.outOfOrder = outOfOrder;
     }
 
     @Override
@@ -180,51 +185,73 @@ public class MigrationServiceImpl implements MigrationService {
         }
 
         // order migrationScripts by version
-        List<ParsedMigrationScript> orderedScripts = new ArrayList<>(migrationScripts.stream()
+        final TreeMap<MigrationVersion, ParsedMigrationScript> scriptsInFilesystemMap = migrationScripts.stream()
                 .filter(script -> script.getFileNameInfo().getVersion().isAtLeast(baselineVersion))
                 .collect(Collectors.toMap(
                         script -> script.getFileNameInfo().getVersion(),
                         script -> script,
                         (oldValue, newValue) -> newValue,
-                        TreeMap::new))
-                .values());
+                        TreeMap::new));
 
         List<MigrationScriptProtocol> history = new ArrayList<>(historyRepository.findAll());
-        List<ParsedMigrationScript> res = new ArrayList<>(orderedScripts);
-        for (int i = 0; i < history.size(); i++) {
-            // do some checks
-            MigrationScriptProtocol protocol = history.get(i);
-            if (orderedScripts.size() <= i) {
-                logger.warn(String.format("there are less migration scripts than already executed history entries! " +
-                        "You should never delete migration scripts you have already executed. " +
-                        "Or maybe you have to cleanup the Elasticsearch-Evolution history index manually! " +
-                        "history version at position %s is %s", i, protocol.getVersion()));
-                break;
-            }
-            ParsedMigrationScript parsedMigrationScript = orderedScripts.get(i);
-            if (!protocol.getVersion().equals(parsedMigrationScript.getFileNameInfo().getVersion())) {
-                throw new MigrationException(String.format(
-                        "The logged execution in the Elasticsearch-Evolution history index at position %s " +
-                                "is version %s and in the same position in the given migration scripts is version %s! " +
-                                "Out of order execution is not supported. Or maybe you have added new migration scripts " +
-                                "in between or have to cleanup the Elasticsearch-Evolution history index manually",
-                        i, protocol.getVersion(), parsedMigrationScript.getFileNameInfo().getVersion()));
-            }
-            // failed scripts can be edited and retried, but successfully executed scripts may not be modified afterwards
-            if (validateOnMigrate && protocol.isSuccess() && protocol.getChecksum() != parsedMigrationScript.getChecksum()) {
-                throw new MigrationException(String.format(
-                        "The logged execution for the migration script at position %s (%s) " +
-                                "has a different checksum from the given migration script! " +
-                                "Modifying already-executed scripts is not supported.",
-                        i, protocol.getScriptName()));
-            }
+        List<ParsedMigrationScript> res = new ArrayList<>(scriptsInFilesystemMap.values());
+        if (outOfOrder) {
+            for (MigrationScriptProtocol protocol : history) {
+                final ParsedMigrationScript parsedMigrationScript = scriptsInFilesystemMap.get(protocol.getVersion());
+                if (null == parsedMigrationScript) {
+                    logger.warn("there are less migration scripts than already executed history entries! " +
+                            "You should never delete migration scripts you have already executed. " +
+                            "Or maybe you have to cleanup the Elasticsearch-Evolution history index manually! " +
+                            "Already executed history version {} is not present in migration files", protocol.getVersion());
+                } else {
+                    validateOnMigrateIfEnabled(protocol, parsedMigrationScript);
 
-            if (protocol.isSuccess()) {
-                res.remove(parsedMigrationScript);
+                    if (protocol.isSuccess()) {
+                        res.remove(parsedMigrationScript);
+                    }
+                }
+            }
+        } else {
+            List<ParsedMigrationScript> orderedScripts = new ArrayList<>(scriptsInFilesystemMap.values());
+            for (int i = 0; i < history.size(); i++) {
+                // do some checks
+                MigrationScriptProtocol protocol = history.get(i);
+                if (orderedScripts.size() <= i) {
+                    logger.warn("there are less migration scripts than already executed history entries! " +
+                            "You should never delete migration scripts you have already executed. " +
+                            "Or maybe you have to cleanup the Elasticsearch-Evolution history index manually! " +
+                            "history version at position {} is {}", i, protocol.getVersion());
+                    break;
+                }
+                ParsedMigrationScript parsedMigrationScript = orderedScripts.get(i);
+                if (!protocol.getVersion().equals(parsedMigrationScript.getFileNameInfo().getVersion())) {
+                    throw new MigrationException(String.format(
+                            "The logged execution in the Elasticsearch-Evolution history index at position %s " +
+                                    "is version %s and in the same position in the given migration scripts is version %s! " +
+                                    "Out of order execution is not supported. Or maybe you have added new migration scripts " +
+                                    "in between or have to cleanup the Elasticsearch-Evolution history index manually",
+                            i, protocol.getVersion(), parsedMigrationScript.getFileNameInfo().getVersion()));
+                }
+                validateOnMigrateIfEnabled(protocol, parsedMigrationScript);
+
+                if (protocol.isSuccess()) {
+                    res.remove(parsedMigrationScript);
+                }
             }
         }
 
         return res;
+    }
+
+    private void validateOnMigrateIfEnabled(MigrationScriptProtocol protocol, ParsedMigrationScript parsedMigrationScript) {
+        // failed scripts can be edited and retried, but successfully executed scripts may not be modified afterward
+        if (validateOnMigrate && protocol.isSuccess() && protocol.getChecksum() != parsedMigrationScript.getChecksum()) {
+            throw new MigrationException(String.format(
+                    "The logged execution for the migration script version %s (%s) " +
+                            "has a different checksum from the given migration script! " +
+                            "Modifying already-executed scripts is not supported.",
+                    protocol.getVersion(), protocol.getScriptName()));
+        }
     }
 
     /**

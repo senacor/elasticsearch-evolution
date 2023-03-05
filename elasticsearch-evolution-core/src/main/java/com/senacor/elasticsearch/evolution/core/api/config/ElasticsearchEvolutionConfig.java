@@ -107,6 +107,14 @@ public class ElasticsearchEvolutionConfig {
     private String baselineVersion = "1.0";
 
     /**
+     * Allows migrations to be run “out of order”.
+     * <p>
+     * If you already have versions 1.0 and 3.0 applied, and now a version 2.0 is found,
+     * it will be applied too instead of being rejected.
+     */
+    private boolean outOfOrder = false;
+
+    /**
      * Loads this configuration into a new ElasticsearchEvolution instance.
      *
      * @param restClient REST client to interact with Elasticsearch
@@ -147,11 +155,13 @@ public class ElasticsearchEvolutionConfig {
             }
             requireNotBlank(historyIndex, "historyIndex must not be empty");
             requireCondition(historyMaxQuerySize, size -> size > 0, "historyMaxQuerySize value '%s' must be greater than 0", historyMaxQuerySize);
+            final MigrationVersion baseline;
             try {
-                MigrationVersion.fromVersion(baselineVersion);
+                baseline = MigrationVersion.fromVersion(baselineVersion);
             } catch (RuntimeException e) {
                 throw new IllegalArgumentException("baselineVersion is invalid", e);
             }
+            requireCondition(baseline, version -> version.isAtLeast("1"), "baselineVersion '%s' must be at least 1", baseline);
         }
         return this;
     }
@@ -273,7 +283,15 @@ public class ElasticsearchEvolutionConfig {
         return this;
     }
 
+    /**
+     * @deprecated use {@link #isValidateOnMigrate()} instead
+     */
+    @Deprecated
     public boolean getValidateOnMigrate() {
+        return isValidateOnMigrate();
+    }
+
+    public boolean isValidateOnMigrate() {
         return validateOnMigrate;
     }
 
@@ -288,6 +306,15 @@ public class ElasticsearchEvolutionConfig {
 
     public ElasticsearchEvolutionConfig setBaselineVersion(String baselineVersion) {
         this.baselineVersion = baselineVersion;
+        return this;
+    }
+
+    public boolean isOutOfOrder() {
+        return outOfOrder;
+    }
+
+    public ElasticsearchEvolutionConfig setOutOfOrder(boolean outOfOrder) {
+        this.outOfOrder = outOfOrder;
         return this;
     }
 
@@ -309,6 +336,7 @@ public class ElasticsearchEvolutionConfig {
                 ", historyMaxQuerySize=" + historyMaxQuerySize +
                 ", validateOnMigrate=" + validateOnMigrate +
                 ", baselineVersion='" + baselineVersion + '\'' +
+                ", outOfOrder='" + outOfOrder + '\'' +
                 '}';
     }
 }
