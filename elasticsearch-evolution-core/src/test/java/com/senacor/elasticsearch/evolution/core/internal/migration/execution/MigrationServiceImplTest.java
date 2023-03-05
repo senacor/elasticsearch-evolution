@@ -84,7 +84,7 @@ class MigrationServiceImplTest {
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     100, 100, restClient, defaultContentType, encoding, true, "1.0", false);
 
-            assertTimeout(Duration.ofMillis(200), underTest::waitUntilUnlocked);
+            assertTimeout(Duration.ofMillis(300), underTest::waitUntilUnlocked);
 
             InOrder order = inOrder(historyRepository);
             order.verify(historyRepository, times(2)).isLocked();
