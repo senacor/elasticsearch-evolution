@@ -168,7 +168,7 @@ The filename has to follow a pattern:
 -   followed by a description which can be any text your filesystem supports
 -   ended with `esMigrationSuffixes` which is by default `.http` and is configurable and case-insensitive.
 
-Elasticsearch-Evolution uses the version for ordering your scripts and enforces strict ordered execution of your scripts. Out-of-Order execution is not supported.
+Elasticsearch-Evolution uses the version for ordering your scripts and enforces strict ordered execution of your scripts, by default. Out-of-Order execution is supported, but disabled by default.
 Elasticsearch-Evolution interprets the version parts as Integers, so each version part must be between 1 (inclusive) and 2,147,483,647 (inclusive).
 
 Here is an example which indicates the ordering: `1.0.1` &lt; `1.1` &lt; `1.2.1` &lt; (`2.0.0` == `2`).
@@ -196,6 +196,7 @@ Elasticsearch-Evolution can be configured to your needs:
 -   **validateOnMigrate** (default=true): Whether to fail when a previously applied migration script has been modified after it was applied.
 -   **baselineVersion** (default=1.0): Version to use as a baseline. versions lower than it will not be applied.
 -   **lineSeparator** (default=\n): Line separator, used only temporary between reading raw migration file line-by-line and parsing it later. Only needed for backward compatibility / checksum stability! Should be one of `\n`, `\r` or `\r\n`
+-   **outOfOrder** (default=false): Allows migrations to be run "out of order". If you already have versions 1.0 and 3.0 applied, and now a version 2.0 is found, it will be applied too instead of being rejected.
 
 ### 5.1 Spring Boot
 
@@ -292,6 +293,7 @@ ElasticsearchEvolution.configure()
 
 ### v0.4.3-SNAPSHOT
 
+- support out of order migration execution.
 - version updates (spring-boot 2.7.9)
 - added regression tests against OpenSearch 2.6.0
 - drop older Elasticsearch and OpenSearch versions in regression tests. Only test against the last 3 minor versions of the latest major release.

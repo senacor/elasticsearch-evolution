@@ -46,13 +46,7 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.withSettings;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Andreas Keefer
@@ -75,7 +69,7 @@ class MigrationServiceImplTest {
         void noLockExists() {
             doReturn(false).when(historyRepository).isLocked();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    2000, 2000, restClient, defaultContentType, encoding, true, "1.0");
+                    2000, 2000, restClient, defaultContentType, encoding, true, "1.0", false);
 
             assertTimeout(Duration.ofSeconds(1), underTest::waitUntilUnlocked);
 
@@ -88,7 +82,7 @@ class MigrationServiceImplTest {
         void LockExistsAndGetsReleased() {
             doReturn(true, false).when(historyRepository).isLocked();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    100, 100, restClient, defaultContentType, encoding, true, "1.0");
+                    100, 100, restClient, defaultContentType, encoding, true, "1.0", false);
 
             assertTimeout(Duration.ofMillis(200), underTest::waitUntilUnlocked);
 
@@ -104,7 +98,7 @@ class MigrationServiceImplTest {
         void emptyHistory_allScriptsHaveToBeReturned() {
             doReturn(new TreeSet<>()).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
             ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
             ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
             List<ParsedMigrationScript> parsedMigrationScripts = asList(
@@ -128,7 +122,7 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.1", true)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             List<ParsedMigrationScript> parsedMigrationScripts = asList(
                     createParsedMigrationScript("1.1"),
@@ -149,7 +143,7 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.1", false)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
             ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
@@ -174,7 +168,7 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.2", false)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
             ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
@@ -191,13 +185,13 @@ class MigrationServiceImplTest {
         }
 
         @Test
-        void outOfOrderExecutionIsNotSupported() {
+        void outOfOrderExecutionIsDisabled() {
             doReturn(new TreeSet<>(asList(
                     createMigrationScriptProtocol("1.0", true),
                     createMigrationScriptProtocol("1.1", true)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
             ParsedMigrationScript parsedMigrationScript1_0_1 = createParsedMigrationScript("1.0.1");
@@ -213,13 +207,79 @@ class MigrationServiceImplTest {
         }
 
         @Test
+        void outOfOrderExecutionIsEnabled_happy_path() {
+            doReturn(new TreeSet<>(asList(
+                    createMigrationScriptProtocol("1.0", true),
+                    createMigrationScriptProtocol("1.1", true)
+            ))).when(historyRepository).findAll();
+            MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", true);
+
+            ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
+            ParsedMigrationScript parsedMigrationScript1_0_1 = createParsedMigrationScript("1.0.1");
+            ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
+            List<ParsedMigrationScript> parsedMigrationScripts = asList(
+                    parsedMigrationScript1_1,
+                    parsedMigrationScript1_0_1,
+                    parsedMigrationScript1_0);
+
+            final List<ParsedMigrationScript> pendingScriptsToBeExecuted = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+            assertThat(pendingScriptsToBeExecuted)
+                    .containsExactly(parsedMigrationScript1_0_1);
+        }
+
+        @Test
+        void outOfOrderExecutionIsEnabled_missing_executed_migration_script() {
+            doReturn(new TreeSet<>(asList(
+                    createMigrationScriptProtocol("1.0", true),
+                    createMigrationScriptProtocol("1.1", true)
+            ))).when(historyRepository).findAll();
+            MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", true);
+
+            ParsedMigrationScript parsedMigrationScript1_0_1 = createParsedMigrationScript("1.0.1");
+            ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
+            List<ParsedMigrationScript> parsedMigrationScripts = asList(
+                    parsedMigrationScript1_1,
+                    parsedMigrationScript1_0_1);
+
+            final List<ParsedMigrationScript> pendingScriptsToBeExecuted = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+            assertThat(pendingScriptsToBeExecuted)
+                    .containsExactly(parsedMigrationScript1_0_1);
+        }
+
+        @Test
+        void outOfOrderExecutionIsEnabled_execute_failed_script() {
+            doReturn(new TreeSet<>(asList(
+                    createMigrationScriptProtocol("1.0", false),
+                    createMigrationScriptProtocol("1.1", true)
+            ))).when(historyRepository).findAll();
+            MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", true);
+
+            ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
+            ParsedMigrationScript parsedMigrationScript1_0_1 = createParsedMigrationScript("1.0.1");
+            ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
+            List<ParsedMigrationScript> parsedMigrationScripts = asList(
+                    parsedMigrationScript1_1,
+                    parsedMigrationScript1_0_1,
+                    parsedMigrationScript1_0);
+
+            final List<ParsedMigrationScript> pendingScriptsToBeExecuted = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+            assertThat(pendingScriptsToBeExecuted)
+                    .containsExactly(
+                            parsedMigrationScript1_0,
+                            parsedMigrationScript1_0_1);
+        }
+
+        @Test
         void failingScriptWasEdited_shouldReturnAllScriptsInclFailing() {
             doReturn(new TreeSet<>(asList(
                     createMigrationScriptProtocol("1.0", true, 1),
                     createMigrationScriptProtocol("1.1", false, 2)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                                                                      0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0", 1);
             ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1", 3);
@@ -246,7 +306,7 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.1", true, 2)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                                                                      0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0", 1);
             ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1", 3);
@@ -256,9 +316,9 @@ class MigrationServiceImplTest {
 
             assertThatThrownBy(() -> underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts))
                     .isInstanceOf(MigrationException.class)
-                    .hasMessage("The logged execution for the migration script at position 1 (V1.1__1.1.http) " +
-                                        "has a different checksum from the given migration script! " +
-                                        "Modifying already-executed scripts is not supported.");
+                    .hasMessage("The logged execution for the migration script version 1.1 (V1.1__1.1.http) " +
+                            "has a different checksum from the given migration script! " +
+                            "Modifying already-executed scripts is not supported.");
         }
 
         @Test
@@ -268,7 +328,7 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.1", true, 2)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                                                                      0, 0, restClient, defaultContentType, encoding, false, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, false, "1.0", false);
 
             ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0", 1);
             ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1", 3);
@@ -278,7 +338,6 @@ class MigrationServiceImplTest {
 
             List<ParsedMigrationScript> res = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
 
-            assertThat(res).hasSize(0);
             assertThat(res).isEmpty();
             InOrder order = inOrder(historyRepository);
             order.verify(historyRepository).findAll();
@@ -289,7 +348,7 @@ class MigrationServiceImplTest {
         void usingABaseline_onlyScriptsWithVersionHigherThanBaselineWillBeReturned() {
             doReturn(new TreeSet<>()).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "2.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "2.0", false);
 
             List<ParsedMigrationScript> parsedMigrationScripts = asList(
                     createParsedMigrationScript("1.0"),
@@ -297,8 +356,9 @@ class MigrationServiceImplTest {
 
             List<ParsedMigrationScript> res = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
 
-            assertThat(res).hasSize(1);
-            assertThat(res).containsOnly(createParsedMigrationScript("2.0"));
+            assertThat(res)
+                    .hasSize(1)
+                    .containsOnly(createParsedMigrationScript("2.0"));
             InOrder order = inOrder(historyRepository);
             order.verify(historyRepository).findAll();
             order.verifyNoMoreInteractions();
@@ -307,7 +367,7 @@ class MigrationServiceImplTest {
         @Test
         void noPendingScriptsIfMigrationScriptListIsEmpty() {
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                                                                      0, 0, restClient, defaultContentType, encoding, true, "2.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "2.0", false);
 
             List<ParsedMigrationScript> res = underTest.getPendingScriptsToBeExecuted(emptyList());
 
@@ -325,7 +385,7 @@ class MigrationServiceImplTest {
             doReturn(responseMock).when(restClient).performRequest(any());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
 
@@ -381,7 +441,7 @@ class MigrationServiceImplTest {
             doReturn(responseMock).when(restClient).performRequest(any());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
 
@@ -421,7 +481,7 @@ class MigrationServiceImplTest {
             doReturn(responseMock).when(restClient).performRequest(any());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
 
@@ -460,7 +520,7 @@ class MigrationServiceImplTest {
             doReturn(responseMock).when(restClient).performRequest(any());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
 
@@ -500,7 +560,7 @@ class MigrationServiceImplTest {
             doReturn(responseMock).when(restClient).performRequest(any());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
 
@@ -536,7 +596,7 @@ class MigrationServiceImplTest {
             doThrow(handledError).when(restClient).performRequest(any());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             ExecutionResult res = underTest.executeScript(script);
 
@@ -555,7 +615,7 @@ class MigrationServiceImplTest {
             doReturn(responseMock).when(restClient).performRequest(any());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             ExecutionResult res = underTest.executeScript(script);
 
@@ -577,7 +637,7 @@ class MigrationServiceImplTest {
             doReturn(responseMock).when(restClient).performRequest(any());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
 
@@ -600,7 +660,7 @@ class MigrationServiceImplTest {
             Response responseMock = createResponseMock(200);
             doReturn(responseMock).when(restClient).performRequest(any());
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             List<MigrationScriptProtocol> res = underTest.executePendingScripts(scripts);
 
@@ -633,7 +693,7 @@ class MigrationServiceImplTest {
             Response responseMock = createResponseMock(statusCode);
             doReturn(responseMock).when(restClient).performRequest(any());
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             assertThatThrownBy(() -> underTest.executePendingScripts(scripts))
                     .isInstanceOf(MigrationException.class)
@@ -666,7 +726,7 @@ class MigrationServiceImplTest {
             Response responseMock = createResponseMock(200);
             doReturn(responseMock).when(restClient).performRequest(any());
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             assertThatThrownBy(() -> underTest.executePendingScripts(scripts))
                     .isInstanceOf(MigrationException.class)
@@ -696,7 +756,7 @@ class MigrationServiceImplTest {
             doReturn(new TreeSet<>()).when(historyRepository).findAll();
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             assertThatThrownBy(() -> underTest.executePendingScripts(scripts))
                     .isInstanceOf(MigrationException.class)
@@ -714,7 +774,7 @@ class MigrationServiceImplTest {
         @Test
         void emptyScriptsCollection() {
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             List<MigrationScriptProtocol> res = underTest.executePendingScripts(emptyList());
 
@@ -733,7 +793,7 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.1", true)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                                                                      0, 0, restClient, defaultContentType, encoding, true, "1.0");
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             List<MigrationScriptProtocol> res = underTest.executePendingScripts(scripts);
 

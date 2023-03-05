@@ -31,7 +31,7 @@ public final class MigrationVersion implements Comparable<MigrationVersion> {
     /**
      * Compiled pattern for matching proper version format
      */
-    private static Pattern splitPattern = Pattern.compile("\\.(?=\\d)");
+    private static final Pattern splitPattern = Pattern.compile("\\.(?=\\d)");
 
     /**
      * The individual parts this version string is composed of. Ex. 1.2.3.4.0 -> [1, 2, 3, 4, 0]
