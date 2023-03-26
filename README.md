@@ -20,7 +20,7 @@ Successful executed migration scripts will not be executed again!
 
 ## 2 Features
 
-- tested on Java 8, 11, 17, 18 and 19
+- tested on Java 8, 11, 17, 18, 19 and 20
 - runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7 and 3.0 (and of course without Spring-Boot)
 - runs on Elasticsearch version 7.5.x - 8.6.x
 - runs on Opensearch version 1.x and 2.x
@@ -294,9 +294,10 @@ ElasticsearchEvolution.configure()
 ### v0.4.3-SNAPSHOT
 
 - support out of order migration execution.
-- version updates (spring-boot 2.7.9)
+- version updates (spring-boot 2.7.10)
 - added regression tests against OpenSearch 2.6.0
 - drop older Elasticsearch and OpenSearch versions in regression tests. Only test against the last 3 minor versions of the latest major release.
+- added regression tests on JDK 20
 
 ### v0.4.2
 
