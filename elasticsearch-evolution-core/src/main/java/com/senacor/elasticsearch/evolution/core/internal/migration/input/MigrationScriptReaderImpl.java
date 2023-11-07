@@ -152,8 +152,8 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
                     .filterInputsBy(new FilterBuilder().includePackage(locationWithoutPrefixAsPackageNotation))
                     .setUrls(urls));
             resources = reflections.getResources(Pattern.compile(esMigrationPrefix + ".*"))
-                    .stream().map(path -> Paths.get(path).getFileName().toString())
-                    .filter(this::isValidFilename)
+                    .stream()
+                    .filter(path -> isValidFilename(Paths.get(path).getFileName().toString()))
                     .collect(Collectors.toSet());
         }
 
