@@ -20,9 +20,9 @@ Successful executed migration scripts will not be executed again!
 
 ## 2 Features
 
-- tested on Java 8, 11, 17, 18 and 19
-- runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5, 2.6 and 2.7 (and of course without Spring-Boot)
-- runs on Elasticsearch version 7.5.x - 8.6.x
+- tested on Java 8, 11, 17, and 21
+- runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0 and 3.1 (and of course without Spring-Boot)
+- runs on Elasticsearch version 7.5.x - 8.11.x
 - runs on Opensearch version 1.x and 2.x
 - highly configurable (e.g. location(s) of your migration files, migration files format pattern)
 - placeholder substitution in migration scripts
@@ -31,11 +31,12 @@ Successful executed migration scripts will not be executed again!
 - ready to use default configuration
 - line comments in migration files
 
-| Compatibility                    | Spring Boot                       | Elasticsearch        | Opensearch |
-|----------------------------------|-----------------------------------|----------------------|------------|
-| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7 | 7.5.x - 8.6.x        | 1.x - 2.x  |
-| elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7 | 7.5.x - 7.17.x       |            |
-| elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4      | 7.0.x - 7.4.x, 6.8.x |            |
+| Compatibility                    | Spring Boot                                 | Elasticsearch        | Opensearch |
+|----------------------------------|---------------------------------------------|----------------------|------------|
+| elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1 | 7.5.x - 8.11.x       | 1.x - 2.x  |
+| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7           | 7.5.x - 8.6.x        | 1.x - 2.x  |
+| elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7           | 7.5.x - 7.17.x       |            |
+| elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4                | 7.0.x - 7.4.x, 6.8.x |            |
 
 NOTE: When you run on Java 11 and using spring-boot 2.2 or 2.3 and you hit [this issue](https://github.com/ronmamo/reflections/issues/279), you have 2 options: 
 
@@ -52,7 +53,7 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.4.1</version>
+    <version>0.4.2</version>
 </dependency>
 ```
 
@@ -76,7 +77,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.4.1</version>
+    <version>0.4.2</version>
 </dependency>
 ```
 
@@ -167,7 +168,7 @@ The filename has to follow a pattern:
 -   followed by a description which can be any text your filesystem supports
 -   ended with `esMigrationSuffixes` which is by default `.http` and is configurable and case-insensitive.
 
-Elasticsearch-Evolution uses the version for ordering your scripts and enforces strict ordered execution of your scripts. Out-of-Order execution is not supported.
+Elasticsearch-Evolution uses the version for ordering your scripts and enforces strict ordered execution of your scripts, by default. Out-of-Order execution is supported, but disabled by default.
 Elasticsearch-Evolution interprets the version parts as Integers, so each version part must be between 1 (inclusive) and 2,147,483,647 (inclusive).
 
 Here is an example which indicates the ordering: `1.0.1` &lt; `1.1` &lt; `1.2.1` &lt; (`2.0.0` == `2`).
@@ -195,6 +196,7 @@ Elasticsearch-Evolution can be configured to your needs:
 -   **validateOnMigrate** (default=true): Whether to fail when a previously applied migration script has been modified after it was applied.
 -   **baselineVersion** (default=1.0): Version to use as a baseline. versions lower than it will not be applied.
 -   **lineSeparator** (default=\n): Line separator, used only temporary between reading raw migration file line-by-line and parsing it later. Only needed for backward compatibility / checksum stability! Should be one of `\n`, `\r` or `\r\n`
+-   **outOfOrder** (default=false): Allows migrations to be run "out of order". If you already have versions 1.0 and 3.0 applied, and now a version 2.0 is found, it will be applied too instead of being rejected.
 
 ### 5.1 Spring Boot
 
@@ -289,7 +291,17 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.4.2-SNAPSHOT
+### v0.4.3
+
+- support out of order migration execution.
+- version updates (spring-boot 2.7.17)
+- added regression tests against OpenSearch 2.6.0
+- drop older Elasticsearch and OpenSearch versions in regression tests. Only test against the last 3 minor versions of the latest major release.
+- added regression tests on JDK 21
+- added regression tests for spring boot 3.1
+- update org.reflections:reflections from 0.9.12 to 0.10.2 [#233](https://github.com/senacor/elasticsearch-evolution/pull/233) thanks @RiVogel
+
+### v0.4.2
 
 - bugfix ([#182](https://github.com/senacor/elasticsearch-evolution/issues/182)): checksum calculation was based on system dependent line separators which lead to different checksums on different operating systems (e.g. windows vs linux). The default is now `\n`. For backward compatibility you can set other line separator via `lineSeparator` config property.
 - version updates (spring-boot 2.7.8)

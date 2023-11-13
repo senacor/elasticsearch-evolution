@@ -23,94 +23,132 @@ class ElasticsearchEvolutionConfigTest {
 
         @Test
         void noValidEncoding() {
-            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate().setEncoding(null).validate())
+            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+                    .setEncoding(null);
+
+            assertThatThrownBy(config::validate)
                     .isInstanceOf(NullPointerException.class)
                     .hasMessage("encoding must not be null");
         }
 
         @Test
         void noValidPlaceholders() {
-            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate().setPlaceholders(null).validate())
+            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+                    .setPlaceholders(null);
+
+            assertThatThrownBy(config::validate)
                     .isInstanceOf(NullPointerException.class)
                     .hasMessage("placeholders must not be null");
         }
 
         @Test
         void noValidLocations() {
-            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate().setLocations(Collections.emptyList()).validate())
+            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+                    .setLocations(Collections.emptyList());
+
+            assertThatThrownBy(config::validate)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("locations must not be empty");
         }
 
         @Test
         void noValidEsMigrationPrefix() {
-            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate().setEsMigrationPrefix("").validate())
+            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+                    .setEsMigrationPrefix("");
+
+            assertThatThrownBy(config::validate)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("esMigrationPrefix must not be empty");
         }
 
         @Test
         void noValidEsMigrationSuffixes() {
-            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate().setEsMigrationSuffixes(Collections.emptyList()).validate())
+            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+                    .setEsMigrationSuffixes(Collections.emptyList());
+
+            assertThatThrownBy(config::validate)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("esMigrationSuffixes must not be empty");
         }
 
         @Test
         void noValidPlaceholderPrefix() {
-            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate().setPlaceholderPrefix("").validate())
+            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+                    .setPlaceholderPrefix("");
+
+            assertThatThrownBy(config::validate)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("placeholderPrefix must not be empty");
         }
 
         @Test
         void noValidPlaceholderSuffix() {
-            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate().setPlaceholderSuffix("").validate())
+            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+                    .setPlaceholderSuffix("");
+
+            assertThatThrownBy(config::validate)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("placeholderSuffix must not be empty");
         }
 
         @Test
         void placeholderNameMustNotContainPlaceholderSuffix() {
-            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate()
-                    .setPlaceholders(Collections.singletonMap("x}x", "x"))
-                    .validate())
+            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+                    .setPlaceholders(Collections.singletonMap("x}x", "x"));
+
+            assertThatThrownBy(config::validate)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("placeholder name 'x}x' must not contain placeholderSuffix '}'");
         }
 
         @Test
         void placeholderNameMustNotContainPlaceholderPrefix() {
-            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate()
-                    .setPlaceholders(Collections.singletonMap("x${x", "x"))
-                    .validate())
+            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+                    .setPlaceholders(Collections.singletonMap("x${x", "x"));
+
+            assertThatThrownBy(config::validate)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("placeholder name 'x${x' must not contain placeholderPrefix '${'");
         }
 
         @Test
         void placeholderValueMustNotContainPlaceholderSuffix() {
-            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate()
-                    .setPlaceholders(Collections.singletonMap("x", "x}x"))
-                    .validate())
+            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+                    .setPlaceholders(Collections.singletonMap("x", "x}x"));
+
+            assertThatThrownBy(config::validate)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("placeholder value 'x}x' must not contain placeholderSuffix '}'");
         }
 
         @Test
         void placeholderValueMustNotContainPlaceholderPrefix() {
-            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate()
-                    .setPlaceholders(Collections.singletonMap("x", "x${x"))
-                    .validate())
+            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+                    .setPlaceholders(Collections.singletonMap("x", "x${x"));
+
+            assertThatThrownBy(config::validate)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("placeholder value 'x${x' must not contain placeholderPrefix '${'");
         }
 
         @Test
         void noValidHistoryMaxQuerySize_mustBeGreaterThan0() {
-            assertThatThrownBy(() -> new ElasticsearchEvolutionConfig().validate().setHistoryMaxQuerySize(0).validate())
+            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+                    .setHistoryMaxQuerySize(0);
+
+            assertThatThrownBy(config::validate)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("historyMaxQuerySize value '0' must be greater than 0");
+        }
+
+        @Test
+        void baselineVersion_must_be_at_least_1() {
+            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+                    .setBaselineVersion("0");
+
+            assertThatThrownBy(config::validate)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("baselineVersion '0' must be at least 1");
         }
     }
 }

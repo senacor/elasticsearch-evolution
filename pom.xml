@@ -5,12 +5,12 @@
 
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-parent</artifactId>
-    <version>0.4.2</version>
+    <version>0.4.3</version>
     <packaging>pom</packaging>
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>2.7.8</version>
+        <version>2.7.17</version>
     </parent>
 
     <name>elasticsearch-evolution</name>
@@ -94,17 +94,19 @@
         <!-- Plugin Versions -->
         <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
-        <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
-        <maven-javadoc-plugin.version>3.4.1</maven-javadoc-plugin.version>
+        <maven-gpg-plugin.version>3.1.0</maven-gpg-plugin.version>
+        <maven-javadoc-plugin.version>3.6.2</maven-javadoc-plugin.version>
         <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
 
         <!-- Dependency Versions -->
-        <commons-io.version>2.11.0</commons-io.version>
+        <commons-io.version>2.15.0</commons-io.version>
         <!--when updating elasticsearch versions, also update "ElasticsearchContainer" version in EmbeddedElasticsearchExtension-->
         <elasticsearch.version>7.5.2</elasticsearch.version>
-        <reflections.version>0.9.12</reflections.version>
-        <testcontainers.elasticsearch.version>1.17.6</testcontainers.elasticsearch.version>
-        <lombok.version>1.18.26</lombok.version>
+        <reflections.version>0.10.2</reflections.version>
+        <testcontainers.elasticsearch.version>1.19.1</testcontainers.elasticsearch.version>
+        <lombok.version>1.18.30</lombok.version>
+        <!-- newer byte-buddy version to support JDK 21 -->
+        <byte-buddy.version>1.14.9</byte-buddy.version>
     </properties>
 
     <dependencyManagement>

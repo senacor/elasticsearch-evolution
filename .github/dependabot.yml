@@ -18,3 +18,7 @@ updates:
         versions:
           - 7.17.x
           - 8.x
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: daily
