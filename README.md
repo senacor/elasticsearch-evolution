@@ -291,7 +291,7 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.4.3-SNAPSHOT
+### v0.4.3
 
 - support out of order migration execution.
 - version updates (spring-boot 2.7.17)
