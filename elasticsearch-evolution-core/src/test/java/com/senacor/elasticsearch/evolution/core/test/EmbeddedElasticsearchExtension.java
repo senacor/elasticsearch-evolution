@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.SearchContainer.ofElasticsearch;
 import static com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.SearchContainer.ofOpensearch;
 import static java.time.Duration.ofMinutes;
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
@@ -43,7 +44,15 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
     private static final SortedSet<SearchContainer> SUPPORTED_SEARCH_VERSIONS = Collections.unmodifiableSortedSet(new TreeSet<>(Arrays.asList(
-            ofOpensearch("1.1.0")
+            ofOpensearch("2.11.0"),
+            ofOpensearch("2.10.0"),
+            ofOpensearch("2.9.0"),
+            ofOpensearch("1.3.12"),
+
+            ofElasticsearch("8.11.1"),
+            ofElasticsearch("8.10.4"),
+            ofElasticsearch("8.9.1"),
+            ofElasticsearch("7.17.15")
     )));
 
     @Override
