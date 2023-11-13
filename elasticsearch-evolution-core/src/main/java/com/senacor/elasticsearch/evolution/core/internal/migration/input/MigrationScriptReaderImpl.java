@@ -3,8 +3,9 @@ package com.senacor.elasticsearch.evolution.core.internal.migration.input;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptReader;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
+import java.util.regex.Pattern;
 import org.reflections.Reflections;
-import org.reflections.scanners.ResourcesScanner;
+import org.reflections.scanners.Scanners;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
@@ -147,10 +148,13 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
             resources = emptySet();
         } else {
             Reflections reflections = new Reflections(new ConfigurationBuilder()
-                    .setScanners(new ResourcesScanner())
+                    .setScanners(Scanners.Resources)
                     .filterInputsBy(new FilterBuilder().includePackage(locationWithoutPrefixAsPackageNotation))
                     .setUrls(urls));
-            resources = reflections.getResources(this::isValidFilename);
+            resources = reflections.getResources(Pattern.compile(esMigrationPrefix + ".*"))
+                    .stream()
+                    .filter(path -> isValidFilename(Paths.get(path).getFileName().toString()))
+                    .collect(Collectors.toSet());
         }
 
         return resources.stream().flatMap(resource -> {
