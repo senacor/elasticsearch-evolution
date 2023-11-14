@@ -1,9 +1,21 @@
 package com.senacor.elasticsearch.evolution.core.api.config;
 
+import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptReaderImpl;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.reflections.Reflections;
+import org.reflections.scanners.Scanners;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -12,6 +24,28 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Andreas Keefer
  */
 class ElasticsearchEvolutionConfigTest {
+
+    @Test
+    void springConfigurationMmetadataJson_should_have_been_generated_by_springBootConfigurationProcessor() {
+        final String metadataPath = "META-INF";
+        Reflections reflections = new Reflections(new ConfigurationBuilder()
+                .setScanners(Scanners.Resources)
+                .filterInputsBy(new FilterBuilder().includePackage(metadataPath))
+                .setUrls(ClasspathHelper.forPackage(metadataPath)));
+        final List<String> springConfigMetadata = reflections.getResources("spring-configuration-metadata\\.json")
+                .stream()
+                .map(resource -> {
+                    try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(MigrationScriptReaderImpl.getInputStream(resource), StandardCharsets.UTF_8))) {
+                        return bufferedReader.lines()
+                                .collect(Collectors.joining("\n"));
+                    } catch (IOException e) {
+                        throw new IllegalStateException("can't read spring-configuration-metadata.json from classpath: " + resource, e);
+                    }
+                }).collect(Collectors.toList());
+
+        assertThat(springConfigMetadata)
+                .anySatisfy(metadataContent -> assertThat(metadataContent).contains(ElasticsearchEvolutionConfig.class.getName()));
+    }
 
     @Nested
     class validate {
