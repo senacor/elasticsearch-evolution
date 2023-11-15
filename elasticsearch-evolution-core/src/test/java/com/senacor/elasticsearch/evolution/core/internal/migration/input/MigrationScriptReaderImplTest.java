@@ -50,8 +50,10 @@ class MigrationScriptReaderImplTest {
 
                 List<RawMigrationScript> res = reader.read();
 
-                assertThat(res).hasSize(1);
-                assertThat(res.get(0).getFileName()).isEqualTo("MANIFEST.MF");
+                assertThat(res).isNotEmpty()
+                        .allSatisfy(rawMigrationScript -> assertThat(rawMigrationScript.getFileName())
+                                .as("fileName")
+                                .isEqualTo("MANIFEST.MF"));
             }
 
             @Test
@@ -248,11 +250,33 @@ class MigrationScriptReaderImplTest {
     }
 
     private URL resolveURL(String path) {
-        ClassLoader classLoader = MigrationScriptReaderImpl.getDefaultClassLoader();
+        ClassLoader classLoader = getDefaultClassLoader();
         if (classLoader != null) {
             return classLoader.getResource(path);
         } else {
             return ClassLoader.getSystemResource(path);
         }
+    }
+
+    static ClassLoader getDefaultClassLoader() {
+        ClassLoader cl = null;
+        try {
+            cl = Thread.currentThread().getContextClassLoader();
+        } catch (Throwable ex) {
+            // Cannot access thread context ClassLoader - falling back...
+        }
+        if (cl == null) {
+            // No thread context class loader -> use class loader of this class.
+            cl = MigrationScriptReaderImpl.class.getClassLoader();
+            if (cl == null) {
+                // getClassLoader() returning null indicates the bootstrap ClassLoader
+                try {
+                    cl = ClassLoader.getSystemClassLoader();
+                } catch (Throwable ex) {
+                    // Cannot access system ClassLoader - oh well, maybe the caller can live with null...
+                }
+            }
+        }
+        return cl;
     }
 }
