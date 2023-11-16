@@ -304,7 +304,8 @@ ElasticsearchEvolution.configure()
 
 - support out of order migration execution.
 - version updates (spring-boot 2.7.17)
-- added regression tests against OpenSearch 2.6.0
+- added regression tests against OpenSearch 2.11, 2.10 and 2.9
+- added regression tests against ElasticSearch 8.11. 8.10 and 8.9
 - drop older Elasticsearch and OpenSearch versions in regression tests. Only test against the last 3 minor versions of the latest major release.
 - added regression tests on JDK 21
 - added regression tests for spring boot 3.1
