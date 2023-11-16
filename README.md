@@ -53,7 +53,7 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.4.2</version>
+    <version>0.4.3</version>
 </dependency>
 ```
 
@@ -77,7 +77,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.4.2</version>
+    <version>0.4.3</version>
 </dependency>
 ```
 
@@ -291,6 +291,11 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
+### v0.5.0
+
+- added spring boot configuration metadata [#240](https://github.com/senacor/elasticsearch-evolution/pull/240)
+- replaces unmaintained [org.reflections](https://github.com/ronmamo/reflections) library with [classgraph](https://github.com/classgraph/classgraph) to scan the classpath for migration files. Fixes [#239](https://github.com/senacor/elasticsearch-evolution/issues/239) 
+
 ### v0.4.3
 
 - support out of order migration execution.
@@ -300,6 +305,10 @@ ElasticsearchEvolution.configure()
 - added regression tests on JDK 21
 - added regression tests for spring boot 3.1
 - update org.reflections:reflections from 0.9.12 to 0.10.2 [#233](https://github.com/senacor/elasticsearch-evolution/pull/233) thanks @RiVogel
+- **KNOWN ISSUES**:
+  - [#239](https://github.com/senacor/elasticsearch-evolution/issues/239): Migration files not found in Spring Boot jar
+    - Workaround 1: downgrade `org.reflections:reflections` to `0.10.1`
+    - Workaround 2: downgrade `elasticsearch-evolution` to `0.4.2`
 
 ### v0.4.2
 

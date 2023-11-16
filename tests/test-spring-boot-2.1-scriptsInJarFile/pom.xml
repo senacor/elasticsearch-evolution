@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>test-spring-boot-2.1-scriptsInJarFile</artifactId>
-    <version>0.4.3</version>
+    <version>0.5.0</version>
     <description>Demo project for Spring Boot</description>
 
     <properties>
@@ -18,7 +18,7 @@
 
         <commons-io.version>2.15.0</commons-io.version>
         <elasticsearch.version>7.5.2</elasticsearch.version>
-        <testcontainers.elasticsearch.version>1.19.1</testcontainers.elasticsearch.version>
+        <testcontainers.elasticsearch.version>1.19.2</testcontainers.elasticsearch.version>
     </properties>
 
     <dependencies>

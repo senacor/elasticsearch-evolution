@@ -27,6 +27,9 @@ public class ElasticsearchEvolutionConfig {
 
     /**
      * Locations of migrations scripts. Supported is classpath:some/path and file:/some/path
+     * The location is scanned recursive.
+     * NOTE: all scripts in all locations / subdirectories will be flatted and only the version number will be used to
+     * order them.
      */
     private List<String> locations = new ArrayList<>(
             Collections.singletonList("classpath:es/migration"));
@@ -281,14 +284,6 @@ public class ElasticsearchEvolutionConfig {
     public ElasticsearchEvolutionConfig setHistoryMaxQuerySize(int historyMaxQuerySize) {
         this.historyMaxQuerySize = historyMaxQuerySize;
         return this;
-    }
-
-    /**
-     * @deprecated use {@link #isValidateOnMigrate()} instead
-     */
-    @Deprecated
-    public boolean getValidateOnMigrate() {
-        return isValidateOnMigrate();
     }
 
     public boolean isValidateOnMigrate() {
