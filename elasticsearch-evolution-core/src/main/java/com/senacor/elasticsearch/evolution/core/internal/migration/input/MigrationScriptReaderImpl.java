@@ -3,33 +3,25 @@ package com.senacor.elasticsearch.evolution.core.internal.migration.input;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptReader;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
-import java.util.regex.Pattern;
-import org.reflections.Reflections;
-import org.reflections.scanners.Scanners;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
-import org.reflections.util.FilterBuilder;
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ScanResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static java.util.Collections.emptySet;
 
 /**
  * @author Andreas Keefer
@@ -137,35 +129,26 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
             // otherwise e.g. "...location_some_suffix" will also be found when search for "...location".
             location = location + "/";
         }
-        final String locationWithoutPrefixAsPackageNotation = location.substring(CLASSPATH_PREFIX.length())
-                .replace("/", ".");
 
-        final Collection<URL> urls = ClasspathHelper.forPackage(locationWithoutPrefixAsPackageNotation);
-        final Set<String> resources;
-        if (urls.isEmpty()) {
-            // https://github.com/senacor/elasticsearch-evolution/issues/27
-            // when the package is empty or does not exist, Reflections can't find any URLs to scan for
-            resources = emptySet();
-        } else {
-            Reflections reflections = new Reflections(new ConfigurationBuilder()
-                    .setScanners(Scanners.Resources)
-                    .filterInputsBy(new FilterBuilder().includePackage(locationWithoutPrefixAsPackageNotation))
-                    .setUrls(urls));
-            resources = reflections.getResources(Pattern.compile(esMigrationPrefix + ".*"))
-                    .stream()
-                    .filter(path -> isValidFilename(Paths.get(path).getFileName().toString()))
-                    .collect(Collectors.toSet());
+        final String locationWithoutPrefix = location.substring(CLASSPATH_PREFIX.length());
+
+        List<RawMigrationScript> res = new ArrayList<>();
+        try (ScanResult scanResult = new ClassGraph()
+                .acceptPaths(locationWithoutPrefix)
+                .scan()) {
+            scanResult.getAllResources()
+                    .filter(resource -> isValidFilename(Paths.get(resource.getPath()).getFileName().toString()))
+                    .forEach(resource -> {
+                        logger.debug("reading migration script '{}' from classpath...", resource);
+                        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(resource.load()), encoding))) {
+                            Path p = Paths.get(resource.getPath());
+                            res.addAll(read(bufferedReader, p.getFileName().toString()).collect(Collectors.toList()));
+                        } catch (IOException e) {
+                            throw new MigrationException("can't read script from classpath: " + resource, e);
+                        }
+                    });
         }
-
-        return resources.stream().flatMap(resource -> {
-            logger.debug("reading migration script '{}' from classpath...", resource);
-            try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(getInputStream(resource), encoding))) {
-                Path p = Paths.get(resource);
-                return read(bufferedReader, p.getFileName().toString());
-            } catch (IOException e) {
-                throw new MigrationException("can't read script from classpath: " + resource, e);
-            }
-        });
+        return res.stream();
     }
 
     private Stream<RawMigrationScript> read(BufferedReader reader, String filename) {
@@ -178,44 +161,10 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         return Stream.of(new RawMigrationScript().setFileName(filename).setContent(content));
     }
 
-    public static InputStream getInputStream(String path) {
-        ClassLoader classLoader = getDefaultClassLoader();
-        if (classLoader != null) {
-            return classLoader.getResourceAsStream(path);
-        } else {
-            return ClassLoader.getSystemResourceAsStream(path);
-        }
-    }
-
     private boolean hasValidSuffix(String path) {
         return this.esMigrationSuffixes
                 .stream()
                 .anyMatch(suffix -> path.toLowerCase().endsWith(suffix.toLowerCase()));
-    }
-
-    static ClassLoader getDefaultClassLoader() {
-        ClassLoader cl = null;
-        try {
-            cl = Thread.currentThread().getContextClassLoader();
-            logger.trace("getDefaultClassLoader - Thread.currentThread().getContextClassLoader()='{}'", cl);
-        } catch (Throwable ex) {
-            // Cannot access thread context ClassLoader - falling back...
-        }
-        if (cl == null) {
-            // No thread context class loader -> use class loader of this class.
-            cl = MigrationScriptReaderImpl.class.getClassLoader();
-            logger.trace("getDefaultClassLoader - MigrationScriptReaderImpl.class.getClassLoader()='{}'", cl);
-            if (cl == null) {
-                // getClassLoader() returning null indicates the bootstrap ClassLoader
-                try {
-                    cl = ClassLoader.getSystemClassLoader();
-                    logger.trace("getDefaultClassLoader - ClassLoader.getSystemClassLoader()='{}'", cl);
-                } catch (Throwable ex) {
-                    // Cannot access system ClassLoader - oh well, maybe the caller can live with null...
-                }
-            }
-        }
-        return cl;
     }
 
     private boolean isValidFilename(String fileName) {
