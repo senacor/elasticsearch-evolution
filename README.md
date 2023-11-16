@@ -291,7 +291,7 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.5.0-SNAPSHOT
+### v0.5.0
 
 - added spring boot configuration metadata [#240](https://github.com/senacor/elasticsearch-evolution/pull/240)
 - replaces unmaintained [org.reflections](https://github.com/ronmamo/reflections) library with [classgraph](https://github.com/classgraph/classgraph) to scan the classpath for migration files. Fixes [#239](https://github.com/senacor/elasticsearch-evolution/issues/239) 
