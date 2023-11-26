@@ -38,6 +38,7 @@
             <modules>
                 <module>test-spring-boot-3.0-scriptsInJarFile</module>
                 <module>test-spring-boot-3.1</module>
+                <module>test-spring-boot-3.2</module>
             </modules>
         </profile>
     </profiles>

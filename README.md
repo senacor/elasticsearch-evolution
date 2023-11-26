@@ -21,7 +21,7 @@ Successful executed migration scripts will not be executed again!
 ## 2 Features
 
 - tested on Java 8, 11, 17, and 21
-- runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0 and 3.1 (and of course without Spring-Boot)
+- runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1 and 3.2 (and of course without Spring-Boot)
 - runs on Elasticsearch version 7.5.x - 8.11.x
 - runs on Opensearch version 1.x and 2.x
 - highly configurable (e.g. location(s) of your migration files, migration files format pattern)
@@ -31,12 +31,12 @@ Successful executed migration scripts will not be executed again!
 - ready to use default configuration
 - line comments in migration files
 
-| Compatibility                    | Spring Boot                                 | Elasticsearch        | Opensearch |
-|----------------------------------|---------------------------------------------|----------------------|------------|
-| elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1 | 7.5.x - 8.11.x       | 1.x - 2.x  |
-| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7           | 7.5.x - 8.6.x        | 1.x - 2.x  |
-| elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7           | 7.5.x - 7.17.x       |            |
-| elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4                | 7.0.x - 7.4.x, 6.8.x |            |
+| Compatibility                    | Spring Boot                                      | Elasticsearch        | Opensearch |
+|----------------------------------|--------------------------------------------------|----------------------|------------|
+| elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1, 3.2 | 7.5.x - 8.11.x       | 1.x - 2.x  |
+| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 8.6.x        | 1.x - 2.x  |
+| elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 7.17.x       |            |
+| elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4                     | 7.0.x - 7.4.x, 6.8.x |            |
 
 NOTE: When you run on Java 11 and using spring-boot 2.2 or 2.3 and you hit [this issue](https://github.com/ronmamo/reflections/issues/279), you have 2 options: 
 
@@ -293,7 +293,9 @@ ElasticsearchEvolution.configure()
 
 ### v0.5.1-SNAPSHOT
 
-- ...
+- version updates (spring-boot 2.7.18)
+- added regression tests for spring boot 3.2
+- remove deprecated query parameter `ignore_throttled` from ES requests
 
 ### v0.5.0
 

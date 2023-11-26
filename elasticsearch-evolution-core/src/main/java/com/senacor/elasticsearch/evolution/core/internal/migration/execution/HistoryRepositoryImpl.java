@@ -267,7 +267,6 @@ public class HistoryRepositoryImpl implements HistoryRepository {
         Map<String, String> nameValuePairs = new HashMap<>();
         nameValuePairs.put("ignore_unavailable", Boolean.toString(indicesOptions.ignoreUnavailable()));
         nameValuePairs.put("allow_no_indices", Boolean.toString(indicesOptions.allowNoIndices()));
-        nameValuePairs.put("ignore_throttled", Boolean.toString(indicesOptions.ignoreThrottled()));
         String expandWildcards;
         if (!indicesOptions.expandWildcardsOpen() && !indicesOptions.expandWildcardsClosed()) {
             expandWildcards = "none";
@@ -293,24 +292,20 @@ public class HistoryRepositoryImpl implements HistoryRepository {
         private static final IndexOptions LENIENT_EXPAND_OPEN = new IndexOptions(
                 true,
                 true,
-                false,
                 true,
                 false);
 
         private final boolean ignoreUnavailable;
         private final boolean allowNoIndices;
-        private final boolean ignoreThrottled;
         private final boolean expandWildcardsOpen;
         private final boolean expandWildcardsClosed;
 
         public IndexOptions(boolean ignoreUnavailable,
                             boolean allowNoIndices,
-                            boolean ignoreThrottled,
                             boolean expandWildcardsOpen,
                             boolean expandWildcardsClosed) {
             this.ignoreUnavailable = ignoreUnavailable;
             this.allowNoIndices = allowNoIndices;
-            this.ignoreThrottled = ignoreThrottled;
             this.expandWildcardsOpen = expandWildcardsOpen;
             this.expandWildcardsClosed = expandWildcardsClosed;
         }
@@ -325,10 +320,6 @@ public class HistoryRepositoryImpl implements HistoryRepository {
 
         public boolean allowNoIndices() {
             return allowNoIndices;
-        }
-
-        public boolean ignoreThrottled() {
-            return ignoreThrottled;
         }
 
         public boolean expandWildcardsOpen() {

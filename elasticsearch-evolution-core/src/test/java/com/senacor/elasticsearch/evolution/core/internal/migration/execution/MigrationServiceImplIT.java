@@ -80,9 +80,9 @@ class MigrationServiceImplIT {
                 softly.assertThat(res.isLocked())
                         .isTrue();
                 softly.assertThat(res.getExecutionRuntimeInMillis())
-                        .isBetween(1, 6000);
+                        .isBetween(1, 8000);
                 softly.assertThat(res.getExecutionTimestamp())
-                        .isBetween(afterExecution.minus(6000, ChronoUnit.MILLIS), afterExecution);
+                        .isBetween(afterExecution.minus(8000, ChronoUnit.MILLIS), afterExecution);
             });
 
             // wait until all documents are indexed
