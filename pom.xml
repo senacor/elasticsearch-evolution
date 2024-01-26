@@ -101,7 +101,7 @@
         <!-- Dependency Versions -->
         <commons-io.version>2.15.1</commons-io.version>
         <!--when updating elasticsearch versions, also update "ElasticsearchContainer" version in EmbeddedElasticsearchExtension-->
-        <elasticsearch.version>7.5.2</elasticsearch.version>
+        <elasticsearch.version>7.17.14</elasticsearch.version>
         <classgraph.version>4.8.165</classgraph.version>
         <testcontainers.elasticsearch.version>1.19.4</testcontainers.elasticsearch.version>
         <lombok.version>1.18.30</lombok.version>
