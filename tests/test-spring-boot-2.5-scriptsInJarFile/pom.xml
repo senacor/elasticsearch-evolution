@@ -10,15 +10,15 @@
     </parent>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>test-spring-boot-2.5-scriptsInJarFile</artifactId>
-    <version>0.5.0</version>
+    <version>0.5.1</version>
     <description>Demo project for Spring Boot</description>
 
     <properties>
         <java.version>1.8</java.version>
 
-        <commons-io.version>2.15.0</commons-io.version>
+        <commons-io.version>2.15.1</commons-io.version>
         <elasticsearch.version>7.5.2</elasticsearch.version>
-        <testcontainers.elasticsearch.version>1.19.2</testcontainers.elasticsearch.version>
+        <testcontainers.elasticsearch.version>1.19.7</testcontainers.elasticsearch.version>
     </properties>
 
     <dependencies>
@@ -85,7 +85,7 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <!--jacoco snapshot to support java 17/18-->
-                <version>0.8.8</version>
+                <version>0.8.11</version>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>

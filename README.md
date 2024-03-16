@@ -21,8 +21,8 @@ Successful executed migration scripts will not be executed again!
 ## 2 Features
 
 - tested on Java 8, 11, 17, and 21
-- runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0 and 3.1 (and of course without Spring-Boot)
-- runs on Elasticsearch version 7.5.x - 8.11.x
+- runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1 and 3.2 (and of course without Spring-Boot)
+- runs on Elasticsearch version 7.5.x - 8.12.x
 - runs on Opensearch version 1.x and 2.x
 - highly configurable (e.g. location(s) of your migration files, migration files format pattern)
 - placeholder substitution in migration scripts
@@ -31,12 +31,12 @@ Successful executed migration scripts will not be executed again!
 - ready to use default configuration
 - line comments in migration files
 
-| Compatibility                    | Spring Boot                                 | Elasticsearch        | Opensearch |
-|----------------------------------|---------------------------------------------|----------------------|------------|
-| elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1 | 7.5.x - 8.11.x       | 1.x - 2.x  |
-| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7           | 7.5.x - 8.6.x        | 1.x - 2.x  |
-| elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7           | 7.5.x - 7.17.x       |            |
-| elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4                | 7.0.x - 7.4.x, 6.8.x |            |
+| Compatibility                    | Spring Boot                                      | Elasticsearch        | Opensearch |
+|----------------------------------|--------------------------------------------------|----------------------|------------|
+| elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1, 3.2 | 7.5.x - 8.12.x       | 1.x - 2.x  |
+| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 8.6.x        | 1.x - 2.x  |
+| elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 7.17.x       |            |
+| elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4                     | 7.0.x - 7.4.x, 6.8.x |            |
 
 NOTE: When you run on Java 11 and using spring-boot 2.2 or 2.3 and you hit [this issue](https://github.com/ronmamo/reflections/issues/279), you have 2 options: 
 
@@ -53,7 +53,7 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.4.3</version>
+    <version>0.5.1</version>
 </dependency>
 ```
 
@@ -77,7 +77,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.4.3</version>
+    <version>0.5.1</version>
 </dependency>
 ```
 
@@ -291,6 +291,12 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
+### v0.5.1
+
+- version updates (spring-boot 2.7.18)
+- added regression tests for spring boot 3.2
+- remove deprecated query parameter `ignore_throttled` from ES requests
+
 ### v0.5.0
 
 - added spring boot configuration metadata [#240](https://github.com/senacor/elasticsearch-evolution/pull/240)
@@ -300,7 +306,8 @@ ElasticsearchEvolution.configure()
 
 - support out of order migration execution.
 - version updates (spring-boot 2.7.17)
-- added regression tests against OpenSearch 2.6.0
+- added regression tests against OpenSearch 2.11, 2.10 and 2.9
+- added regression tests against ElasticSearch 8.11. 8.10 and 8.9
 - drop older Elasticsearch and OpenSearch versions in regression tests. Only test against the last 3 minor versions of the latest major release.
 - added regression tests on JDK 21
 - added regression tests for spring boot 3.1
