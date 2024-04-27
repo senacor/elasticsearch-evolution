@@ -10,9 +10,6 @@ import com.senacor.elasticsearch.evolution.core.internal.model.migration.Migrati
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +18,6 @@ import java.util.stream.Collectors;
 
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireCondition;
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotBlank;
-import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -39,6 +35,7 @@ public class MigrationScriptParserImpl implements MigrationScriptParser {
     private final String placeholderPrefix;
     private final String placeholderSuffix;
     private final boolean placeholderReplacement;
+    private final String lineSeparator;
 
     /**
      * create Parser
@@ -48,13 +45,15 @@ public class MigrationScriptParserImpl implements MigrationScriptParser {
                                      Map<String, String> placeholders,
                                      String placeholderPrefix,
                                      String placeholderSuffix,
-                                     boolean placeholderReplacement) {
+                                     boolean placeholderReplacement,
+                                     String lineSeparator) {
         this.esMigrationPrefix = esMigrationPrefix;
         this.esMigrationSuffixes = esMigrationSuffixes;
         this.placeholders = placeholders;
         this.placeholderPrefix = placeholderPrefix;
         this.placeholderSuffix = placeholderSuffix;
         this.placeholderReplacement = placeholderReplacement;
+        this.lineSeparator = lineSeparator;
     }
 
     @Override
@@ -79,36 +78,31 @@ public class MigrationScriptParserImpl implements MigrationScriptParser {
                 : script.getContent();
         MigrationScriptRequest res = new MigrationScriptRequest();
 
-        try (BufferedReader reader = new BufferedReader(new StringReader(contentReplaced))) {
-            final AtomicReference<ParseState> state = new AtomicReference<>(ParseState.METHOD_PATH);
-            reader.lines()
-                    // filter out comment lines
-                    .filter(line -> !line.trim().startsWith("#") && !line.trim().startsWith("//"))
-                    .forEachOrdered(line -> {
-                        switch (state.get()) {
-                            case METHOD_PATH:
-                                parseMethodWithPath(res, line);
-                                state.set(ParseState.HEADER);
-                                break;
-                            case HEADER:
-                                if (line.trim().isEmpty()) {
-                                    state.set(ParseState.CONTENT);
-                                } else {
-                                    parseHeader(res, line);
-                                }
-                                break;
-                            case CONTENT:
-                                if (!res.isBodyEmpty()) {
-                                    res.addToBody(lineSeparator());
-                                }
-                                res.addToBody(line);
-                                break;
-                            default:
-                                throw new UnsupportedOperationException("state '" + state + "' not supportet");
+        final AtomicReference<ParseState> state = new AtomicReference<>(ParseState.METHOD_PATH);
+        for (String line : contentReplaced.split(lineSeparator, -1)) {
+            if (!line.trim().startsWith("#") && !line.trim().startsWith("//")) {
+                switch (state.get()) {
+                    case METHOD_PATH:
+                        parseMethodWithPath(res, line);
+                        state.set(ParseState.HEADER);
+                        break;
+                    case HEADER:
+                        if (line.trim().isEmpty()) {
+                            state.set(ParseState.CONTENT);
+                        } else {
+                            parseHeader(res, line);
                         }
-                    });
-        } catch (IOException e) {
-            throw new MigrationException("failed parsing content of " + script.getFileName(), e);
+                        break;
+                    case CONTENT:
+                        if (!res.isBodyEmpty()) {
+                            res.addToBody(lineSeparator);
+                        }
+                        res.addToBody(line);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("state '" + state + "' not supportet");
+                }
+            }
         }
 
         return res;
@@ -125,7 +119,7 @@ public class MigrationScriptParserImpl implements MigrationScriptParser {
     }
 
     private void parseMethodWithPath(MigrationScriptRequest res, String line) {
-        String[] methodAndPath = line.trim().split("[ ]+", 2);
+        String[] methodAndPath = line.trim().split(" +", 2);
         if (methodAndPath.length != 2) {
             throw new MigrationException(String.format(
                     "can't parse method and path: '%s'. Method and path must be separated by space and should look like this: 'PUT /my_index'",

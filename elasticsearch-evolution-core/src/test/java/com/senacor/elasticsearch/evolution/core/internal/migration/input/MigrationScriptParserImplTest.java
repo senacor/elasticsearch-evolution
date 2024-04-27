@@ -36,7 +36,8 @@ class MigrationScriptParserImplTest {
                     Maps.newHashMap("index", "myIndex"),
                     "${",
                     "}",
-                    true);
+                    true,
+                    "\n");
 
             String replaced = parser.replaceParams(template);
 
@@ -51,7 +52,8 @@ class MigrationScriptParserImplTest {
                     Maps.newHashMap("index", "myIndex"),
                     "${",
                     "}",
-                    true);
+                    true,
+                    "\n");
 
             String replaced = parser.replaceParams(template);
 
@@ -68,7 +70,8 @@ class MigrationScriptParserImplTest {
                     placeholders,
                     "${",
                     "}",
-                    true);
+                    true,
+                    "\n");
 
             String replaced = parser.replaceParams(template);
 
@@ -85,7 +88,8 @@ class MigrationScriptParserImplTest {
                 null,
                 null,
                 null,
-                false);
+                false,
+                "\n");
 
         @Test
         void isParsable() {
@@ -147,7 +151,8 @@ class MigrationScriptParserImplTest {
                 null,
                 null,
                 null,
-                false);
+                false,
+                "\n");
 
         @Test
         void success() {
@@ -186,7 +191,8 @@ class MigrationScriptParserImplTest {
                 null,
                 null,
                 null,
-                false);
+                false,
+                "\n");
 
         @Test
         void success_withMethodAndPathAndHeaderAndBody() {
@@ -358,7 +364,8 @@ class MigrationScriptParserImplTest {
                     placeholders,
                     "${",
                     "}",
-                    true)
+                    true,
+                    "\n")
                     .parse(new RawMigrationScript()
                             .setFileName(fileName)
                             .setContent(defaultContent));
@@ -388,6 +395,55 @@ class MigrationScriptParserImplTest {
                 softly.assertThat(res.getMigrationScriptRequest().getBody())
                         .as("body")
                         .isEqualTo("{" + lineSeparator() + "\"index\":\"my-index\"" + lineSeparator() + "}");
+            });
+        }
+
+        @Test
+        void success_NotRemoveTrailingNewlines() {
+            String defaultContent = "PUT /my-index" + lineSeparator() +
+                    lineSeparator() +
+                    "{" + lineSeparator() + "\"index\":\"my-index\"" + lineSeparator() + "}" +
+                    lineSeparator();
+            String fileName = "V1__create.http";
+            HashMap<String, String> placeholders = new HashMap<>();
+
+            ParsedMigrationScript res = new MigrationScriptParserImpl(
+                    "V",
+                    Collections.singletonList(".http"),
+                    placeholders,
+                    "${",
+                    "}",
+                    false,
+                    "\n")
+                    .parse(new RawMigrationScript()
+                            .setFileName(fileName)
+                            .setContent(defaultContent));
+
+            assertSoftly(softly -> {
+                softly.assertThat(res.getChecksum())
+                        .as("Checksum")
+                        .isEqualTo(defaultContent.hashCode());
+                softly.assertThat(res.getFileNameInfo().getVersion())
+                        .as("version")
+                        .isEqualTo(MigrationVersion.fromVersion("1"));
+                softly.assertThat(res.getFileNameInfo().getScriptName())
+                        .as("scriptName")
+                        .isEqualTo(fileName);
+                softly.assertThat(res.getFileNameInfo().getDescription())
+                        .as("description")
+                        .isEqualTo("create");
+                softly.assertThat(res.getMigrationScriptRequest().getHttpMethod())
+                        .as("methot")
+                        .isEqualTo(HttpMethod.PUT);
+                softly.assertThat(res.getMigrationScriptRequest().getPath())
+                        .as("path")
+                        .isEqualTo("/my-index");
+                softly.assertThat(res.getMigrationScriptRequest().getHttpHeader())
+                        .as("header")
+                        .isEmpty();
+                softly.assertThat(res.getMigrationScriptRequest().getBody())
+                        .as("body")
+                        .isEqualTo("{" + lineSeparator() + "\"index\":\"my-index\"" + lineSeparator() + "}" + lineSeparator());
             });
         }
 

@@ -22,7 +22,7 @@ Successful executed migration scripts will not be executed again!
 
 - tested on Java 8, 11, 17, and 21
 - runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1 and 3.2 (and of course without Spring-Boot)
-- runs on Elasticsearch version 7.5.x - 8.12.x
+- runs on Elasticsearch version 7.5.x - 8.13.x
 - runs on Opensearch version 1.x and 2.x
 - highly configurable (e.g. location(s) of your migration files, migration files format pattern)
 - placeholder substitution in migration scripts
@@ -33,15 +33,10 @@ Successful executed migration scripts will not be executed again!
 
 | Compatibility                    | Spring Boot                                      | Elasticsearch        | Opensearch |
 |----------------------------------|--------------------------------------------------|----------------------|------------|
-| elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1, 3.2 | 7.5.x - 8.12.x       | 1.x - 2.x  |
+| elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1, 3.2 | 7.5.x - 8.13.x       | 1.x - 2.x  |
 | elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 8.6.x        | 1.x - 2.x  |
 | elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 7.17.x       |            |
 | elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4                     | 7.0.x - 7.4.x, 6.8.x |            |
-
-NOTE: When you run on Java 11 and using spring-boot 2.2 or 2.3 and you hit [this issue](https://github.com/ronmamo/reflections/issues/279), you have 2 options: 
-
--   downgrade to `org.reflections:reflections:0.9.11` via defining this dependency explicitly 
--   use spring boot 2.3.6+
 
 ## 3 Quickstart
 
@@ -293,7 +288,9 @@ ElasticsearchEvolution.configure()
 
 ### v0.5.2-SNAPSHOT
 
-- ...
+- bugfix ([#293](https://github.com/senacor/elasticsearch-evolution/issues/293)): trailing newlines will no longer be removed from migration scripts.
+- added regression tests against OpenSearch 2.13
+- added regression tests against ElasticSearch 8.13
 
 ### v0.5.1
 

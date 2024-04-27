@@ -151,10 +151,15 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         return res.stream();
     }
 
-    private Stream<RawMigrationScript> read(BufferedReader reader, String filename) {
-        String content = reader.lines()
-                // use static line separator ('\n' per default) to get predictable and system independent checksum later
-                .collect(Collectors.joining(lineSeparator));
+    Stream<RawMigrationScript> read(BufferedReader reader, String filename) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        int ch;
+        while ((ch = reader.read()) != -1) {
+            sb.append((char) ch);
+        }
+        // use static line separator ('\n' per default) to get predictable and system independent checksum later
+        String content = sb.toString().replaceAll("\\R", lineSeparator);
+
         if (content.isEmpty()) {
             return Stream.empty();
         }

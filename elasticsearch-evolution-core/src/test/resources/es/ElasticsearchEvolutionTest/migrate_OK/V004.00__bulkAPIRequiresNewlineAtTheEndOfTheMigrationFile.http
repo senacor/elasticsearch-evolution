@@ -1,0 +1,6 @@
+POST _bulk
+Content-Type: application/x-ndjson
+
+# https://github.com/senacor/elasticsearch-evolution/issues/293
+{ "index" : { "_index" : "test_2" } }
+{ "b" : false }
