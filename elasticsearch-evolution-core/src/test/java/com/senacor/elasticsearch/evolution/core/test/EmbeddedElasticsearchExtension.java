@@ -49,10 +49,10 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
             ofOpensearch("2.11.1"),
             ofOpensearch("1.3.16"),
 
-            ofElasticsearch("8.13.0"),
+            ofElasticsearch("8.13.4"),
             ofElasticsearch("8.12.2"),
             ofElasticsearch("8.11.4"),
-            ofElasticsearch("7.17.20")
+            ofElasticsearch("7.17.21")
     )));
 
     @Override
