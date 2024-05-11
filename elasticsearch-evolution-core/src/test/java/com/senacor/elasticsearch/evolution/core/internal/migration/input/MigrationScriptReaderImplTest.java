@@ -4,8 +4,12 @@ import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -139,6 +143,21 @@ class MigrationScriptReaderImplTest {
             }
 
             @Test
+            void include_trailing_newlines() {
+                MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(
+                        Arrays.asList("classpath:scriptreader/issue293_trailing_newlines"),
+                        StandardCharsets.UTF_8,
+                        "w",
+                        singletonList(".http"), "\n");
+
+                List<RawMigrationScript> actual = reader.read();
+
+                assertThat(actual)
+                        .containsExactlyInAnyOrder(
+                                new RawMigrationScript().setFileName("with_trailing_newline.http").setContent("content!\n"));
+            }
+
+            @Test
             void withWrongProtocol() {
                 MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(
                         Arrays.asList("classpath:scriptreader", "http:scriptreader"),
@@ -247,6 +266,29 @@ class MigrationScriptReaderImplTest {
                 assertThat(actual).isEmpty();
             }
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "foo\nbar",
+            "foo\r\nbar",
+            "foo\rbar"
+    })
+    void read_should_normalize_new_lines_to_defined_line_separator(String input) throws IOException {
+        final String lineSeparator = "<my-line-separator>";
+        MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(
+                singletonList("ignore"),
+                StandardCharsets.UTF_8,
+                "ignore",
+                singletonList(".ignore"), lineSeparator);
+
+        final Stream<RawMigrationScript> res;
+        try (BufferedReader bufferedReader = new BufferedReader(new StringReader(input))) {
+            res = reader.read(bufferedReader, "filename");
+        }
+
+        assertThat(res)
+                .containsExactlyInAnyOrder(new RawMigrationScript().setFileName("filename").setContent("foo"+lineSeparator+"bar"));
     }
 
     private URL resolveURL(String path) {

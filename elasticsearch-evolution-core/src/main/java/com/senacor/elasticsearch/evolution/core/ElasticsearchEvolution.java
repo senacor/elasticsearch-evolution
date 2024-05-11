@@ -140,7 +140,8 @@ public class ElasticsearchEvolution {
                 getConfig().getPlaceholders(),
                 getConfig().getPlaceholderPrefix(),
                 getConfig().getPlaceholderSuffix(),
-                getConfig().isPlaceholderReplacement()
+                getConfig().isPlaceholderReplacement(),
+                getConfig().getLineSeparator()
         );
     }
 
