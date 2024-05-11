@@ -166,8 +166,10 @@ class MigrationScriptReaderImplTest {
                         Arrays.asList(".http", ".other"), "\n");
                 assertThatThrownBy(reader::read)
                         .isInstanceOf(MigrationException.class)
-                        .hasMessage("could not read location path http:scriptreader, should look like this: " +
-                                "classpath:es/migration or this: file:/home/scripts/migration");
+                        .hasMessage("""
+                                could not read location path http:scriptreader, should look like this: \
+                                classpath:es/migration or this: file:/home/scripts/migration\
+                                """);
             }
         }
 

@@ -39,11 +39,13 @@ public class EsUtils {
     public List<String> fetchAllDocuments(String index) {
         try {
             Request post = new Request("POST", "/" + index + "/_search");
-            post.setJsonEntity("{" +
-                    "    \"query\": {" +
-                    "        \"match_all\": {}" +
-                    "    }" +
-                    "}");
+            post.setJsonEntity("""
+                    {\
+                        "query": {\
+                            "match_all": {}\
+                        }\
+                    }\
+                    """);
             Response response = restClient.performRequest(post);
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode < 200 || statusCode >= 300) {
@@ -76,7 +78,7 @@ public class EsUtils {
             indexRequest.setJsonEntity(OBJECT_MAPPER.writeValueAsString(source));
             final Response res = restClient.performRequest(indexRequest);
             if (res.getStatusLine().getStatusCode() != 201) {
-                throw new IllegalStateException(String.format("indexDocument failed with status code %s: %s",
+                throw new IllegalStateException("indexDocument failed with status code %s: %s".formatted(
                         res.getStatusLine().getStatusCode(),
                         res.getStatusLine().getReasonPhrase()));
             }

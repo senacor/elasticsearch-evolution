@@ -102,7 +102,7 @@ public class ElasticsearchEvolution {
             logger.info("reading migration scripts...");
             Collection<RawMigrationScript> rawMigrationScripts = migrationScriptReader.read();
             if (rawMigrationScripts.size() > getConfig().getHistoryMaxQuerySize()) {
-                throw new MigrationException(String.format("configured historyMaxQuerySize of '%s' is to low for the number of migration scripts of '%s'",
+                throw new MigrationException("configured historyMaxQuerySize of '%s' is to low for the number of migration scripts of '%s'".formatted(
                         getConfig().getHistoryMaxQuerySize(), rawMigrationScripts.size()));
             }
 
