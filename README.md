@@ -286,6 +286,10 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
+### v0.5.3-SNAPSHOT
+
+- ...
+
 ### v0.5.2
 
 - bugfix ([#293](https://github.com/senacor/elasticsearch-evolution/issues/293)): trailing newlines will no longer be removed from migration scripts.
