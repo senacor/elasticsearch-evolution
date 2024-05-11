@@ -18,7 +18,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.SocketUtils;
+import org.springframework.test.util.TestSocketUtils;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableMap;
@@ -84,11 +84,8 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
                 .withEnv("cluster.routing.allocation.disk.watermark.low", "97%")
                 .withEnv("cluster.routing.allocation.disk.watermark.high", "98%")
                 .withEnv("cluster.routing.allocation.disk.watermark.flood_stage", "99%");
-        // SocketUtils replacement: https://github.com/spring-projects/spring-framework/issues/28210
-        // https://github.com/spring-cloud/spring-cloud-function/issues/825
-        // https://github.com/spring-cloud/spring-cloud-deployer-local/pull/214
-        int httpPort = SocketUtils.findAvailableTcpPort(5000, 30000);
-        int transportPort = SocketUtils.findAvailableTcpPort(30001, 65535);
+        int httpPort = TestSocketUtils.findAvailableTcpPort();
+        int transportPort = TestSocketUtils.findAvailableTcpPort();
         container.setPortBindings(Arrays.asList(httpPort + ":9200", transportPort + ":" + searchContainer.transportPort));
 //        container.setWaitStrategy(new HttpWaitStrategy()
 //                .forPort(9200)

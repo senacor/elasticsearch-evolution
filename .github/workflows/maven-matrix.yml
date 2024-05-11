@@ -23,7 +23,7 @@ jobs:
   build-with-jdk:
     strategy:
       matrix:
-        java: [ 8, 11, 17, 21 ]
+        java: [ 17, 21 ]
       fail-fast: false
     runs-on: ubuntu-22.04
     steps:
@@ -109,12 +109,12 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
           git_user_signingkey: true
           git_commit_gpgsign: true
-      - name: Set up JDK 8
+      - name: Set up JDK 17
         # with JDK 11 the maven-javadoc-plugin > 3.0.1 fails with "cannot find symbol org.elasticsearch.*"
         uses: actions/setup-java@v4
         with:
           distribution: zulu
-          java-version: 8
+          java-version: 17
       - name: Release to maven central
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
@@ -140,12 +140,12 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
           git_user_signingkey: true
           git_commit_gpgsign: true
-      - name: Set up JDK 8
+      - name: Set up JDK 17
         # with JDK 11 the maven-javadoc-plugin > 3.0.1 fails with "cannot find symbol org.elasticsearch.*"
         uses: actions/setup-java@v4
         with:
           distribution: zulu
-          java-version: 8
+          java-version: 17
       - name: Release to maven central
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
