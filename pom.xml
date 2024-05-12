@@ -180,6 +180,16 @@
                     <groupId>org.eluder.coveralls</groupId>
                     <artifactId>coveralls-maven-plugin</artifactId>
                     <version>${coveralls-maven-plugin.version}</version>
+                    <dependencies>
+                        <!-- fix https://github.com/trautonen/coveralls-maven-plugin/issues/141
+                         ClassNotFoundException: javax.xml.bind.DatatypeConverter
+                         when running on JDK 17-->
+                        <dependency>
+                            <groupId>javax.xml.bind</groupId>
+                            <artifactId>jaxb-api</artifactId>
+                            <version>2.3.1</version>
+                        </dependency>
+                    </dependencies>
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
