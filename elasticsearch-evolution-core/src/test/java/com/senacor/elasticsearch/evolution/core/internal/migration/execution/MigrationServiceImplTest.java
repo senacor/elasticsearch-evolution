@@ -316,9 +316,11 @@ class MigrationServiceImplTest {
 
             assertThatThrownBy(() -> underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts))
                     .isInstanceOf(MigrationException.class)
-                    .hasMessage("The logged execution for the migration script version 1.1 (V1.1__1.1.http) " +
-                            "has a different checksum from the given migration script! " +
-                            "Modifying already-executed scripts is not supported.");
+                    .hasMessage("""
+                            The logged execution for the migration script version 1.1 (V1.1__1.1.http) \
+                            has a different checksum from the given migration script! \
+                            Modifying already-executed scripts is not supported.\
+                            """);
         }
 
         @Test

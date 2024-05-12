@@ -147,9 +147,9 @@ public class MigrationScriptRequest {
             return Arrays.stream(values())
                     .filter(m -> m.name().equals(normalizedMethod))
                     .findFirst()
-                    .orElseThrow(() -> new MigrationException(String.format(
-                            "Method '%s' not supported, only %s is supported.",
-                            method, Arrays.toString(values()))));
+                    .orElseThrow(() -> new MigrationException(
+                    "Method '%s' not supported, only %s is supported.".formatted(
+                    method, Arrays.toString(values()))));
         }
     }
 }

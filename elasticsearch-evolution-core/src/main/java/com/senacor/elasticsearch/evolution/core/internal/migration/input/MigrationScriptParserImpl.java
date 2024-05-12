@@ -14,7 +14,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireCondition;
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotBlank;
@@ -61,7 +60,7 @@ public class MigrationScriptParserImpl implements MigrationScriptParser {
         requireNonNull(rawMigrationScripts, "rawMigrationScripts must not be null");
         return rawMigrationScripts.stream()
                 .map(this::parse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     ParsedMigrationScript parse(RawMigrationScript rawMigrationScript) {
@@ -111,8 +110,8 @@ public class MigrationScriptParserImpl implements MigrationScriptParser {
     private void parseHeader(MigrationScriptRequest res, String line) {
         String[] header = line.trim().split("[:=]", 2);
         if (header.length != 2) {
-            throw new MigrationException(String.format(
-                    "can't parse header: '%s'. Header must be separated by ':' and should look like this: 'Content-Type: application/json'",
+            throw new MigrationException(
+                    "can't parse header: '%s'. Header must be separated by ':' and should look like this: 'Content-Type: application/json'".formatted(
                     line));
         }
         res.addHttpHeader(header[0].trim(), header[1].trim());
@@ -121,8 +120,8 @@ public class MigrationScriptParserImpl implements MigrationScriptParser {
     private void parseMethodWithPath(MigrationScriptRequest res, String line) {
         String[] methodAndPath = line.trim().split(" +", 2);
         if (methodAndPath.length != 2) {
-            throw new MigrationException(String.format(
-                    "can't parse method and path: '%s'. Method and path must be separated by space and should look like this: 'PUT /my_index'",
+            throw new MigrationException(
+                    "can't parse method and path: '%s'. Method and path must be separated by space and should look like this: 'PUT /my_index'".formatted(
                     line));
         }
         res.setHttpMethod(HttpMethod.create(methodAndPath[0]))
@@ -163,8 +162,8 @@ public class MigrationScriptParserImpl implements MigrationScriptParser {
         String version;
         String description;
         if (separatorPos < 0) {
-            throw new MigrationException(String.format(
-                    "Description in migration filename is required: '%s'. It should look like this: '%s1.2%ssome_desctiption here%s'",
+            throw new MigrationException(
+                    "Description in migration filename is required: '%s'. It should look like this: '%s1.2%ssome_desctiption here%s'".formatted(
                     migrationName, prefix, separator, suffixes.get(0)));
         }
 
@@ -193,8 +192,8 @@ public class MigrationScriptParserImpl implements MigrationScriptParser {
                         migrationName.length() - suffix.length());
             }
         }
-        throw new MigrationException(String.format(
-                "Wrong versioned migration name format: '%s'. It must end with a configured suffix: '%s'",
+        throw new MigrationException(
+                "Wrong versioned migration name format: '%s'. It must end with a configured suffix: '%s'".formatted(
                 migrationName,
                 suffixes));
     }

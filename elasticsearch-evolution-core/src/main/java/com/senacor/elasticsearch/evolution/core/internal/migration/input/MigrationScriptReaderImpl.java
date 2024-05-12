@@ -20,7 +20,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -72,11 +71,11 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
                         return readFromLocation(location);
                     } catch (URISyntaxException | IOException e) {
                         throw new MigrationException(
-                                String.format("couldn't read scripts from %s", location), e);
+                                "couldn't read scripts from %s".formatted(location), e);
                     }
                 })
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -94,8 +93,10 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         } else if (location.startsWith(FILE_PREFIX)) {
             return readScriptsFromFilesystem(location);
         } else {
-            throw new MigrationException(String.format("could not read location path %s, " +
-                            "should look like this: %ses/migration or this: %s/home/scripts/migration",
+            throw new MigrationException(("""
+                    could not read location path %s, \
+                    should look like this: %ses/migration or this: %s/home/scripts/migration\
+                    """).formatted(
                     location, CLASSPATH_PREFIX, FILE_PREFIX));
         }
     }
@@ -142,7 +143,7 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
                         logger.debug("reading migration script '{}' from classpath...", resource);
                         try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(resource.load()), encoding))) {
                             Path p = Paths.get(resource.getPath());
-                            res.addAll(read(bufferedReader, p.getFileName().toString()).collect(Collectors.toList()));
+                            res.addAll(read(bufferedReader, p.getFileName().toString()).toList());
                         } catch (IOException e) {
                             throw new MigrationException("can't read script from classpath: " + resource, e);
                         }

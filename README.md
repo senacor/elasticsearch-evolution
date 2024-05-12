@@ -20,8 +20,8 @@ Successful executed migration scripts will not be executed again!
 
 ## 2 Features
 
-- tested on Java 8, 11, 17, and 21
-- runs on Spring-Boot 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1 and 3.2 (and of course without Spring-Boot)
+- tested on Java 17 and 21
+- runs on Spring-Boot 3.x (and of course without Spring-Boot)
 - runs on Elasticsearch version 7.5.x - 8.13.x
 - runs on Opensearch version 1.x and 2.x
 - highly configurable (e.g. location(s) of your migration files, migration files format pattern)
@@ -33,6 +33,7 @@ Successful executed migration scripts will not be executed again!
 
 | Compatibility                    | Spring Boot                                      | Elasticsearch        | Opensearch |
 |----------------------------------|--------------------------------------------------|----------------------|------------|
+| elasticsearch-evolution >= 0.6.0 | 3.x                                              | 7.5.x - 8.13.x       | 1.x - 2.x  |
 | elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1, 3.2 | 7.5.x - 8.13.x       | 1.x - 2.x  |
 | elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 8.6.x        | 1.x - 2.x  |
 | elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 7.17.x       |            |
@@ -219,14 +220,6 @@ spring.elasticsearch.username=my-user-name
 spring.elasticsearch.password=my-secret-pw
 ```
 
-##### 5.1.1.2 spring boot < 2.7
-NOTE: these config properties are deprecated since spring boot 2.6 and may be removed in 2.7! See spring-boot 2.6 [release notes](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-2.6-Release-Notes#elasticsearch-property-consolidation).
-```properties
-spring.elasticsearch.rest.uris[0]=https://example.com:9200
-spring.elasticsearch.rest.username=my-user-name
-spring.elasticsearch.rest.password=my-secret-pw
-```
-
 #### 5.1.2 Customize Elasticsearch-Evolutions AutoConfiguration
 
 ##### 5.1.2.1 Custom RestClient
@@ -285,6 +278,11 @@ ElasticsearchEvolution.configure()
 ```
 
 ## 6 changelog
+
+### v0.6.0-SNAPSHOT
+
+- The minimum supported Java version is now 17.
+- Drop spring boot 2 compatibility. Further versions may run on spring boot 2, but it is not tested anymore.
 
 ### v0.5.2
 
