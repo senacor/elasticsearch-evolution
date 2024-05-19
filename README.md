@@ -193,6 +193,8 @@ Elasticsearch-Evolution can be configured to your needs:
 -   **baselineVersion** (default=1.0): Version to use as a baseline. versions lower than it will not be applied.
 -   **lineSeparator** (default=\n): Line separator, used only temporary between reading raw migration file line-by-line and parsing it later. Only needed for backward compatibility / checksum stability! Should be one of `\n`, `\r` or `\r\n`
 -   **outOfOrder** (default=false): Allows migrations to be run "out of order". If you already have versions 1.0 and 3.0 applied, and now a version 2.0 is found, it will be applied too instead of being rejected.
+- **trimTrailingNewlineInMigrations** (default=false): Whether to remove a trailing newline in migration scripts. Only
+  needed for backward compatibility / checksum stability!
 
 ### 5.1 Spring Boot
 
@@ -281,6 +283,7 @@ ElasticsearchEvolution.configure()
 
 ### v0.6.0-SNAPSHOT
 
+- Added option to trim a trailing newline in migration scripts (fixes [#298](https://github.com/senacor/elasticsearch-evolution/issues/298)). NOTE: This option is only needed for backward compatibility / checksum stability!
 - The minimum supported Java version is now 17.
 - Drop spring boot 2 compatibility. Further versions may run on spring boot 2, but it is not tested anymore.
 
