@@ -44,9 +44,9 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
     private static final SortedSet<SearchContainer> SUPPORTED_SEARCH_VERSIONS = Collections.unmodifiableSortedSet(new TreeSet<>(Arrays.asList(
+            ofOpensearch("2.14.0"),
             ofOpensearch("2.13.0"),
             ofOpensearch("2.12.0"),
-            ofOpensearch("2.11.1"),
             ofOpensearch("1.3.16"),
 
             ofElasticsearch("8.13.4"),
