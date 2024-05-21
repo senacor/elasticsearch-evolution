@@ -281,6 +281,10 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
+### v0.6.1-SNAPSHOT
+
+- ...
+
 ### v0.6.0
 
 - Added option to trim a trailing newline in migration scripts (fixes [#298](https://github.com/senacor/elasticsearch-evolution/issues/298)). NOTE: This option is only needed for backward compatibility / checksum stability!
