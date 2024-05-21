@@ -148,14 +148,14 @@ public class MigrationServiceImpl implements MigrationService {
             if (statusCode >= 200 && statusCode < 300) {
                 success = true;
             } else {
-                error = Optional.of(new MigrationException(String.format(
-                        "execution of script '%s' failed with HTTP status %s: %s",
+                error = Optional.of(new MigrationException(
+                        "execution of script '%s' failed with HTTP status %s: %s".formatted(
                         scriptToExecute.getFileNameInfo(),
                         statusCode,
                         response.toString())));
             }
         } catch (RuntimeException | IOException e) {
-            error = Optional.of(new MigrationException(String.format("execution of script '%s' failed", scriptToExecute.getFileNameInfo()), e));
+            error = Optional.of(new MigrationException("execution of script '%s' failed".formatted(scriptToExecute.getFileNameInfo()), e));
         }
 
         return new ExecutionResult(
@@ -199,10 +199,12 @@ public class MigrationServiceImpl implements MigrationService {
             for (MigrationScriptProtocol protocol : history) {
                 final ParsedMigrationScript parsedMigrationScript = scriptsInFilesystemMap.get(protocol.getVersion());
                 if (null == parsedMigrationScript) {
-                    logger.warn("there are less migration scripts than already executed history entries! " +
-                            "You should never delete migration scripts you have already executed. " +
-                            "Or maybe you have to cleanup the Elasticsearch-Evolution history index manually! " +
-                            "Already executed history version {} is not present in migration files", protocol.getVersion());
+                    logger.warn("""
+                            there are less migration scripts than already executed history entries! \
+                            You should never delete migration scripts you have already executed. \
+                            Or maybe you have to cleanup the Elasticsearch-Evolution history index manually! \
+                            Already executed history version {} is not present in migration files\
+                            """, protocol.getVersion());
                 } else {
                     validateOnMigrateIfEnabled(protocol, parsedMigrationScript);
 
@@ -217,19 +219,23 @@ public class MigrationServiceImpl implements MigrationService {
                 // do some checks
                 MigrationScriptProtocol protocol = history.get(i);
                 if (orderedScripts.size() <= i) {
-                    logger.warn("there are less migration scripts than already executed history entries! " +
-                            "You should never delete migration scripts you have already executed. " +
-                            "Or maybe you have to cleanup the Elasticsearch-Evolution history index manually! " +
-                            "history version at position {} is {}", i, protocol.getVersion());
+                    logger.warn("""
+                            there are less migration scripts than already executed history entries! \
+                            You should never delete migration scripts you have already executed. \
+                            Or maybe you have to cleanup the Elasticsearch-Evolution history index manually! \
+                            history version at position {} is {}\
+                            """, i, protocol.getVersion());
                     break;
                 }
                 ParsedMigrationScript parsedMigrationScript = orderedScripts.get(i);
                 if (!protocol.getVersion().equals(parsedMigrationScript.getFileNameInfo().getVersion())) {
-                    throw new MigrationException(String.format(
-                            "The logged execution in the Elasticsearch-Evolution history index at position %s " +
-                                    "is version %s and in the same position in the given migration scripts is version %s! " +
-                                    "Out of order execution is not supported. Or maybe you have added new migration scripts " +
-                                    "in between or have to cleanup the Elasticsearch-Evolution history index manually",
+                    throw new MigrationException((
+                            """
+                            The logged execution in the Elasticsearch-Evolution history index at position %s \
+                            is version %s and in the same position in the given migration scripts is version %s! \
+                            Out of order execution is not supported. Or maybe you have added new migration scripts \
+                            in between or have to cleanup the Elasticsearch-Evolution history index manually\
+                            """).formatted(
                             i, protocol.getVersion(), parsedMigrationScript.getFileNameInfo().getVersion()));
                 }
                 validateOnMigrateIfEnabled(protocol, parsedMigrationScript);
@@ -246,10 +252,12 @@ public class MigrationServiceImpl implements MigrationService {
     private void validateOnMigrateIfEnabled(MigrationScriptProtocol protocol, ParsedMigrationScript parsedMigrationScript) {
         // failed scripts can be edited and retried, but successfully executed scripts may not be modified afterward
         if (validateOnMigrate && protocol.isSuccess() && protocol.getChecksum() != parsedMigrationScript.getChecksum()) {
-            throw new MigrationException(String.format(
-                    "The logged execution for the migration script version %s (%s) " +
-                            "has a different checksum from the given migration script! " +
-                            "Modifying already-executed scripts is not supported.",
+            throw new MigrationException((
+                    """
+                    The logged execution for the migration script version %s (%s) \
+                    has a different checksum from the given migration script! \
+                    Modifying already-executed scripts is not supported.\
+                    """).formatted(
                     protocol.getVersion(), protocol.getScriptName()));
         }
     }

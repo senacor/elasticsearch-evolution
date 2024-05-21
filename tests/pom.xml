@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.senacor.elasticsearch.evolution</groupId>
         <artifactId>elasticsearch-evolution-parent</artifactId>
-        <version>0.5.2</version>
+        <version>0.6.0</version>
         <relativePath>../</relativePath>
     </parent>
     <artifactId>tests</artifactId>
@@ -19,27 +19,8 @@
 
     <modules>
         <module>migration-scripts</module>
-        <module>test-spring-boot-2.7</module>
-        <module>test-spring-boot-2.6</module>
-        <module>test-spring-boot-2.5-scriptsInJarFile</module>
-        <module>test-spring-boot-2.4</module>
-        <module>test-spring-boot-2.3</module>
-        <module>test-spring-boot-2.2</module>
-        <module>test-spring-boot-2.1-scriptsInJarFile</module>
+        <module>test-spring-boot-3.0-scriptsInJarFile</module>
+        <module>test-spring-boot-3.1</module>
+        <module>test-spring-boot-3.2</module>
     </modules>
-
-    <profiles>
-        <profile>
-            <id>jdk17+</id>
-            <activation>
-                <!-- only run on JDK >= 17 -->
-                <jdk>[17,)</jdk>
-            </activation>
-            <modules>
-                <module>test-spring-boot-3.0-scriptsInJarFile</module>
-                <module>test-spring-boot-3.1</module>
-                <module>test-spring-boot-3.2</module>
-            </modules>
-        </profile>
-    </profiles>
 </project>

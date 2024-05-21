@@ -91,7 +91,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
             }
             validateHttpStatusIs2xx(res, "saveOrUpdate");
         } catch (IOException e) {
-            throw new MigrationException(String.format("saveOrUpdate of '%s' failed!", migrationScriptProtocol), e);
+            throw new MigrationException("saveOrUpdate of '%s' failed!".formatted(migrationScriptProtocol), e);
         }
     }
 
@@ -238,7 +238,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
 
     void validateHttpStatusIs2xx(int statusCode, String description) throws MigrationException {
         if (isNotStatusCode2xx(statusCode)) {
-            throw new MigrationException(String.format("%s - response status is not OK: %s", description, statusCode));
+            throw new MigrationException("%s - response status is not OK: %s".formatted(description, statusCode));
         }
     }
 
