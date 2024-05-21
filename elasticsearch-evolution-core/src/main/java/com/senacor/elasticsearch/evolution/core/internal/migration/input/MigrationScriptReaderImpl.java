@@ -38,25 +38,28 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
     private final String esMigrationPrefix;
     private final List<String> esMigrationSuffixes;
     private final String lineSeparator;
+    private final boolean trimTrailingNewlineInMigrations;
 
     /**
-     * @param locations               Locations of migrations scripts, e.g classpath:es/migration or file:/home/migration
-     * @param encoding                migrations scripts encoding
-     * @param esMigrationFilePrefix   File name prefix for ES migrations.
-     * @param esMigrationFileSuffixes File name suffix for ES migrations.
-     * @param lineSeparator           Line separator. should be '\n' per default and only something else for backward compatibility / hash stability
+     * @param locations                       Locations of migrations scripts, e.g classpath:es/migration or file:/home/migration
+     * @param encoding                        migrations scripts encoding
+     * @param esMigrationFilePrefix           File name prefix for ES migrations.
+     * @param esMigrationFileSuffixes         File name suffix for ES migrations.
+     * @param lineSeparator                   Line separator. should be '\n' per default and only something else for backward compatibility / checksum stability
+     * @param trimTrailingNewlineInMigrations Whether to remove a trailing newline in migration scripts.
      */
-
     public MigrationScriptReaderImpl(List<String> locations,
                                      Charset encoding,
                                      String esMigrationFilePrefix,
                                      List<String> esMigrationFileSuffixes,
-                                     String lineSeparator) {
+                                     String lineSeparator,
+                                     boolean trimTrailingNewlineInMigrations) {
         this.locations = locations;
         this.encoding = encoding;
         this.esMigrationPrefix = esMigrationFilePrefix;
         this.esMigrationSuffixes = esMigrationFileSuffixes;
         this.lineSeparator = lineSeparator;
+        this.trimTrailingNewlineInMigrations = trimTrailingNewlineInMigrations;
     }
 
     /**
@@ -164,6 +167,11 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         if (content.isEmpty()) {
             return Stream.empty();
         }
+
+        if (trimTrailingNewlineInMigrations && content.endsWith(lineSeparator)) {
+            content = content.substring(0, content.length() - lineSeparator.length());
+        }
+
         return Stream.of(new RawMigrationScript().setFileName(filename).setContent(content));
     }
 

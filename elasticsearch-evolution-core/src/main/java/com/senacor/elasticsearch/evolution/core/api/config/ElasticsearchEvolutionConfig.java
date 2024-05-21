@@ -41,7 +41,8 @@ public class ElasticsearchEvolutionConfig {
 
     /**
      * Line separator, used only temporary between reading raw migration file line-by-line and parsing it later.
-     * Only needed for backward compatibility / checksum stability!
+     * <p>
+     * NOTE: Only needed for backward compatibility / checksum stability!
      * <p>
      * Should be one of
      * - '\n' (LF - Linux/Unix/OS X)
@@ -102,6 +103,13 @@ public class ElasticsearchEvolutionConfig {
      * Whether to fail when a previously applied migration script has been modified after it was applied.
      */
     private boolean validateOnMigrate = true;
+
+    /**
+     * Whether to remove a trailing newline in migration scripts.
+     * <p>
+     * NOTE: This is only needed for backward compatibility / checksum stability!
+     */
+    private boolean trimTrailingNewlineInMigrations = false;
 
     /**
      * version to use as a baseline.
@@ -295,6 +303,15 @@ public class ElasticsearchEvolutionConfig {
         return this;
     }
 
+    public boolean isTrimTrailingNewlineInMigrations() {
+        return trimTrailingNewlineInMigrations;
+    }
+
+    public ElasticsearchEvolutionConfig setTrimTrailingNewlineInMigrations(boolean trimTrailingNewlineInMigrations) {
+        this.trimTrailingNewlineInMigrations = trimTrailingNewlineInMigrations;
+        return this;
+    }
+
     public String getBaselineVersion() {
         return baselineVersion;
     }
@@ -330,6 +347,7 @@ public class ElasticsearchEvolutionConfig {
                 ", historyIndex='" + historyIndex + '\'' +
                 ", historyMaxQuerySize=" + historyMaxQuerySize +
                 ", validateOnMigrate=" + validateOnMigrate +
+                ", trimTrailingNewlineInMigrations=" + trimTrailingNewlineInMigrations +
                 ", baselineVersion='" + baselineVersion + '\'' +
                 ", outOfOrder='" + outOfOrder + '\'' +
                 '}';

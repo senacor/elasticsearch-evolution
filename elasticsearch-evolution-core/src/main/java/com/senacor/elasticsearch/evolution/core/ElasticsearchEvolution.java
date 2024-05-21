@@ -151,7 +151,8 @@ public class ElasticsearchEvolution {
                 getConfig().getEncoding(),
                 getConfig().getEsMigrationPrefix(),
                 getConfig().getEsMigrationSuffixes(),
-                getConfig().getLineSeparator());
+                getConfig().getLineSeparator(),
+                getConfig().isTrimTrailingNewlineInMigrations());
     }
 
     protected HistoryRepository createHistoryRepository() {

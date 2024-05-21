@@ -36,7 +36,7 @@ class MigrationScriptReaderImplTest {
                         singletonList("classpath:scriptreader"),
                         StandardCharsets.UTF_8,
                         "c",
-                        singletonList(".http"), "\n");
+                        singletonList(".http"), "\n", false);
                 List<RawMigrationScript> actual = reader.read();
                 assertThat(actual)
                         .containsExactlyInAnyOrder(
@@ -50,7 +50,7 @@ class MigrationScriptReaderImplTest {
                         singletonList("classpath:META-INF"),
                         StandardCharsets.UTF_8,
                         "MANIFEST",
-                        singletonList(".MF"), "\n");
+                        singletonList(".MF"), "\n", false);
 
                 List<RawMigrationScript> res = reader.read();
 
@@ -67,7 +67,7 @@ class MigrationScriptReaderImplTest {
                         singletonList(classpath),
                         StandardCharsets.UTF_8,
                         "c",
-                        singletonList(".http"), "\n") {
+                        singletonList(".http"), "\n", false) {
                     @Override
                     protected Stream<RawMigrationScript> readFromLocation(String location) throws URISyntaxException, IOException {
                         throw new URISyntaxException("input", "reason");
@@ -85,7 +85,7 @@ class MigrationScriptReaderImplTest {
                         singletonList("classpath:scriptreader"),
                         StandardCharsets.UTF_8,
                         "c",
-                        Arrays.asList(".http", ".other"), "\n");
+                        Arrays.asList(".http", ".other"), "\n", false);
                 List<RawMigrationScript> actual = reader.read();
                 assertThat(actual)
                         .containsExactlyInAnyOrder(
@@ -100,7 +100,7 @@ class MigrationScriptReaderImplTest {
                         Arrays.asList("classpath:scriptreader", "classpath:scriptreader"),
                         StandardCharsets.UTF_8,
                         "c",
-                        Arrays.asList(".http", ".other"), "\n");
+                        Arrays.asList(".http", ".other"), "\n", false);
                 List<RawMigrationScript> actual = reader.read();
                 assertThat(actual)
                         .containsExactlyInAnyOrder(
@@ -115,7 +115,7 @@ class MigrationScriptReaderImplTest {
                         singletonList("classpath:scriptreader/issue36/location"),
                         StandardCharsets.UTF_8,
                         "c",
-                        singletonList(".http"), "\n");
+                        singletonList(".http"), "\n", false);
 
                 List<RawMigrationScript> actual = reader.read();
 
@@ -132,7 +132,7 @@ class MigrationScriptReaderImplTest {
                                 "classpath:scriptreader/issue36/location_with_suffix"),
                         StandardCharsets.UTF_8,
                         "c",
-                        singletonList(".http"), "\n");
+                        singletonList(".http"), "\n", false);
 
                 List<RawMigrationScript> actual = reader.read();
 
@@ -148,7 +148,7 @@ class MigrationScriptReaderImplTest {
                         Arrays.asList("classpath:scriptreader/issue293_trailing_newlines"),
                         StandardCharsets.UTF_8,
                         "w",
-                        singletonList(".http"), "\n");
+                        singletonList(".http"), "\n", false);
 
                 List<RawMigrationScript> actual = reader.read();
 
@@ -163,7 +163,7 @@ class MigrationScriptReaderImplTest {
                         Arrays.asList("classpath:scriptreader", "http:scriptreader"),
                         StandardCharsets.UTF_8,
                         "c",
-                        Arrays.asList(".http", ".other"), "\n");
+                        Arrays.asList(".http", ".other"), "\n", false);
                 assertThatThrownBy(reader::read)
                         .isInstanceOf(MigrationException.class)
                         .hasMessage("""
@@ -183,7 +183,7 @@ class MigrationScriptReaderImplTest {
                         singletonList("file:" + absolutePathToScriptreader),
                         StandardCharsets.UTF_8,
                         "c",
-                        singletonList(".http"), "\n");
+                        singletonList(".http"), "\n", false);
                 List<RawMigrationScript> actual = reader.read();
                 assertThat(actual)
                         .containsExactlyInAnyOrder(
@@ -199,7 +199,7 @@ class MigrationScriptReaderImplTest {
                         singletonList("file:"+absolutePathToScriptreader+"/issue36/location"),
                         StandardCharsets.UTF_8,
                         "c",
-                        singletonList(".http"), "\n");
+                        singletonList(".http"), "\n", false);
 
                 List<RawMigrationScript> actual = reader.read();
 
@@ -218,7 +218,7 @@ class MigrationScriptReaderImplTest {
                                 "file:"+absolutePathToScriptreader+"/issue36/location_with_suffix"),
                         StandardCharsets.UTF_8,
                         "c",
-                        singletonList(".http"), "\n");
+                        singletonList(".http"), "\n", false);
 
                 List<RawMigrationScript> actual = reader.read();
 
@@ -230,12 +230,12 @@ class MigrationScriptReaderImplTest {
 
             @Test
             void invalidPath() {
-                assertThatThrownBy(() ->
-                        new MigrationScriptReaderImpl(
-                                singletonList("file:X:/snc/scripts"),
-                                StandardCharsets.UTF_8,
-                                "c",
-                                singletonList(".http"), "\n").read())
+                final MigrationScriptReaderImpl underTest = new MigrationScriptReaderImpl(
+                        singletonList("file:X:/snc/scripts"),
+                        StandardCharsets.UTF_8,
+                        "c",
+                        singletonList(".http"), "\n", false);
+                assertThatThrownBy(() -> underTest.read())
                         .isInstanceOf(MigrationException.class)
                         .hasMessage("couldn't read scripts from file:X:/snc/scripts");
             }
@@ -245,12 +245,12 @@ class MigrationScriptReaderImplTest {
             void validAndInvalidPath() throws URISyntaxException {
                 URL resourceDirectory = resolveURL("scriptreader");
                 String absolutePathToScriptreader = Paths.get(resourceDirectory.toURI()).toFile().getAbsolutePath();
-                assertThatThrownBy(() ->
-                        new MigrationScriptReaderImpl(
-                                Arrays.asList("file:X:/snc/scripts", "file:" + absolutePathToScriptreader),
-                                StandardCharsets.UTF_8,
-                                "c",
-                                singletonList(".http"), "\n").read())
+                final MigrationScriptReaderImpl underTest = new MigrationScriptReaderImpl(
+                        Arrays.asList("file:X:/snc/scripts", "file:" + absolutePathToScriptreader),
+                        StandardCharsets.UTF_8,
+                        "c",
+                        singletonList(".http"), "\n", false);
+                assertThatThrownBy(() -> underTest.read())
                         .isInstanceOf(MigrationException.class)
                         .hasMessage("couldn't read scripts from file:X:/snc/scripts");
             }
@@ -263,7 +263,7 @@ class MigrationScriptReaderImplTest {
                         singletonList("file:" + absolutePathToScriptreader),
                         StandardCharsets.UTF_8,
                         "d",
-                        singletonList(".http"), "\n");
+                        singletonList(".http"), "\n", false);
                 List<RawMigrationScript> actual = reader.read();
                 assertThat(actual).isEmpty();
             }
@@ -272,9 +272,9 @@ class MigrationScriptReaderImplTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "foo\nbar",
-            "foo\r\nbar",
-            "foo\rbar"
+            "foo\nbar\n",
+            "foo\r\nbar\r\n",
+            "foo\rbar\r"
     })
     void read_should_normalize_new_lines_to_defined_line_separator(String input) throws IOException {
         final String lineSeparator = "<my-line-separator>";
@@ -282,7 +282,9 @@ class MigrationScriptReaderImplTest {
                 singletonList("ignore"),
                 StandardCharsets.UTF_8,
                 "ignore",
-                singletonList(".ignore"), lineSeparator);
+                singletonList(".ignore"),
+                lineSeparator,
+                false);
 
         final Stream<RawMigrationScript> res;
         try (BufferedReader bufferedReader = new BufferedReader(new StringReader(input))) {
@@ -290,7 +292,32 @@ class MigrationScriptReaderImplTest {
         }
 
         assertThat(res)
-                .containsExactlyInAnyOrder(new RawMigrationScript().setFileName("filename").setContent("foo"+lineSeparator+"bar"));
+                .containsExactlyInAnyOrder(new RawMigrationScript().setFileName("filename").setContent("foo" + lineSeparator + "bar" + lineSeparator));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "foo\nbar\n",
+            "foo\r\nbar\r\n",
+            "foo\rbar\r"
+    })
+    void read_should_trim_trailing_newlines_if_config_is_set(String input) throws IOException {
+        final String lineSeparator = "<my-line-separator>";
+        MigrationScriptReaderImpl reader = new MigrationScriptReaderImpl(
+                singletonList("ignore"),
+                StandardCharsets.UTF_8,
+                "ignore",
+                singletonList(".ignore"),
+                lineSeparator,
+                true);
+
+        final Stream<RawMigrationScript> res;
+        try (BufferedReader bufferedReader = new BufferedReader(new StringReader(input))) {
+            res = reader.read(bufferedReader, "filename");
+        }
+
+        assertThat(res)
+                .containsExactlyInAnyOrder(new RawMigrationScript().setFileName("filename").setContent("foo" + lineSeparator + "bar"));
     }
 
     private URL resolveURL(String path) {
