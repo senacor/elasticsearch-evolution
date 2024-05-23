@@ -169,7 +169,7 @@ Elasticsearch-Evolution interprets the version parts as Integers, so each versio
 
 Here is an example which indicates the ordering: `1.0.1` &lt; `1.1` &lt; `1.2.1` &lt; (`2.0.0` == `2`).
 In this example version `1.0.1` is the smallest version and is executed first, after that version `1.1`, `1.2.1` and in the end `2`. 
-`2` is the same as `2.0` or `2.0.0` - so leading zeros will be trimed.
+`2` is the same as `2.0` or `2.0.0` - so trailing zeros will be trimmed.
 
 **NOTE:** Versions with major version `0` are reserved for internal usage, so the smallest version you can define is `1`
 
