@@ -4,8 +4,6 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledForJreRange;
-import org.junit.jupiter.api.condition.JRE;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,7 +18,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = {"spring.elasticsearch.uris=http://localhost:" + ApplicationTest.ELASTICSEARCH_PORT})
-@EnabledForJreRange(min = JRE.JAVA_17)
 class ApplicationTest {
 
     static final int ELASTICSEARCH_PORT = 18774;

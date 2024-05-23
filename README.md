@@ -284,6 +284,8 @@ ElasticsearchEvolution.configure()
 ### v0.6.1-SNAPSHOT
 
 - added regression tests against OpenSearch 2.14
+- bump spring boot version to 3.3.0
+- added regression tests for spring boot 3.3
 
 ### v0.6.0
 
