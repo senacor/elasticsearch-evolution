@@ -103,7 +103,7 @@
         <commons-io.version>2.16.1</commons-io.version>
         <!--when updating elasticsearch versions, also update "ElasticsearchContainer" version in EmbeddedElasticsearchExtension-->
         <elasticsearch.version>7.5.2</elasticsearch.version>
-        <classgraph.version>4.8.173</classgraph.version>
+        <classgraph.version>4.8.174</classgraph.version>
         <testcontainers.elasticsearch.version>1.19.8</testcontainers.elasticsearch.version>
         <lombok.version>1.18.32</lombok.version>
         <!-- newer byte-buddy version to support JDK 21 -->
