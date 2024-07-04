@@ -61,7 +61,7 @@ Elasticsearch-Evolution uses internally Elastics `RestClient` and requires at mi
 </properties>
 ```
 
-Place your migration scripts in your application classpath at `es/evolution`
+Place your migration scripts in your application classpath at `es/migration`
 
 That's it. Elasticsearch-Evolution runs at application startup and expects your Elasticsearch/Opensearch at <http://localhost:9200>
 
@@ -77,7 +77,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 </dependency>
 ```
 
-Place your migration scripts in your application classpath at `es/evolution`
+Place your migration scripts in your application classpath at `es/migration`
 
 Create a `ElasticsearchEvolution` instance and execute the migration.
 
