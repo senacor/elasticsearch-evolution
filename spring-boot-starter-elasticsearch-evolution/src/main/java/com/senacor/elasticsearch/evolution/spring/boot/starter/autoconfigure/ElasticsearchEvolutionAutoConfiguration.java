@@ -94,7 +94,7 @@ public class ElasticsearchEvolutionAutoConfiguration {
         @Bean
         @ConditionalOnBean(RestClientBuilder.class)
         @ConditionalOnMissingBean
-        public RestClient restClient(RestClientBuilder restClientBuilder) {
+        public RestClient elasticRestClient(RestClientBuilder restClientBuilder) {
             logger.info("creating RestClient from {}", restClientBuilder);
             return restClientBuilder.build();
         }
