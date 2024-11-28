@@ -104,7 +104,7 @@
 			<plugin>
 				<groupId>org.openrewrite.maven</groupId>
 				<artifactId>rewrite-maven-plugin</artifactId>
-				<version>5.44.0</version>
+				<version>5.46.0</version>
 				<configuration>
 					<activeRecipes>
 						<recipe>org.openrewrite.java.migrate.UpgradeToJava17</recipe>
