@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@v5
       - name: Set up JDK 17
         # build with JDK 8 because of issue https://github.com/trautonen/coveralls-maven-plugin/issues/112
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: zulu
           java-version: 17
