@@ -291,7 +291,7 @@
                 <plugin>
                     <groupId>org.openrewrite.maven</groupId>
                     <artifactId>rewrite-maven-plugin</artifactId>
-                    <version>6.3.2</version>
+                    <version>6.16.1</version>
                     <configuration>
                         <activeRecipes>
                             <recipe>org.openrewrite.java.migrate.UpgradeToJava17</recipe>
