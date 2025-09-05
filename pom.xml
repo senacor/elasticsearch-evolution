@@ -105,7 +105,7 @@
         <elasticsearch.version>7.5.2</elasticsearch.version>
         <classgraph.version>4.8.181</classgraph.version>
         <testcontainers.elasticsearch.version>1.21.3</testcontainers.elasticsearch.version>
-        <lombok.version>1.18.38</lombok.version>
+        <lombok.version>1.18.40</lombok.version>
         <!-- newer byte-buddy version to support JDK 21 -->
         <byte-buddy.version>1.14.9</byte-buddy.version>
     </properties>
