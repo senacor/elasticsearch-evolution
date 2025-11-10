@@ -16,7 +16,7 @@
     <properties>
         <java.version>17</java.version>
 
-        <commons-io.version>2.20.0</commons-io.version>
+        <commons-io.version>2.21.0</commons-io.version>
         <elasticsearch.version>7.5.2</elasticsearch.version>
         <testcontainers.elasticsearch.version>1.21.3</testcontainers.elasticsearch.version>
     </properties>
