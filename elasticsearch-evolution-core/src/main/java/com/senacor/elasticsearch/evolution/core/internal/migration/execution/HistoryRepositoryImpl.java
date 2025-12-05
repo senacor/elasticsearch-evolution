@@ -116,7 +116,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     }
 
     private long executeCountRequest(Optional<String> countQuery) throws IOException {
-        final Request countRequest = new Request("GET", "/" + historyIndex + "/_count");
+        final Request countRequest = new Request("POST", "/" + historyIndex + "/_count");
         countRequest.addParameters(indicesOptions(IndexOptions.lenientExpandOpen()));
         countQuery.ifPresent(countRequest::setJsonEntity);
         final Response countResponse = restClient.performRequest(countRequest);

@@ -5,20 +5,20 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.2.5</version>
+		<version>3.2.6</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.senacor.elasticsearch.evolution</groupId>
 	<artifactId>test-spring-boot-3.2</artifactId>
-	<version>0.6.0</version>
+	<version>0.6.1-SNAPSHOT</version>
 	<description>Demo project for Spring Boot</description>
 
 	<properties>
 		<java.version>17</java.version>
 
-		<commons-io.version>2.16.1</commons-io.version>
+		<commons-io.version>2.21.0</commons-io.version>
 		<elasticsearch.version>7.5.2</elasticsearch.version>
-		<testcontainers.elasticsearch.version>1.19.8</testcontainers.elasticsearch.version>
+		<testcontainers.elasticsearch.version>1.21.3</testcontainers.elasticsearch.version>
 	</properties>
 
 	<dependencies>
@@ -78,7 +78,7 @@
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<!--jacoco snapshot to support java 17/18-->
-				<version>0.8.12</version>
+				<version>0.8.14</version>
 				<executions>
 					<execution>
 						<id>prepare-agent</id>
@@ -101,23 +101,23 @@
 					<failIfNoTests>true</failIfNoTests>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.openrewrite.maven</groupId>
-				<artifactId>rewrite-maven-plugin</artifactId>
-				<version>5.31.0</version>
-				<configuration>
-					<activeRecipes>
-						<recipe>org.openrewrite.java.migrate.UpgradeToJava17</recipe>
-					</activeRecipes>
-				</configuration>
-				<dependencies>
-					<dependency>
-						<groupId>org.openrewrite.recipe</groupId>
-						<artifactId>rewrite-migrate-java</artifactId>
-						<version>2.14.0</version>
-					</dependency>
-				</dependencies>
-			</plugin>
+<!--			<plugin>-->
+<!--				<groupId>org.openrewrite.maven</groupId>-->
+<!--				<artifactId>rewrite-maven-plugin</artifactId>-->
+<!--				<version>6.3.2</version>-->
+<!--				<configuration>-->
+<!--					<activeRecipes>-->
+<!--						<recipe>org.openrewrite.java.migrate.UpgradeToJava17</recipe>-->
+<!--					</activeRecipes>-->
+<!--				</configuration>-->
+<!--				<dependencies>-->
+<!--					<dependency>-->
+<!--						<groupId>org.openrewrite.recipe</groupId>-->
+<!--						<artifactId>rewrite-migrate-java</artifactId>-->
+<!--						<version>3.4.0</version>-->
+<!--					</dependency>-->
+<!--				</dependencies>-->
+<!--			</plugin>-->
 		</plugins>
 	</build>
 
