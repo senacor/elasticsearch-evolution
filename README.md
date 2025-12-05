@@ -32,7 +32,7 @@ Successful executed migration scripts will not be executed again!
 
 | Compatibility                    | Spring Boot                                      | Elasticsearch        | Opensearch |
 |----------------------------------|--------------------------------------------------|----------------------|------------|
-| elasticsearch-evolution >= 0.6.0 | 3.x                                              | 7.5.x - 8.19.x       | 1.x - 2.x  |
+| elasticsearch-evolution >= 0.6.1 | 3.x                                              | 7.5.x - 8.19.x       | 1.x - 2.x  |
 | elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1, 3.2 | 7.5.x - 8.13.x       | 1.x - 2.x  |
 | elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 8.6.x        | 1.x - 2.x  |
 | elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 7.17.x       |            |
@@ -48,7 +48,7 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.6.0</version>
+    <version>0.6.1</version>
 </dependency>
 ```
 
@@ -72,7 +72,7 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.6.0</version>
+    <version>0.6.1</version>
 </dependency>
 ```
 
@@ -280,7 +280,7 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.6.1-SNAPSHOT
+### v0.6.1
 
 - added regression tests against OpenSearch 2.19
 - bump spring boot version to 3.5
