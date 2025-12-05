@@ -8,7 +8,6 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core)
 [![Javadocs](https://www.javadoc.io/badge/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core.svg)](https://www.javadoc.io/doc/com.senacor.elasticsearch.evolution/elasticsearch-evolution-core)
 [![Github build](https://github.com/senacor/elasticsearch-evolution/workflows/Maven%20Matrix%20Build/badge.svg?branch=master)](https://github.com/senacor/elasticsearch-evolution/actions?query=branch%3Amaster)
-[![codebeat badge](https://codebeat.co/badges/29dc74db-88e2-4b26-963b-14eb340ae275)](https://codebeat.co/projects/github-com-senacor-elasticsearch-evolution-master)
 [![Coverage Status](https://coveralls.io/repos/github/senacor/elasticsearch-evolution/badge.svg?branch=master)](https://coveralls.io/github/senacor/elasticsearch-evolution?branch=master)
 ![Lines of code](https://img.shields.io/tokei/lines/github/senacor/elasticsearch-evolution)
 ![Libraries.io dependency status for GitHub repo](https://img.shields.io/librariesio/github/senacor/elasticsearch-evolution)
@@ -20,7 +19,7 @@ Successful executed migration scripts will not be executed again!
 
 ## 2 Features
 
-- tested on Java 17 and 21
+- tested on Java 17, 21 and 25
 - runs on Spring-Boot 3.x (and of course without Spring-Boot)
 - runs on Elasticsearch version 7.5.x - 8.13.x
 - runs on Opensearch version 1.x and 2.x
@@ -286,6 +285,8 @@ ElasticsearchEvolution.configure()
 - added regression tests against OpenSearch 2.14
 - bump spring boot version to 3.3.0
 - added regression tests for spring boot 3.3
+- bugfix ([#536](https://github.com/senacor/elasticsearch-evolution/issues/536)): don't do HTTP GET request with a body
+- added regression tests on JDK 25
 
 ### v0.6.0
 

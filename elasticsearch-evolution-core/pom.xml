@@ -115,12 +115,6 @@
             <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <!-- support JDK 21 -->
-            <groupId>net.bytebuddy</groupId>
-            <artifactId>byte-buddy</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
