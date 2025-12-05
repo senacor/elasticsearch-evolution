@@ -280,6 +280,10 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
+### v0.6.2-SNAPSHOT
+
+- ...
+
 ### v0.6.1
 
 - added regression tests against OpenSearch 2.19
