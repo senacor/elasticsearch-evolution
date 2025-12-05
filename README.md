@@ -21,7 +21,7 @@ Successful executed migration scripts will not be executed again!
 
 - tested on Java 17, 21 and 25
 - runs on Spring-Boot 3.x (and of course without Spring-Boot)
-- runs on Elasticsearch version 7.5.x - 8.13.x
+- runs on Elasticsearch version 7.5.x - 8.19.x
 - runs on Opensearch version 1.x and 2.x
 - highly configurable (e.g. location(s) of your migration files, migration files format pattern)
 - placeholder substitution in migration scripts
@@ -32,7 +32,7 @@ Successful executed migration scripts will not be executed again!
 
 | Compatibility                    | Spring Boot                                      | Elasticsearch        | Opensearch |
 |----------------------------------|--------------------------------------------------|----------------------|------------|
-| elasticsearch-evolution >= 0.6.0 | 3.x                                              | 7.5.x - 8.13.x       | 1.x - 2.x  |
+| elasticsearch-evolution >= 0.6.0 | 3.x                                              | 7.5.x - 8.19.x       | 1.x - 2.x  |
 | elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1, 3.2 | 7.5.x - 8.13.x       | 1.x - 2.x  |
 | elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 8.6.x        | 1.x - 2.x  |
 | elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 7.17.x       |            |
@@ -282,11 +282,12 @@ ElasticsearchEvolution.configure()
 
 ### v0.6.1-SNAPSHOT
 
-- added regression tests against OpenSearch 2.14
+- added regression tests against OpenSearch 2.19
 - bump spring boot version to 3.3.0
 - added regression tests for spring boot 3.3
 - bugfix ([#536](https://github.com/senacor/elasticsearch-evolution/issues/536)): don't do HTTP GET request with a body
 - added regression tests on JDK 25
+- added regression tests against ElasticSearch 8.14 - 8.19
 
 ### v0.6.0
 
