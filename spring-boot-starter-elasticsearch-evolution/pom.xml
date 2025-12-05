@@ -11,6 +11,8 @@
     </parent>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
     <packaging>jar</packaging>
+
+    <name>${project.artifactId}</name>
     <description>spring boot starter with auto configuration for elasticsearch-evolution</description>
 
     <properties>

@@ -11,6 +11,8 @@
     </parent>
     <artifactId>elasticsearch-evolution-core</artifactId>
     <packaging>jar</packaging>
+
+    <name>${project.artifactId}</name>
     <description>core library of elasticsearch-evolution</description>
 
     <properties>
