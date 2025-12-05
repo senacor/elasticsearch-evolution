@@ -283,7 +283,7 @@ ElasticsearchEvolution.configure()
 ### v0.6.1-SNAPSHOT
 
 - added regression tests against OpenSearch 2.19
-- bump spring boot version to 3.3.0
+- bump spring boot version to 3.5
 - added regression tests for spring boot 3.3
 - bugfix ([#536](https://github.com/senacor/elasticsearch-evolution/issues/536)): don't do HTTP GET request with a body
 - added regression tests on JDK 25
