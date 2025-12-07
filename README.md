@@ -1,6 +1,6 @@
 # Elasticsearch-Evolution
 
-> A library to migrate Elasticsearch mappings. Inspired by flyway.
+> A library to migrate Elasticsearch and Opensearch mappings. Inspired by flyway.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://raw.githubusercontent.com/senacor/elasticsearch-evolution/master/LICENSE)
 [![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
