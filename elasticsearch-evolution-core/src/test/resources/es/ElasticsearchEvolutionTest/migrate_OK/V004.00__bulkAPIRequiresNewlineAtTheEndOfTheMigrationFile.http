@@ -1,4 +1,4 @@
-POST _bulk
+POST /_bulk
 Content-Type: application/x-ndjson
 
 # https://github.com/senacor/elasticsearch-evolution/issues/293

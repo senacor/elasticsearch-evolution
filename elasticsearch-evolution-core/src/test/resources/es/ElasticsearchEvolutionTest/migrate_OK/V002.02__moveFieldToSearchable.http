@@ -1,4 +1,4 @@
-POST test_*/_update_by_query?refresh
+POST /test_*/_update_by_query?refresh
 Content-Type: application/json
 
 {

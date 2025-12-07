@@ -97,7 +97,7 @@ elasticsearchEvolution.migrate();
 A Elasticsearch-Evolutions migration script represents just a rest call. Here is an Example:
 
 ```http request
-PUT _template/my_template
+PUT /_template/my_template
 Content-Type: application/json
 
 {
@@ -124,7 +124,7 @@ Content-Type: application/json
 }
 ```
 
-The first line defines the HTTP method `PUT` and the relative path to the Elasticsearch/Opensearch endpoint `_template/my_template` to create a new mapping template.
+The first line defines the HTTP method `PUT` and the relative path to the Elasticsearch/Opensearch endpoint `/_template/my_template` to create a new mapping template.
 Followed by a HTTP Header `Content-Type: application/json`.
 After a blank line the HTTP body is defined.
 
