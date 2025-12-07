@@ -14,7 +14,7 @@
 
 ## 1 Evolve your Elasticsearch and Opensearch mapping easily and reliable across all your instances
 
-Elasticsearch-Evolution executes versioned migration scripts reliable and persists the execution state in an internal Elasticsearch/Opensearch index.
+Elasticsearch-Evolution executes versioned migration scripts reliable and persists the execution state in an internal Elasticsearch / Opensearch index.
 Successful executed migration scripts will not be executed again! 
 
 ## 2 Features
