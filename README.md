@@ -11,6 +11,7 @@
 [![Quality analysis](https://github.com/senacor/elasticsearch-evolution/actions/workflows/quality.yml/badge.svg)](https://github.com/senacor/elasticsearch-evolution/actions/workflows/quality.yml)
 [![Coverage Status](https://coveralls.io/repos/github/senacor/elasticsearch-evolution/badge.svg?branch=master)](https://coveralls.io/github/senacor/elasticsearch-evolution?branch=master)
 ![Libraries.io dependency status for GitHub repo](https://img.shields.io/librariesio/github/senacor/elasticsearch-evolution)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11573/badge)](https://www.bestpractices.dev/projects/11573)
 
 ## 1 Evolve your Elasticsearch and Opensearch mapping easily and reliable across all your instances
 
