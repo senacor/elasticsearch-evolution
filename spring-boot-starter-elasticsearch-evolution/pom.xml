@@ -14,7 +14,13 @@
 
     <name>${project.artifactId}</name>
     <description>spring boot starter with auto configuration for elasticsearch-evolution</description>
+    <url>${project.parent.url}</url>
 
+    <scm>
+        <connection>${project.parent.scm.connection}</connection>
+        <developerConnection>${project.parent.scm.developerConnection}</developerConnection>
+        <url>${project.parent.scm.url}</url>
+    </scm>
     <properties>
     </properties>
 
