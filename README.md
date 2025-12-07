@@ -12,7 +12,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/senacor/elasticsearch-evolution/badge.svg?branch=master)](https://coveralls.io/github/senacor/elasticsearch-evolution?branch=master)
 ![Libraries.io dependency status for GitHub repo](https://img.shields.io/librariesio/github/senacor/elasticsearch-evolution)
 
-## 1 Evolve your Elasticsearch mapping easily and reliable across all your instances
+## 1 Evolve your Elasticsearch and Opensearch mapping easily and reliable across all your instances
 
 Elasticsearch-Evolution executes versioned migration scripts reliable and persists the execution state in an internal Elasticsearch/Opensearch index.
 Successful executed migration scripts will not be executed again! 
