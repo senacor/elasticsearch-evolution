@@ -36,7 +36,7 @@ jobs:
         with:
           languages: 'java'
       - name: Build and test with Maven
-        run: $MVN_CMD install
+        run: $MVN_CMD install spotbugs:spotbugs
       - name: upload test results
         uses: actions/upload-artifact@v5  # upload test results
         if: success() || failure()        # run this step even if previous step failed
@@ -52,3 +52,7 @@ jobs:
         run: $MVN_CMD coveralls:report -DrepoToken=$COVERALLS_REPO_TOKEN -DserviceName=GitHub-Actions
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
+      - name: Publish SpotBugs Code Analysis report
+        uses: lcollins/spotbugs-github-action@v3.1.0
+        with:
+          path: '**/spotbugsXml.xml'
