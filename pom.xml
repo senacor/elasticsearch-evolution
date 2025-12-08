@@ -313,6 +313,17 @@
 <!--                        </dependency>-->
 <!--                    </dependencies>-->
 <!--                </plugin>-->
+                <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>4.9.8.2</version>
+                    <configuration>
+                        <xmlOutput>true</xmlOutput>
+                        <failOnError>false</failOnError>
+                        <effort>max</effort>
+                        <threshold>high</threshold>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -338,6 +349,15 @@
             </plugin>
         </plugins>
     </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </reporting>
 
     <profiles>
         <!-- Activate using the release property: mvn clean install -Drelease -->
