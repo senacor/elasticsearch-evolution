@@ -21,7 +21,7 @@ Successful executed migration scripts will not be executed again!
 ## 2 Features
 
 - tested on Java 17, 21 and 25
-- runs on Spring-Boot 3.x (and of course without Spring-Boot)
+- runs on Spring-Boot >= 3.1 (and of course without Spring-Boot)
 - runs on Elasticsearch version 7.5.x - 8.19.x
 - runs on Opensearch version 1.x and 2.x
 - highly configurable (e.g. location(s) of your migration files, migration files format pattern)
@@ -33,7 +33,8 @@ Successful executed migration scripts will not be executed again!
 
 | Compatibility                    | Spring Boot                                      | Elasticsearch        | Opensearch |
 |----------------------------------|--------------------------------------------------|----------------------|------------|
-| elasticsearch-evolution >= 0.6.1 | 3.x                                              | 7.5.x - 8.19.x       | 1.x - 2.x  |
+| elasticsearch-evolution >= 0.6.2 | 3.1, 3.2, 3.3, 3.4                               | 7.5.x - 8.19.x       | 1.x - 2.x  |
+| elasticsearch-evolution >= 0.6.1 | 3.0, 3.1, 3.2                                    | 7.5.x - 8.19.x       | 1.x - 2.x  |
 | elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1, 3.2 | 7.5.x - 8.13.x       | 1.x - 2.x  |
 | elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 8.6.x        | 1.x - 2.x  |
 | elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 7.17.x       |            |
@@ -283,7 +284,8 @@ ElasticsearchEvolution.configure()
 
 ### v0.6.2-SNAPSHOT
 
-- ...
+- Drop spring boot 3.0 compatibility. Further versions may run on spring boot 3.0, but it is not tested anymore.
+- Added regression tests for spring boot 3.4.
 
 ### v0.6.1
 
