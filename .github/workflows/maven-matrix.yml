@@ -102,7 +102,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Import GPG key to sign maven build artifacts
+      - name: Import GPG key to sign maven build artifacts (this may fail when this job was triggered from an untrusted source because then the required environment variable is not available)
         uses: crazy-max/ghaction-import-gpg@v6
         with:
           gpg_private_key: ${{ secrets.GPG_SECRET_KEYS }}
