@@ -1,4 +1,4 @@
-package com.senacor.elasticsearch.evolution.springboot30;
+package com.senacor.elasticsearch.evolution.springboot34;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
