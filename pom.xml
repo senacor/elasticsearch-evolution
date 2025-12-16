@@ -110,7 +110,7 @@
         <!--when updating elasticsearch versions, also update "ElasticsearchContainer" version in EmbeddedElasticsearchExtension-->
         <elasticsearch.version>7.5.2</elasticsearch.version>
         <classgraph.version>4.8.184</classgraph.version>
-        <testcontainers.elasticsearch.version>1.21.3</testcontainers.elasticsearch.version>
+        <testcontainers.elasticsearch.version>1.21.4</testcontainers.elasticsearch.version>
         <lombok.version>1.18.42</lombok.version>
     </properties>
 
