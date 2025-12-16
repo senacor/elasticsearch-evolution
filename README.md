@@ -21,7 +21,7 @@ Successful executed migration scripts will not be executed again!
 ## 2 Features
 
 - tested on Java 17, 21 and 25
-- runs on Spring-Boot >= 3.1 (and of course without Spring-Boot)
+- runs on Spring-Boot 3.x (and of course without Spring-Boot)
 - runs on Elasticsearch version 7.5.x - 8.19.x
 - runs on Opensearch version 1.x and 2.x
 - highly configurable (e.g. location(s) of your migration files, migration files format pattern)
@@ -33,8 +33,8 @@ Successful executed migration scripts will not be executed again!
 
 | Compatibility                    | Spring Boot                                      | Elasticsearch        | Opensearch |
 |----------------------------------|--------------------------------------------------|----------------------|------------|
-| elasticsearch-evolution >= 0.6.2 | 3.1, 3.2, 3.3, 3.4                               | 7.5.x - 8.19.x       | 1.x - 2.x  |
-| elasticsearch-evolution >= 0.6.1 | 3.0, 3.1, 3.2                                    | 7.5.x - 8.19.x       | 1.x - 2.x  |
+| elasticsearch-evolution >= 0.6.2 | 3.1 - 3.4                                        | 7.5.x - 8.19.x       | 1.x - 2.x  |
+| elasticsearch-evolution >= 0.6.1 | 3.0 - 3.2                                        | 7.5.x - 8.19.x       | 1.x - 2.x  |
 | elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1, 3.2 | 7.5.x - 8.13.x       | 1.x - 2.x  |
 | elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 8.6.x        | 1.x - 2.x  |
 | elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 7.17.x       |            |
@@ -414,36 +414,14 @@ ElasticsearchEvolution.configure()
 
 ## 7 Contributing
 
-We welcome contributions to Elasticsearch-Evolution! Here's how you can help:
+We welcome contributions to Elasticsearch-Evolution! Here's how you can help: [CONTRIBUTING.md](CONTRIBUTING.md)
 
-### 7.1 Reporting Issues
+## 8 Code of Conduct
 
-If you find a bug or have a feature request, please open an issue on [GitHub Issues](https://github.com/senacor/elasticsearch-evolution/issues). Please include:
+see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 
-- A clear description of the issue or feature request
-- Steps to reproduce (for bugs)
-- Expected vs. actual behavior
-- Your environment (Elasticsearch-Evolution version, Java version, Spring Boot version, Elasticsearch/Opensearch version)
+## 9 Stats
 
-### 7.2 Contributing Code
+### 9.1 Star History
 
-1. **Fork the repository** and create your branch from `master`
-2. **Make your changes** following the existing code style
-3. **Add tests** for any new functionality
-4. **Ensure all tests pass** by running `./mvnw clean install`
-5. **Update documentation** if you're adding or changing functionality
-6. **Submit a pull request** with a clear description of your changes
-
-### 7.3 Code Quality
-
-This project uses:
-
-- **CodeQL** for security analysis
-- **JaCoCo** for code coverage
-- **Maven** for dependency management
-
-Please ensure your contributions maintain the quality standards enforced by our CI/CD pipeline.
-
-### 7.4 License
-
-By contributing to Elasticsearch-Evolution, you agree that your contributions will be licensed under the [Apache License 2.0](https://raw.githubusercontent.com/senacor/elasticsearch-evolution/master/LICENSE).
+[![Star History Chart](https://api.star-history.com/svg?repos=senacor/elasticsearch-evolution&type=date&legend=top-left)](https://www.star-history.com/#senacor/elasticsearch-evolution&type=date&legend=top-left)
