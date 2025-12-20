@@ -23,9 +23,9 @@ Successful executed migration scripts will not be executed again!
 - tested on Java 17, 21 and 25
 - runs on Spring-Boot 3.x (and of course without Spring-Boot)
 - runs on Elasticsearch version 7.5.x - 9.x
-  - but focussing on maintained versions, see https://www.elastic.co/support/eol or https://endoflife.date/elasticsearch
+  - but focussing on maintained versions, see [elastic.co/support/eol](https://www.elastic.co/support/eol) or [endoflife.date/elasticsearch](https://endoflife.date/elasticsearch)
 - runs on Opensearch version 1.x - 3.x
-  - but focussing on maintained versions, see https://opensearch.org/releases/ or https://endoflife.date/opensearch
+  - but focussing on maintained versions, see [opensearch.org/releases](https://opensearch.org/releases/) or [endoflife.date/opensearch](https://endoflife.date/opensearch)
 - highly configurable (e.g. location(s) of your migration files, migration files format pattern)
 - placeholder substitution in migration scripts
 - easily extendable to your needs
