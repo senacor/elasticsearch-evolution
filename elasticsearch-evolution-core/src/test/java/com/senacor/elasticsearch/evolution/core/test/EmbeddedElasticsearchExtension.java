@@ -44,10 +44,14 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
     private static final SortedSet<SearchContainer> SUPPORTED_SEARCH_VERSIONS = Collections.unmodifiableSortedSet(new TreeSet<>(Arrays.asList(
+            ofOpensearch("3.4.0"),
+            ofOpensearch("3.3.2"),
             ofOpensearch("2.19.4"),
             ofOpensearch("1.3.20"),
 
-            ofElasticsearch("8.19.8"),
+            ofElasticsearch("9.2.3"),
+            ofElasticsearch("9.1.9"),
+            ofElasticsearch("8.19.9"),
             ofElasticsearch("7.17.28")
     )));
 
@@ -185,10 +189,12 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
                     .containerImage("quay.io/xtermi2/opensearch")
                     .version(version)
                     .env(ImmutableMap.of(
-                            "OPENSEARCH_JAVA_OPTS", "-Xms128m -Xmx128m",
+                            // since opensearch 3.x 128MB is not enough
+                            "OPENSEARCH_JAVA_OPTS", "-Xms196m -Xmx196m",
                             // disable security / https for testing
                             "plugins.security.disabled", "true",
-                            "DISABLE_INSTALL_DEMO_CONFIG", "true"
+                            "DISABLE_INSTALL_DEMO_CONFIG", "true",
+                            "discovery.type", "single-node"
                     ))
                     .transportPort(9600)
                     .build();
