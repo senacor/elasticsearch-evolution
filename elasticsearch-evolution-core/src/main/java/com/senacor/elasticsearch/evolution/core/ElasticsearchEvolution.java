@@ -3,6 +3,7 @@ package com.senacor.elasticsearch.evolution.core;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
+import com.senacor.elasticsearch.evolution.core.api.ValidateException;
 import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptParser;
@@ -98,11 +99,11 @@ public class ElasticsearchEvolution {
      */
     public int migrate() throws MigrationException {
         if (getConfig().isEnabled()) {
-            logger.info("start elasticsearch migration...");
+            logger.info("start migration...");
             logger.info("reading migration scripts...");
             Collection<RawMigrationScript> rawMigrationScripts = migrationScriptReader.read();
             if (rawMigrationScripts.size() > getConfig().getHistoryMaxQuerySize()) {
-                throw new MigrationException("configured historyMaxQuerySize of '%s' is to low for the number of migration scripts of '%s'".formatted(
+                throw new MigrationException("configured historyMaxQuerySize of '%s' is too low for the number of migration scripts of '%s'".formatted(
                         getConfig().getHistoryMaxQuerySize(), rawMigrationScripts.size()));
             }
 
@@ -116,6 +117,47 @@ public class ElasticsearchEvolution {
         } else {
             logger.debug("elasticsearch-evolution is not enabled");
             return 0;
+        }
+    }
+
+    /**
+     * Validate applied migrations against resolved ones (on the filesystem or classpath)
+     * to detect accidental changes that may prevent the schema(s) from being recreated exactly.
+     * Validation fails if:
+     * <ul>
+     * <li>a previously applied migration has been modified after it was applied (if enabled in configuration {@link ElasticsearchEvolutionConfig#isValidateOnMigrate()}</li>
+     * <li>versions have been resolved that haven't been applied yet</li>
+     * </ul>
+     *
+     * @throws ValidateException when the validation failed.
+     */
+    public void validate() throws ValidateException {
+        if (getConfig().isEnabled()) {
+            logger.info("start validate...");
+            logger.info("reading migration scripts...");
+            Collection<RawMigrationScript> rawMigrationScripts = migrationScriptReader.read();
+            if (rawMigrationScripts.size() > getConfig().getHistoryMaxQuerySize()) {
+                throw new ValidateException("configured historyMaxQuerySize of '%s' is too low for the number of migration scripts of '%s'".formatted(
+                        getConfig().getHistoryMaxQuerySize(), rawMigrationScripts.size()));
+            }
+
+            logger.info("parsing migration scripts...");
+            Collection<ParsedMigrationScript> parsedMigrationScripts = migrationScriptParser.parse(rawMigrationScripts);
+            logger.info("validating migration scripts...");
+            try {
+                List<ParsedMigrationScript> pendingScriptsToBeExecuted = migrationService.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+
+                if (!pendingScriptsToBeExecuted.isEmpty()) {
+                    throw new ValidateException(pendingScriptsToBeExecuted.stream()
+                            .map(ParsedMigrationScript::getFileNameInfo)
+                            .toList());
+                }
+            } catch (MigrationException migrationException) {
+                throw new ValidateException("Validation failed: " + migrationException.getMessage(), migrationException);
+            }
+            logger.info("validate succeeded");
+        } else {
+            logger.debug("elasticsearch-evolution is not enabled");
         }
     }
 

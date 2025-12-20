@@ -94,6 +94,27 @@ ElasticsearchEvolution elasticsearchEvolution = ElasticsearchEvolution.configure
 elasticsearchEvolution.migrate();
 ```
 
+#### 3.2.1 Validation without execution
+
+If you just want to validate your migration scripts without executing them, you can use the `validate()` method:
+
+```java
+ElasticsearchEvolution elasticsearchEvolution = ...;
+// just validate the migrations
+elasticsearchEvolution.validate();
+```
+
+This will validate applied migrations against resolved ones (on the filesystem or classpath) to detect accidental
+changes that may prevent the schema(s) from being recreated exactly.
+
+Validation fails if:
+
+* a previously applied migration has been modified after it was applied (if enabled in configuration, see
+  `validateOnMigrate`)
+* versions have been resolved that haven't been applied yet
+
+Then a `ValidateException` is thrown.
+
 ## 4 Migration script format
 
 ### 4.1 Migration script file content
@@ -290,6 +311,7 @@ ElasticsearchEvolution.configure()
 - Added regression tests for spring boot 3.4.
 - Added regression tests against ElasticSearch 9.0 - 9.2
 - Added regression tests against OpenSearch 3.3 and 3.4
+- Added option to just validate without executing migrations ([#435](https://github.com/senacor/elasticsearch-evolution/issues/435)).
 
 ### v0.6.1
 

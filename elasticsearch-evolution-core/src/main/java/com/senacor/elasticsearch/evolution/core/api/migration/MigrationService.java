@@ -3,6 +3,7 @@ package com.senacor.elasticsearch.evolution.core.api.migration;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
+import lombok.NonNull;
 
 import java.util.Collection;
 import java.util.List;
@@ -20,5 +21,18 @@ public interface MigrationService {
      * @return executed Scripts
      * @throws MigrationException if execution failed
      */
-    List<MigrationScriptProtocol> executePendingScripts(Collection<ParsedMigrationScript> migrationScripts) throws MigrationException;
+    @NonNull
+    List<MigrationScriptProtocol> executePendingScripts(@NonNull Collection<ParsedMigrationScript> migrationScripts) throws MigrationException;
+
+    /**
+     * This method returns only those scripts, which must be executed.
+     * Already executed scripts will be filtered out.
+     * The returned scripts must be executed in the returned order.
+     *
+     * @param migrationScripts all migration scripts that were potentially executed earlier.
+     * @return list of ordered scripts which must be executed
+     * @throws MigrationException if validateOnMigrate failed
+     */
+    @NonNull
+    List<ParsedMigrationScript> getPendingScriptsToBeExecuted(@NonNull Collection<ParsedMigrationScript> migrationScripts) throws MigrationException;
 }
