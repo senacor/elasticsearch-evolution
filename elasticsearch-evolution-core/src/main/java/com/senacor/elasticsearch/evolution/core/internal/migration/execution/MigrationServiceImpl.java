@@ -7,6 +7,7 @@ import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.internal.utils.RandomUtils;
+import lombok.NonNull;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.client.Request;
@@ -67,7 +68,8 @@ public class MigrationServiceImpl implements MigrationService {
     }
 
     @Override
-    public List<MigrationScriptProtocol> executePendingScripts(Collection<ParsedMigrationScript> migrationScripts)
+    @NonNull
+    public List<MigrationScriptProtocol> executePendingScripts(@NonNull Collection<ParsedMigrationScript> migrationScripts)
             throws MigrationException {
         if (!getPendingScriptsToBeExecuted(migrationScripts).isEmpty()) {
             return executePendingScriptsWithLock(migrationScripts);
@@ -78,7 +80,7 @@ public class MigrationServiceImpl implements MigrationService {
 
     private List<MigrationScriptProtocol> executePendingScriptsWithLock(Collection<ParsedMigrationScript> migrationScripts)
             throws MigrationException {
-        List<MigrationScriptProtocol> executedScripts = new ArrayList<>();
+        final List<MigrationScriptProtocol> executedScripts = new ArrayList<>();
         try {
             historyRepository.createIndexIfAbsent();
             waitUntilUnlocked();
@@ -171,15 +173,9 @@ public class MigrationServiceImpl implements MigrationService {
                 error);
     }
 
-    /**
-     * This method returns only those scripts, which must be executed.
-     * Already executed scripts will be filtered out.
-     * the returned scripts must be executed in the returned order.
-     *
-     * @param migrationScripts all migration scripts that were potentially executed earlier.
-     * @return list of ordered scripts which must be executed
-     */
-    List<ParsedMigrationScript> getPendingScriptsToBeExecuted(Collection<ParsedMigrationScript> migrationScripts) {
+    @Override
+    @NonNull
+    public List<ParsedMigrationScript> getPendingScriptsToBeExecuted(@NonNull Collection<ParsedMigrationScript> migrationScripts) throws MigrationException {
         if (migrationScripts.isEmpty()) {
             return new ArrayList<>();
         }
@@ -249,7 +245,8 @@ public class MigrationServiceImpl implements MigrationService {
         return res;
     }
 
-    private void validateOnMigrateIfEnabled(MigrationScriptProtocol protocol, ParsedMigrationScript parsedMigrationScript) {
+    private void validateOnMigrateIfEnabled(MigrationScriptProtocol protocol,
+                                            ParsedMigrationScript parsedMigrationScript) {
         // failed scripts can be edited and retried, but successfully executed scripts may not be modified afterward
         if (validateOnMigrate && protocol.isSuccess() && protocol.getChecksum() != parsedMigrationScript.getChecksum()) {
             throw new MigrationException((

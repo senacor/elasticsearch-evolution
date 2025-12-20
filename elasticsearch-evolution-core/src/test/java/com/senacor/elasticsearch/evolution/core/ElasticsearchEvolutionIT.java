@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
+import com.senacor.elasticsearch.evolution.core.api.ValidateException;
 import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
 import com.senacor.elasticsearch.evolution.core.internal.migration.execution.HistoryRepositoryImpl;
@@ -32,8 +33,7 @@ import java.util.Map;
 import java.util.NavigableSet;
 
 import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.elasticsearch.client.RequestOptions.DEFAULT;
 
@@ -60,6 +60,10 @@ class ElasticsearchEvolutionIT {
         ElasticsearchEvolution underTest = elasticsearchEvolutionConfig
                 .load(restHighLevelClient.getLowLevelClient());
 
+        assertThatThrownBy(underTest::validate)
+                .isInstanceOf(ValidateException.class)
+                .hasMessageStartingWith("There are pending migrations to be executed: ");
+
         assertSoftly(softly -> {
             softly.assertThat(underTest.migrate())
                     .as("# of successful executed scripts ")
@@ -70,6 +74,9 @@ class ElasticsearchEvolutionIT {
                     .allMatch(MigrationScriptProtocol::isSuccess);
         });
         esUtils.refreshIndices();
+
+        assertThatCode(underTest::validate)
+                .doesNotThrowAnyException();
 
         String testIndex = "test_*";
         Response getIndexResponse = restHighLevelClient.getLowLevelClient().performRequest(new Request("GET", "/" + testIndex));
@@ -84,7 +91,6 @@ class ElasticsearchEvolutionIT {
                     .containsKeys("test_1", "test_2");
             softly.assertThat(bodyParsed.get("test_1").get("mappings"))
                     .as("'test_1' and 'test_2' mapping should be equals '%s'", bodyParsed)
-                    .isNotNull()
                     .isNotEmpty()
                     .isEqualTo(bodyParsed.get("test_2").get("mappings"));
         });
@@ -150,7 +156,7 @@ class ElasticsearchEvolutionIT {
         assertSoftly(softly -> {
             softly.assertThat(elasticsearchEvolutionConfig.load(restHighLevelClient.getLowLevelClient()).migrate())
                     .as("# of successful executed scripts")
-                    .isEqualTo(1);
+                    .isOne();
             NavigableSet<MigrationScriptProtocol> protocols = historyRepository.findAll();
             softly.assertThat(protocols)
                     .as("# of historyIndex entries and all are successful")
@@ -217,7 +223,7 @@ class ElasticsearchEvolutionIT {
         assertSoftly(softly -> {
             softly.assertThat(elasticsearchEvolutionConfig.load(restHighLevelClient.getLowLevelClient()).migrate())
                     .as("# of successful executed scripts ")
-                    .isEqualTo(1);
+                    .isOne();
             softly.assertThat(historyRepository.findAll())
                     .as("# of historyIndex entries and all are successful")
                     .hasSize(3)
