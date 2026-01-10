@@ -9,11 +9,11 @@ import com.senacor.elasticsearch.evolution.core.internal.model.migration.Migrati
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.test.ArgumentProviders;
 import com.senacor.elasticsearch.evolution.core.test.ArgumentProviders.FailingHttpCodesProvider;
-import com.senacor.elasticsearch.evolution.core.test.MockitoExtension;
-import org.apache.http.StatusLine;
+import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestResponse;
+import com.senacor.elasticsearch.evolution.rest.abstracion.HttpMethod;
 import org.apache.http.entity.ContentType;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestClient;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +25,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -33,19 +34,18 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.stream.Stream;
 
 import static com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion.fromVersion;
-import static com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest.HttpMethod.DELETE;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.junit.jupiter.api.Assertions.assertTimeout;
-import static org.mockito.Answers.RETURNS_DEEP_STUBS;
-import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -57,10 +57,16 @@ class MigrationServiceImplTest {
     @Mock
     private HistoryRepository historyRepository;
     @Mock
-    private RestClient restClient;
+    private EvolutionRestClient restClient;
 
     private final Charset encoding = StandardCharsets.UTF_8;
-    private final ContentType defaultContentType = ContentType.APPLICATION_JSON;
+    private final String defaultContentType = ContentType.APPLICATION_JSON.toString();
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(restClient.getContentType(nullable(Map.class)))
+                .thenCallRealMethod();
+    }
 
     @Nested
     class waitUntilUnlocked {
@@ -383,8 +389,8 @@ class MigrationServiceImplTest {
         @Test
         void OK_resultIsSetCorrect() throws IOException {
             ParsedMigrationScript script = createParsedMigrationScript("1.1");
-            Response responseMock = createResponseMock(200);
-            doReturn(responseMock).when(restClient).performRequest(any());
+            EvolutionRestResponse responseMock = createResponseMock(200);
+            doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
@@ -416,22 +422,11 @@ class MigrationServiceImplTest {
             });
 
             InOrder order = inOrder(historyRepository, restClient);
-            order.verify(restClient).performRequest(argThat(argument -> {
-                assertSoftly(softly -> {
-                    softly.assertThat(argument.getMethod())
-                            .isEqualToIgnoringCase(script.getMigrationScriptRequest().getHttpMethod().name())
-                            .isNotNull();
-                    softly.assertThat(argument.getEndpoint())
-                            .isEqualTo(script.getMigrationScriptRequest().getPath())
-                            .isNotNull();
-                    softly.assertThat(argument.getEntity())
-                            .isNull();
-                    softly.assertThat(argument.getOptions().getHeaders())
-                            .hasSize(script.getMigrationScriptRequest().getHttpHeader().size())
-                            .isEmpty();
-                });
-                return true;
-            }));
+            order.verify(restClient).execute(eq(script.getMigrationScriptRequest().getHttpMethod()),
+                    eq(script.getMigrationScriptRequest().getPath()),
+                    anyMap(),
+                    isNull(),
+                    eq(script.getMigrationScriptRequest().getBody()));
             order.verifyNoMoreInteractions();
         }
 
@@ -439,8 +434,8 @@ class MigrationServiceImplTest {
         void OK_requestWithBody() throws IOException {
             ParsedMigrationScript script = createParsedMigrationScript("1.1");
             script.getMigrationScriptRequest().setBody("my-body");
-            Response responseMock = createResponseMock(200);
-            doReturn(responseMock).when(restClient).performRequest(any());
+            EvolutionRestResponse responseMock = createResponseMock(200);
+            doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
@@ -450,26 +445,12 @@ class MigrationServiceImplTest {
             assertThat(res.isSuccess()).isTrue();
 
             InOrder order = inOrder(historyRepository, restClient);
-            order.verify(restClient).performRequest(argThat(argument -> {
-                assertSoftly(softly -> {
-                    softly.assertThat(argument.getMethod())
-                            .isEqualToIgnoringCase(script.getMigrationScriptRequest().getHttpMethod().name())
-                            .isNotNull();
-                    softly.assertThat(argument.getEndpoint())
-                            .isEqualTo(script.getMigrationScriptRequest().getPath())
-                            .isNotNull();
-                    softly.assertThat(argument.getEntity().getContentLength())
-                            .isEqualTo(script.getMigrationScriptRequest().getBody().length());
-                    softly.assertThat(argument.getEntity().getContentType().getValue())
-                            .isEqualTo(defaultContentType.toString());
-                    softly.assertThat(argument.getEntity().getContentEncoding())
-                            .isNull();
-                    softly.assertThat(argument.getOptions().getHeaders())
-                            .hasSize(script.getMigrationScriptRequest().getHttpHeader().size())
-                            .isEmpty();
-                });
-                return true;
-            }));
+            order.verify(restClient).getContentType(anyMap());
+            order.verify(restClient).execute(eq(script.getMigrationScriptRequest().getHttpMethod()),
+                    eq(script.getMigrationScriptRequest().getPath()),
+                    eq(Map.of(EvolutionRestClient.HEADER_NAME_CONTENT_TYPE, defaultContentType)),
+                    isNull(),
+                    eq(script.getMigrationScriptRequest().getBody()));
             order.verifyNoMoreInteractions();
         }
 
@@ -479,8 +460,8 @@ class MigrationServiceImplTest {
             String contentType = "text/plain";
             script.getMigrationScriptRequest().setBody("my-body")
                     .addHttpHeader("content-type", contentType);
-            Response responseMock = createResponseMock(200);
-            doReturn(responseMock).when(restClient).performRequest(any());
+            EvolutionRestResponse responseMock = createResponseMock(200);
+            doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
@@ -490,25 +471,12 @@ class MigrationServiceImplTest {
             assertThat(res.isSuccess()).isTrue();
 
             InOrder order = inOrder(historyRepository, restClient);
-            order.verify(restClient).performRequest(argThat(argument -> {
-                assertSoftly(softly -> {
-                    softly.assertThat(argument.getMethod())
-                            .isEqualToIgnoringCase(script.getMigrationScriptRequest().getHttpMethod().name())
-                            .isNotNull();
-                    softly.assertThat(argument.getEndpoint())
-                            .isEqualTo(script.getMigrationScriptRequest().getPath())
-                            .isNotNull();
-                    softly.assertThat(argument.getEntity().getContentLength())
-                            .isEqualTo(script.getMigrationScriptRequest().getBody().length());
-                    softly.assertThat(argument.getEntity().getContentType().getValue())
-                            .isEqualTo(contentType + "; charset=" + encoding);
-                    softly.assertThat(argument.getEntity().getContentEncoding())
-                            .isNull();
-                    softly.assertThat(argument.getOptions().getHeaders())
-                            .hasSize(script.getMigrationScriptRequest().getHttpHeader().size());
-                });
-                return true;
-            }));
+            order.verify(restClient).getContentType(anyMap());
+            order.verify(restClient).execute(eq(script.getMigrationScriptRequest().getHttpMethod()),
+                    eq(script.getMigrationScriptRequest().getPath()),
+                    eq(Map.of(EvolutionRestClient.HEADER_NAME_CONTENT_TYPE, contentType + "; charset=" + encoding)),
+                    isNull(),
+                    eq(script.getMigrationScriptRequest().getBody()));
             order.verifyNoMoreInteractions();
         }
 
@@ -518,8 +486,8 @@ class MigrationServiceImplTest {
             String contentType = "text/plain; charset=" + StandardCharsets.ISO_8859_1;
             script.getMigrationScriptRequest().setBody("my-body")
                     .addHttpHeader("content-type", contentType);
-            Response responseMock = createResponseMock(200);
-            doReturn(responseMock).when(restClient).performRequest(any());
+            EvolutionRestResponse responseMock = createResponseMock(200);
+            doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
@@ -529,25 +497,12 @@ class MigrationServiceImplTest {
             assertThat(res.isSuccess()).isTrue();
 
             InOrder order = inOrder(historyRepository, restClient);
-            order.verify(restClient).performRequest(argThat(argument -> {
-                assertSoftly(softly -> {
-                    softly.assertThat(argument.getMethod())
-                            .isEqualToIgnoringCase(script.getMigrationScriptRequest().getHttpMethod().name())
-                            .isNotNull();
-                    softly.assertThat(argument.getEndpoint())
-                            .isEqualTo(script.getMigrationScriptRequest().getPath())
-                            .isNotNull();
-                    softly.assertThat(argument.getEntity().getContentLength())
-                            .isEqualTo(script.getMigrationScriptRequest().getBody().length());
-                    softly.assertThat(argument.getEntity().getContentType().getValue())
-                            .isEqualTo(contentType);
-                    softly.assertThat(argument.getEntity().getContentEncoding())
-                            .isNull();
-                    softly.assertThat(argument.getOptions().getHeaders())
-                            .hasSize(script.getMigrationScriptRequest().getHttpHeader().size());
-                });
-                return true;
-            }));
+            order.verify(restClient).getContentType(anyMap());
+            order.verify(restClient).execute(eq(script.getMigrationScriptRequest().getHttpMethod()),
+                    eq(script.getMigrationScriptRequest().getPath()),
+                    eq(Map.of(EvolutionRestClient.HEADER_NAME_CONTENT_TYPE, contentType)),
+                    isNull(),
+                    eq(script.getMigrationScriptRequest().getBody()));
             order.verifyNoMoreInteractions();
         }
 
@@ -558,8 +513,8 @@ class MigrationServiceImplTest {
             String headerValue = "custom-value";
             script.getMigrationScriptRequest()
                     .addHttpHeader(headerKey, headerValue);
-            Response responseMock = createResponseMock(200);
-            doReturn(responseMock).when(restClient).performRequest(any());
+            EvolutionRestResponse responseMock = createResponseMock(200);
+            doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
@@ -569,25 +524,11 @@ class MigrationServiceImplTest {
             assertThat(res.isSuccess()).isTrue();
 
             InOrder order = inOrder(historyRepository, restClient);
-            order.verify(restClient).performRequest(argThat(argument -> {
-                assertSoftly(softly -> {
-                    softly.assertThat(argument.getMethod())
-                            .isEqualToIgnoringCase(script.getMigrationScriptRequest().getHttpMethod().name())
-                            .isNotNull();
-                    softly.assertThat(argument.getEndpoint())
-                            .isEqualTo(script.getMigrationScriptRequest().getPath())
-                            .isNotNull();
-                    softly.assertThat(argument.getEntity())
-                            .isNull();
-                    softly.assertThat(argument.getOptions().getHeaders())
-                            .hasSize(1);
-                    softly.assertThat(argument.getOptions().getHeaders().get(0).getName())
-                            .isEqualTo(headerKey);
-                    softly.assertThat(argument.getOptions().getHeaders().get(0).getValue())
-                            .isEqualTo(headerValue);
-                });
-                return true;
-            }));
+            order.verify(restClient).execute(eq(script.getMigrationScriptRequest().getHttpMethod()),
+                    eq(script.getMigrationScriptRequest().getPath()),
+                    eq(Map.of(headerKey, headerValue)),
+                    isNull(),
+                    eq(""));
             order.verifyNoMoreInteractions();
         }
 
@@ -595,7 +536,7 @@ class MigrationServiceImplTest {
         @ArgumentsSource(HandledErrorsProvider.class)
         void executeScript_failed_status(Exception handledError) throws IOException {
             ParsedMigrationScript script = createParsedMigrationScript("1.1");
-            doThrow(handledError).when(restClient).performRequest(any());
+            doThrow(handledError).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
@@ -613,8 +554,8 @@ class MigrationServiceImplTest {
         @ArgumentsSource(FailingHttpCodesProvider.class)
         void executeScript_failed_status(int httpStatusCode) throws IOException {
             ParsedMigrationScript script = createParsedMigrationScript("1.1");
-            Response responseMock = createResponseMock(httpStatusCode);
-            doReturn(responseMock).when(restClient).performRequest(any());
+            EvolutionRestResponse responseMock = createResponseMock(httpStatusCode);
+            doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
@@ -625,9 +566,8 @@ class MigrationServiceImplTest {
             assertThat(res.getError()).isNotEmpty();
             assertThat(res.getError().get())
                     .isInstanceOf(MigrationException.class)
-                    .hasMessage("execution of script '%s' failed with HTTP status %s: Response(%s)",
+                    .hasMessageStartingWith("execution of script '%s' failed with HTTP status %s: ",
                             script.getFileNameInfo(),
-                            httpStatusCode,
                             httpStatusCode);
         }
 
@@ -635,8 +575,8 @@ class MigrationServiceImplTest {
         @ArgumentsSource(ArgumentProviders.SuccessHttpCodesProvider.class)
         void executeScript_OK_status(int httpStatusCode) throws IOException {
             ParsedMigrationScript script = createParsedMigrationScript("1.1");
-            Response responseMock = createResponseMock(httpStatusCode);
-            doReturn(responseMock).when(restClient).performRequest(any());
+            EvolutionRestResponse responseMock = createResponseMock(httpStatusCode);
+            doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
@@ -659,8 +599,8 @@ class MigrationServiceImplTest {
             doReturn(true).when(historyRepository).unlock();
             doReturn(new TreeSet<>()).when(historyRepository).findAll();
 
-            Response responseMock = createResponseMock(200);
-            doReturn(responseMock).when(restClient).performRequest(any());
+            EvolutionRestResponse responseMock = createResponseMock(200);
+            doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
@@ -673,9 +613,9 @@ class MigrationServiceImplTest {
             order.verify(historyRepository).isLocked();
             order.verify(historyRepository).lock();
             order.verify(historyRepository).findAll();
-            order.verify(restClient).performRequest(any());
+            order.verify(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
             order.verify(historyRepository).saveOrUpdate(any());
-            order.verify(restClient).performRequest(any());
+            order.verify(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
             order.verify(historyRepository).saveOrUpdate(any());
             order.verify(historyRepository).unlock();
             order.verifyNoMoreInteractions();
@@ -692,16 +632,16 @@ class MigrationServiceImplTest {
             doReturn(new TreeSet<>()).when(historyRepository).findAll();
 
             int statusCode = 500;
-            Response responseMock = createResponseMock(statusCode);
-            doReturn(responseMock).when(restClient).performRequest(any());
+            EvolutionRestResponse responseMock = createResponseMock(statusCode);
+            when(restClient.execute(any(), anyString(), anyMap(), isNull(), anyString()))
+                    .thenReturn(responseMock);
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
             assertThatThrownBy(() -> underTest.executePendingScripts(scripts))
                     .isInstanceOf(MigrationException.class)
-                    .hasMessage("execution of script '%s' failed with HTTP status %s: Response(%s)",
+                    .hasMessageStartingWith("execution of script '%s' failed with HTTP status %s: ",
                             scripts.get(0).getFileNameInfo(),
-                            statusCode,
                             statusCode);
 
             InOrder order = inOrder(historyRepository, restClient);
@@ -709,7 +649,7 @@ class MigrationServiceImplTest {
             order.verify(historyRepository).isLocked();
             order.verify(historyRepository).lock();
             order.verify(historyRepository).findAll();
-            order.verify(restClient).performRequest(any());
+            order.verify(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
             order.verify(historyRepository).saveOrUpdate(any());
             order.verify(historyRepository).unlock();
             order.verifyNoMoreInteractions();
@@ -725,8 +665,8 @@ class MigrationServiceImplTest {
             doReturn(false).when(historyRepository).unlock();
             doReturn(new TreeSet<>()).when(historyRepository).findAll();
 
-            Response responseMock = createResponseMock(200);
-            doReturn(responseMock).when(restClient).performRequest(any());
+            EvolutionRestResponse responseMock = createResponseMock(200);
+            doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
                     0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
 
@@ -739,9 +679,9 @@ class MigrationServiceImplTest {
             order.verify(historyRepository).isLocked();
             order.verify(historyRepository).lock();
             order.verify(historyRepository).findAll();
-            order.verify(restClient).performRequest(any());
+            order.verify(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
             order.verify(historyRepository).saveOrUpdate(any());
-            order.verify(restClient).performRequest(any());
+            order.verify(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
             order.verify(historyRepository).saveOrUpdate(any());
             order.verify(historyRepository).unlock();
             order.verifyNoMoreInteractions();
@@ -806,11 +746,9 @@ class MigrationServiceImplTest {
         }
     }
 
-    private Response createResponseMock(int statusCode) {
-        Response restResponse = mock(Response.class, withSettings().defaultAnswer(RETURNS_DEEP_STUBS));
-        StatusLine statusLine = restResponse.getStatusLine();
-        doReturn(statusCode).when(statusLine).getStatusCode();
-        doReturn("Response(" + statusCode + ")").when(restResponse).toString();
+    private EvolutionRestResponse createResponseMock(int statusCode) {
+        EvolutionRestResponse restResponse = mock(EvolutionRestResponse.class);
+        doReturn(statusCode).when(restResponse).statusCode();
         return restResponse;
     }
 
@@ -838,8 +776,8 @@ class MigrationServiceImplTest {
                         new FileNameInfoImpl(fromVersion(version), version, createDefaultScriptName(version)))
                 .setChecksum(checksum)
                 .setMigrationScriptRequest(new MigrationScriptRequest()
-                                                   .setHttpMethod(DELETE)
-                                                   .setPath("/"));
+                        .setHttpMethod(HttpMethod.DELETE)
+                        .setPath("/"));
     }
 
     private String createDefaultScriptName(String version) {

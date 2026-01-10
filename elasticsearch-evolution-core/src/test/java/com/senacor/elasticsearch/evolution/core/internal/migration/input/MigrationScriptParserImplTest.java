@@ -6,9 +6,9 @@ import com.senacor.elasticsearch.evolution.core.internal.model.FileNameInfo;
 import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.FileNameInfoImpl;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest;
-import com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest.HttpMethod;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
+import com.senacor.elasticsearch.evolution.rest.abstracion.HttpMethod;
 import org.assertj.core.util.Maps;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -169,7 +169,7 @@ class MigrationScriptParserImplTest {
             MigrationScriptRequest expectedRequest = new MigrationScriptRequest()
                     .setHttpMethod(HttpMethod.PUT)
                     .setPath("/")
-                    .addHttpHeader("Header", "value")
+                    .setHttpHeader(Map.of("Header", "value"))
                     .addToBody("{" + lineSeparator() + "\"body\":\"value\"" + lineSeparator() + "}");
             assertThat(res).containsExactlyInAnyOrder(
                     new ParsedMigrationScript()
@@ -449,40 +449,34 @@ class MigrationScriptParserImplTest {
 
         @Test
         void failed_MethodAndPathInvalid() {
-            String defaultContent = "/";
+            final RawMigrationScript rawMigrationScript = new RawMigrationScript()
+                    .setFileName("V1__create.http")
+                    .setContent("/");
 
-            String fileName = "V1__create.http";
-            assertThatThrownBy(() ->
-                    underTest.parse(new RawMigrationScript()
-                            .setFileName(fileName)
-                            .setContent(defaultContent)))
+            assertThatThrownBy(() -> underTest.parse(rawMigrationScript))
                     .isInstanceOf(MigrationException.class)
                     .hasMessage("can't parse method and path: '/'. Method and path must be separated by space and should look like this: 'PUT /my_index'");
         }
 
         @Test
         void failed_methodNotSupported() {
-            String defaultContent = "TRACE /";
+            final RawMigrationScript rawMigrationScript = new RawMigrationScript()
+                    .setFileName("V1__create.http")
+                    .setContent("TRACE /");
 
-            String fileName = "V1__create.http";
-            assertThatThrownBy(() ->
-                    underTest.parse(new RawMigrationScript()
-                            .setFileName(fileName)
-                            .setContent(defaultContent)))
-                    .isInstanceOf(MigrationException.class)
+            assertThatThrownBy(() -> underTest.parse(rawMigrationScript))
+                    .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Method 'TRACE' not supported, only [GET, HEAD, POST, PUT, DELETE, OPTIONS, PATCH] is supported.");
         }
 
         @Test
         void failed_headerInvalid() {
-            String defaultContent = "PUT /" + lineSeparator() +
-                    "Header value";
+            final RawMigrationScript rawMigrationScript = new RawMigrationScript()
+                    .setFileName("V1__create.http")
+                    .setContent("PUT /" + lineSeparator() + "Header value");
 
-            String fileName = "V1__create.http";
             assertThatThrownBy(() ->
-                    underTest.parse(new RawMigrationScript()
-                            .setFileName(fileName)
-                            .setContent(defaultContent)))
+                    underTest.parse(rawMigrationScript))
                     .isInstanceOf(MigrationException.class)
                     .hasMessage("can't parse header: 'Header value'. Header must be separated by ':' and should look like this: 'Content-Type: application/json'");
         }

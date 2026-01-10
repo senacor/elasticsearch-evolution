@@ -8,16 +8,15 @@ import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedM
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.ElasticsearchArgumentsProvider;
 import com.senacor.elasticsearch.evolution.core.test.EsUtils;
-import com.senacor.elasticsearch.evolution.core.test.MockitoExtension;
-import org.apache.http.entity.ContentType;
+import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -25,7 +24,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion.fromVersion;
-import static com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest.HttpMethod.PUT;
+import static com.senacor.elasticsearch.evolution.rest.abstracion.HttpMethod.PUT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
@@ -44,19 +43,19 @@ class MigrationServiceImplIT {
     private HistoryRepository historyRepositoryMock;
 
     private final Charset encoding = StandardCharsets.UTF_8;
-    private final ContentType defaultContentType = ContentType.APPLICATION_JSON;
+    private final String defaultContentType = EvolutionRestClient.APPLICATION_JSON_UTF8;
 
     @Nested
     class executeScript {
 
         @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void OK_indexDocumentIsWrittenToElasticsearch(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
+        void OK_indexDocumentIsWrittenToElasticsearch(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient, EvolutionRestClient restClient) {
             String index = "myindex";
             ParsedMigrationScript script = createParsedMigrationScript("1.1", index);
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepositoryMock,
-                    0, 0, restHighLevelClient.getLowLevelClient(),
+                    0, 0, restClient,
                     defaultContentType, encoding, true, "1.0", false);
 
             MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();

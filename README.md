@@ -33,13 +33,13 @@ Successful executed migration scripts will not be executed again!
 - ready to use default configuration
 - line comments in migration files
 
-| Compatibility                    | Spring Boot                                      | Elasticsearch      | Opensearch |
-|----------------------------------|--------------------------------------------------|--------------------|------------|
-| elasticsearch-evolution >= 0.6.2 | 3.1 - 3.4                                        | 7.5.x - 9.x        | 1.x - 3.x  |
-| elasticsearch-evolution >= 0.6.1 | 3.0 - 3.2                                        | 7.5.x - 8.19.x     | 1.x - 2.x  |
-| elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1, 3.2 | 7.5.x - 8.13.x     | 1.x - 2.x  |
-| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 8.6.x      | 1.x - 2.x  |
-| elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 7.17.x     |            |
+| Compatibility                    | Spring Boot                                      | Elasticsearch        | Opensearch |
+|----------------------------------|--------------------------------------------------|----------------------|------------|
+| elasticsearch-evolution >= 0.7.0 | 3.2 - 3.5                                        | 7.5.x - 9.x          | 1.x - 3.x  |
+| elasticsearch-evolution >= 0.6.1 | 3.0 - 3.2                                        | 7.5.x - 8.19.x       | 1.x - 2.x  |
+| elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1, 3.2 | 7.5.x - 8.13.x       | 1.x - 2.x  |
+| elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 8.6.x        | 1.x - 2.x  |
+| elasticsearch-evolution 0.3.x    | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 7.17.x       |            |
 | elasticsearch-evolution 0.2.x    | 1.5, 2.0, 2.1, 2.2, 2.3, 2.4                     | 7.0.x - 7.4.x, 6.8.x |            |
 
 ## 3 Quickstart
@@ -52,16 +52,13 @@ First add the latest version of Elasticsearch-Evolution spring boot starter as a
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.6.1</version>
+    <version>0.7.0</version>
 </dependency>
-```
-
-Elasticsearch-Evolution uses internally Elastics `RestClient` and requires at minimum version 7.5.2. Spring boot could use an older version, depending on your Spring Boot version, so update it in your pom.xml:
-
-```xml
-<properties>
-    <elasticsearch.version>7.5.2</elasticsearch.version>
-</properties>
+<dependency>
+    <groupId>com.senacor.elasticsearch.evolution</groupId>
+    <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
+    <version>0.7.0</version>
+</dependency>
 ```
 
 Place your migration scripts in your application classpath at `es/migration`
@@ -76,7 +73,12 @@ First add the latest version of Elasticsearch-Evolution core as a dependency:
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.6.1</version>
+    <version>0.7.0</version>
+</dependency>
+<dependency>
+  <groupId>com.senacor.elasticsearch.evolution</groupId>
+  <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
+  <version>0.7.0</version>
 </dependency>
 ```
 
@@ -85,11 +87,13 @@ Place your migration scripts in your application classpath at `es/migration`
 Create a `ElasticsearchEvolution` instance and execute the migration.
 
 ```java
-// first create a Elastic RestClient
+// first create an Elastic RestClient
 RestClient restClient = RestClient.builder(HttpHost.create("http://localhost:9200")).build();
-// then create a ElasticsearchEvolution configuration and create a instance of ElasticsearchEvolution with that configuration
+// then create a EvolutionRestClient abstraction for Elasticsearch
+EvolutionRestClient evolutionRestClient = new EvolutionESRestClient(restClient);
+// then create a ElasticsearchEvolution configuration and create an instance of ElasticsearchEvolution with that configuration
 ElasticsearchEvolution elasticsearchEvolution = ElasticsearchEvolution.configure()
-        .load(restClient);
+        .load(evolutionRestClient);
 // execute the migration
 elasticsearchEvolution.migrate();
 ```
@@ -114,6 +118,36 @@ Validation fails if:
 * versions have been resolved that haven't been applied yet
 
 Then a `ValidateException` is thrown.
+
+### 3.3 REST Client abstraction
+
+Elasticsearch-Evolution uses an REST client abstraction (`EvolutionRestClient`). Currently, these implementations exist:
+
+* Elasticsearch [RestClient](https://central.sonatype.com/artifact/org.elasticsearch.client/elasticsearch-rest-client) implementation: `EvolutionESRestClient`
+  ```xml
+  <dependency>
+    <groupId>com.senacor.elasticsearch.evolution</groupId>
+    <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
+    <version>0.7.0</version>
+  </dependency>
+  ```
+* OpenSearch implementation is coming soon
+
+You can provide your own implementation of `EvolutionRestClient` if you want to use another HTTP client like _Apache HTTPClient_ or _OkHttpClient_. This interface is located in:
+```xml
+<dependency>
+  <groupId>com.senacor.elasticsearch.evolution</groupId>
+  <artifactId>elasticsearch-evolution-rest-abstraction</artifactId>
+  <version>0.7.0</version>
+</dependency>
+```
+- with the Spring-Boot starter you have to create a bean with your custom `EvolutionRestClient` implementation like this:
+  ```java
+  @Bean
+  public EvolutionRestClient customEvolutionRestClient() {
+      return new MyOkHttpClientEvolutionRestClient(...);
+  }
+  ```
 
 ## 4 Migration script format
 
@@ -239,7 +273,6 @@ spring.elasticsearch.evolution.historyIndex=es_evolution
 Since spring boot 2.1 AutoConfiguration for Elasticsearchs REST client is provided (see org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration).
 You can configure the `RestClient`, required for Elasticsearch-Evolution, just like that in your `application.properties`:
 
-##### 5.1.1.1 spring boot 2.6+
 ```properties
 spring.elasticsearch.uris[0]=https://example.com:9200
 spring.elasticsearch.username=my-user-name
@@ -248,10 +281,10 @@ spring.elasticsearch.password=my-secret-pw
 
 #### 5.1.2 Customize Elasticsearch-Evolutions AutoConfiguration
 
-##### 5.1.2.1 Custom RestClient
+##### 5.1.2.1 Custom Elasticsearch RestClient
 
-Elasticsearch-Evolutions just needs a `RestClient` as spring bean. 
-If you don't have spring boot 2.1 or later or you need a special `RestClient` configuration e.g. to accept self signed certificates or disable hostname validation, you can provide a custom `RestClient` like this:   
+Elasticsearch-Evolutions just needs a `EvolutionRestClient` as spring bean. The Elasticsearch `EvolutionESRestClient` impl needs a `RestClient` spring bean.
+If you don't have spring boot 2.1 or later or you need a special `RestClient` configuration e.g. to accept self-signed certificates or disable hostname validation, you can provide a custom `RestClient` like this:
 
 ```java
 @Bean
@@ -305,10 +338,12 @@ ElasticsearchEvolution.configure()
 
 ## 6 changelog
 
-### v0.6.2-SNAPSHOT
+### v0.7.0-SNAPSHOT
 
-- Drop spring boot 3.0 compatibility. Further versions may run on spring boot 3.0, but it is not tested anymore.
-- Added regression tests for spring boot 3.4.
+- **breaking change**: Added abstraction for the underlying HTTP Client (`EvolutionRestClient` in new artifact `com.senacor.elasticsearch.evolution:elasticsearch-evolution-rest-abstraction`) and an implementation for the Elasticsearch `RestClient` (`EvolutionESRestClient` in artifact `com.senacor.elasticsearch.evolution:elasticsearch-evolution-rest-abstraction-es-client`).
+  - You have to add the dependency `com.senacor.elasticsearch.evolution:elasticsearch-evolution-rest-abstraction-es-client`
+- Drop spring boot 3.0 and 3.1 compatibility tests. Further versions may run on spring boot 3.0 and 3.1, but it is not tested anymore.
+- Added regression tests for spring boot 3.4 and 3.5.
 - Added regression tests against ElasticSearch 9.0 - 9.2
 - Added regression tests against OpenSearch 3.3 and 3.4
 - Added option to just validate without executing migrations ([#435](https://github.com/senacor/elasticsearch-evolution/issues/435)).

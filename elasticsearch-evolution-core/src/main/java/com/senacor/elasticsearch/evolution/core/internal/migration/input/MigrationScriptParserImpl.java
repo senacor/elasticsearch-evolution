@@ -6,9 +6,9 @@ import com.senacor.elasticsearch.evolution.core.internal.model.FileNameInfo;
 import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.FileNameInfoImpl;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest;
-import com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest.HttpMethod;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
+import com.senacor.elasticsearch.evolution.rest.abstracion.HttpMethod;
 
 import java.util.Collection;
 import java.util.List;

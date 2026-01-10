@@ -1,14 +1,13 @@
 package com.senacor.elasticsearch.evolution.springboot32;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import org.apache.http.HttpHost;
-import org.elasticsearch.client.RestClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.web.client.RestClient;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -60,7 +59,7 @@ class ApplicationTests {
 
         @Bean
         public EsUtils esUtils(ElasticsearchContainer elasticsearchContainer) {
-            return new EsUtils(RestClient.builder(HttpHost.create(elasticsearchContainer.getHttpHostAddress())).build());
+            return new EsUtils(RestClient.create("http://" + elasticsearchContainer.getHttpHostAddress()));
         }
     }
 }

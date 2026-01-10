@@ -7,13 +7,9 @@ import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.internal.utils.RandomUtils;
+import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestResponse;
 import lombok.NonNull;
-import org.apache.http.entity.ContentType;
-import org.apache.http.nio.entity.NStringEntity;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +32,8 @@ public class MigrationServiceImpl implements MigrationService {
     private final HistoryRepository historyRepository;
     private final int waitUntilUnlockedMinTimeInMillis;
     private final int waitUntilUnlockedMaxTimeInMillis;
-    private final RestClient restClient;
-    private final ContentType defaultContentType;
+    private final EvolutionRestClient restClient;
+    private final String defaultContentType;
     private final Charset encoding;
     private final boolean validateOnMigrate;
     private final boolean outOfOrder;
@@ -47,8 +43,8 @@ public class MigrationServiceImpl implements MigrationService {
     public MigrationServiceImpl(HistoryRepository historyRepository,
                                 int waitUntilUnlockedMinTimeInMillis,
                                 int waitUntilUnlockedMaxTimeInMillis,
-                                RestClient restClient,
-                                ContentType defaultContentType,
+                                EvolutionRestClient restClient,
+                                String defaultContentType,
                                 Charset encoding,
                                 boolean validateOnMigrate,
                                 String baselineVersion,
@@ -126,35 +122,38 @@ public class MigrationServiceImpl implements MigrationService {
         long startTimeInMillis = System.currentTimeMillis();
         Optional<RuntimeException> error = Optional.empty();
         try {
-            Request request = new Request(scriptToExecute.getMigrationScriptRequest().getHttpMethod().name(),
-                    scriptToExecute.getMigrationScriptRequest().getPath());
+            Map<String, String> headers = new HashMap<>(scriptToExecute.getMigrationScriptRequest().getHttpHeader());
             if (null != scriptToExecute.getMigrationScriptRequest().getBody()
                     && !scriptToExecute.getMigrationScriptRequest().getBody().trim().isEmpty()) {
-                ContentType contentType = scriptToExecute.getMigrationScriptRequest().getContentType()
+                String contentType = restClient.getContentType(scriptToExecute.getMigrationScriptRequest().getHttpHeader())
                         .orElse(defaultContentType);
-                if (null == contentType.getCharset()) {
+                if (!contentType.contains("charset=")) {
                     logger.debug("no charset is defined for {}, setting to configured encoding {}", scriptToExecute.getFileNameInfo(), encoding);
-                    contentType = contentType.withCharset(encoding);
+                    contentType += "; charset=" + encoding;
                 }
-                request.setEntity(new NStringEntity(scriptToExecute.getMigrationScriptRequest().getBody(), contentType));
+                // remove any existing content-type header (ignore case)
+                headers.entrySet()
+                        .removeIf(entry -> EvolutionRestClient.HEADER_NAME_CONTENT_TYPE.equalsIgnoreCase(entry.getKey()));
+                headers.put(EvolutionRestClient.HEADER_NAME_CONTENT_TYPE, contentType);
             }
+            EvolutionRestResponse response = restClient.execute(
+                    scriptToExecute.getMigrationScriptRequest().getHttpMethod(),
+                    scriptToExecute.getMigrationScriptRequest().getPath(),
+                    headers,
+                    null,
+                    scriptToExecute.getMigrationScriptRequest().getBody()
+            );
 
-            RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
-            scriptToExecute.getMigrationScriptRequest().getHttpHeader()
-                    .forEach(builder::addHeader);
-            request.setOptions(builder);
-
-            Response response = restClient.performRequest(request);
-
-            int statusCode = response.getStatusLine().getStatusCode();
+            int statusCode = response.statusCode();
             if (statusCode >= 200 && statusCode < 300) {
                 success = true;
             } else {
                 error = Optional.of(new MigrationException(
-                        "execution of script '%s' failed with HTTP status %s: %s".formatted(
-                        scriptToExecute.getFileNameInfo(),
-                        statusCode,
-                        response.toString())));
+                        "execution of script '%s' failed with HTTP status %s: %s (body=%s)".formatted(
+                                scriptToExecute.getFileNameInfo(),
+                                statusCode,
+                                response.asString(),
+                                response.body())));
             }
         } catch (RuntimeException | IOException e) {
             error = Optional.of(new MigrationException("execution of script '%s' failed".formatted(scriptToExecute.getFileNameInfo()), e));

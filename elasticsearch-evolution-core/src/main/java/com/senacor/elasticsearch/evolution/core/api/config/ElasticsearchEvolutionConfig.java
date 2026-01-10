@@ -2,7 +2,7 @@ package com.senacor.elasticsearch.evolution.core.api.config;
 
 import com.senacor.elasticsearch.evolution.core.ElasticsearchEvolution;
 import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
-import org.elasticsearch.client.RestClient;
+import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.nio.charset.Charset;
@@ -131,7 +131,7 @@ public class ElasticsearchEvolutionConfig {
      * @param restClient REST client to interact with Elasticsearch
      * @return The new fully-configured ElasticsearchEvolution instance.
      */
-    public ElasticsearchEvolution load(RestClient restClient) {
+    public ElasticsearchEvolution load(EvolutionRestClient restClient) {
         return new ElasticsearchEvolution(this, restClient);
     }
 

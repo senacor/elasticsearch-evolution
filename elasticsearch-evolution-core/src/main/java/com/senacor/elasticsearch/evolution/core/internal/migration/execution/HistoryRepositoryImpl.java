@@ -7,11 +7,9 @@ import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
 import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
+import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestResponse;
 import lombok.Value;
-import org.apache.http.util.EntityUtils;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +20,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotBlank;
+import static com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient.APPLICATION_JSON_UTF8;
+import static com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient.HEADER_NAME_CONTENT_TYPE;
+import static com.senacor.elasticsearch.evolution.rest.abstracion.HttpMethod.*;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -34,13 +35,13 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     private static final MigrationVersion INTERNAL_VERSIONS = MigrationVersion.fromVersion("0");
     static final String INDEX_TYPE_DOC = "_doc";
 
-    private final RestClient restClient;
+    private final EvolutionRestClient restClient;
     private final String historyIndex;
     private final MigrationScriptProtocolMapper migrationScriptProtocolMapper;
     private final int querySize;
     private final ObjectMapper objectMapper;
 
-    public HistoryRepositoryImpl(RestClient restClient,
+    public HistoryRepositoryImpl(EvolutionRestClient restClient,
                                  String historyIndex,
                                  MigrationScriptProtocolMapper migrationScriptProtocolMapper,
                                  int querySize,
@@ -55,15 +56,16 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     @Override
     public NavigableSet<MigrationScriptProtocol> findAll() throws MigrationException {
         try {
-            final Request findAllSearchRequest = new Request("POST", "/" + historyIndex + "/_search");
-            findAllSearchRequest.addParameters(indicesOptions(IndexOptions.lenientExpandOpen()));
-            findAllSearchRequest.setJsonEntity("{\"size\":" + querySize + "}");
-            final Response searchResponse = restClient.performRequest(findAllSearchRequest);
-            final String bodyAsString = EntityUtils.toString(searchResponse.getEntity());
+            final EvolutionRestResponse searchResponse = restClient.execute(POST,
+                    "/" + historyIndex + "/_search",
+                    Map.of(HEADER_NAME_CONTENT_TYPE, APPLICATION_JSON_UTF8),
+                    indicesOptions(IndexOptions.lenientExpandOpen()),
+                    "{\"size\":" + querySize + "}");
+            final Optional<String> bodyAsString = searchResponse.body();
             logger.debug("findAll res: {} (body={})", searchResponse, bodyAsString);
             validateHttpStatusIs2xx(searchResponse, "findAll");
 
-            final SearchResponse body = objectMapper.readValue(bodyAsString, SearchResponse.class);
+            final SearchResponse body = objectMapper.readValue(bodyAsString.orElse(null), SearchResponse.class);
 
             // map and order
             return body.getHits().getHitList().stream()
@@ -81,13 +83,15 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     public void saveOrUpdate(MigrationScriptProtocol migrationScriptProtocol) throws MigrationException {
         try {
             final String id = requireNonNull(migrationScriptProtocol.getVersion(), "migrationScriptProtocol.version must not be null").getVersion();
-            final Request indexRequest = new Request("PUT", "/" + historyIndex + "/_doc/" + id);
             final Map<String, Object> source = migrationScriptProtocolMapper.mapToMap(migrationScriptProtocol);
-            indexRequest.setJsonEntity(objectMapper.writeValueAsString(source));
-            final Response res = restClient.performRequest(indexRequest);
+            final EvolutionRestResponse res = restClient.execute(PUT,
+                    "/" + historyIndex + "/_doc/" + id,
+                    Map.of(HEADER_NAME_CONTENT_TYPE, APPLICATION_JSON_UTF8),
+                    null,
+                    objectMapper.writeValueAsString(source));
 
             if (logger.isDebugEnabled()) {
-                logger.debug("saveOrUpdate res: {} (body={})", res, EntityUtils.toString(res.getEntity()));
+                logger.debug("saveOrUpdate res: {} (body={})", res.asString(), res.body());
             }
             validateHttpStatusIs2xx(res, "saveOrUpdate");
         } catch (IOException e) {
@@ -116,14 +120,17 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     }
 
     private long executeCountRequest(Optional<String> countQuery) throws IOException {
-        final Request countRequest = new Request("POST", "/" + historyIndex + "/_count");
-        countRequest.addParameters(indicesOptions(IndexOptions.lenientExpandOpen()));
-        countQuery.ifPresent(countRequest::setJsonEntity);
-        final Response countResponse = restClient.performRequest(countRequest);
+        final EvolutionRestResponse countResponse = restClient.execute(POST,
+                "/" + historyIndex + "/_count",
+                countQuery.isPresent()
+                        ? Map.of(HEADER_NAME_CONTENT_TYPE, APPLICATION_JSON_UTF8)
+                        : null,
+                indicesOptions(IndexOptions.lenientExpandOpen()),
+                countQuery.orElse(null));
 
         validateHttpStatusIs2xx(countResponse, "isLocked");
 
-        final JsonNode countResBody = objectMapper.readTree(countResponse.getEntity().getContent());
+        final JsonNode countResBody = objectMapper.readTree(countResponse.body().orElseThrow(() -> new IllegalStateException("count response body must be present")));
         return countResBody.get("count").asLong();
     }
 
@@ -157,20 +164,23 @@ public class HistoryRepositoryImpl implements HistoryRepository {
         try {
             refresh(historyIndex);
 
-            final Request updateByQueryRequest = new Request("POST", "/" + historyIndex + "/_update_by_query");
-            updateByQueryRequest.addParameters(indicesOptions(IndexOptions.lenientExpandOpen()));
-            updateByQueryRequest.addParameter("requests_per_second", "-1");
-            updateByQueryRequest.addParameter("refresh", "true");
-            updateByQueryRequest.setJsonEntity("{\"script\":{" +
+            final Map<String, String> urlParams = new HashMap<>(indicesOptions(IndexOptions.lenientExpandOpen()));
+            urlParams.put("requests_per_second", "-1");
+            urlParams.put("refresh", "true");
+            String body = "{\"script\":{" +
                     "\"source\":\"ctx.op = \\\"delete\\\"\"," +
                     "\"lang\":\"painless\"}," +
                     "\"size\":1000," +
-                    "\"query\":{\"term\":{\"" + MigrationScriptProtocolMapper.VERSION_FIELD_NAME + "\":{\"value\":\"" + INTERNAL_LOCK_VERSION + "\"}}}}");
+                    "\"query\":{\"term\":{\"" + MigrationScriptProtocolMapper.VERSION_FIELD_NAME + "\":{\"value\":\"" + INTERNAL_LOCK_VERSION + "\"}}}}";
 
-            final Response deleteInternalLockRes = restClient.performRequest(updateByQueryRequest);
+            final EvolutionRestResponse deleteInternalLockRes = restClient.execute(POST,
+                    "/" + historyIndex + "/_update_by_query",
+                    Map.of(HEADER_NAME_CONTENT_TYPE, APPLICATION_JSON_UTF8),
+                    urlParams,
+                    body);
 
             if (logger.isDebugEnabled()) {
-                logger.debug("unlock.deleteLockEntry res: {} (body={})", deleteInternalLockRes, EntityUtils.toString(deleteInternalLockRes.getEntity()));
+                logger.debug("unlock.deleteLockEntry res: {} (body={})", deleteInternalLockRes.asString(), deleteInternalLockRes.body());
             }
 
             executeLockRequest(false, "unlock.removeLock");
@@ -182,40 +192,47 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     }
 
     private void executeLockRequest(boolean lock, String debugContext) throws IOException {
-        final Request updateByQueryRequest = new Request("POST", "/" + historyIndex + "/_update_by_query");
-        updateByQueryRequest.addParameters(indicesOptions(IndexOptions.lenientExpandOpen()));
-        updateByQueryRequest.addParameter("requests_per_second", "-1");
-        updateByQueryRequest.addParameter("refresh", "true");
-        updateByQueryRequest.setJsonEntity("{\"script\":" +
+        final Map<String, String> urlParams = new HashMap<>(indicesOptions(IndexOptions.lenientExpandOpen()));
+        urlParams.put("requests_per_second", "-1");
+        urlParams.put("refresh", "true");
+        String body = "{\"script\":" +
                 "{\"source\":\"ctx._source." + MigrationScriptProtocolMapper.LOCKED_FIELD_NAME + " = params.lock\"," +
                 "\"lang\":\"painless\"," +
                 "\"params\":{\"lock\":" + lock + "}" +
                 "}," +
                 "\"size\":1000," +
-                "\"query\":{\"term\":{\"" + MigrationScriptProtocolMapper.LOCKED_FIELD_NAME + "\":{\"value\":" + !lock + "}}}}");
+                "\"query\":{\"term\":{\"" + MigrationScriptProtocolMapper.LOCKED_FIELD_NAME + "\":{\"value\":" + !lock + "}}}}";
 
-        final Response updateByQueryResponse = restClient.performRequest(updateByQueryRequest);
+        final EvolutionRestResponse updateByQueryResponse = restClient.execute(POST,
+                "/" + historyIndex + "/_update_by_query",
+                Map.of(HEADER_NAME_CONTENT_TYPE, APPLICATION_JSON_UTF8),
+                urlParams,
+                body);
 
         if (logger.isDebugEnabled()) {
-            logger.debug("{} res: {} (body={})", debugContext, updateByQueryResponse, EntityUtils.toString(updateByQueryResponse.getEntity()));
+            logger.debug("{} res: {} (body={})", debugContext, updateByQueryResponse.asString(), updateByQueryResponse.body());
         }
     }
 
     @Override
     public boolean createIndexIfAbsent() throws MigrationException {
         try {
-            Response existsRes = restClient.performRequest(new Request("HEAD", "/" + historyIndex));
-            boolean exists = 200 == existsRes.getStatusLine().getStatusCode();
+            EvolutionRestResponse existsRes = restClient.execute(HEAD, "/" + historyIndex);
+            boolean exists = 200 == existsRes.statusCode();
             if (exists) {
                 logger.debug("Elasticsearch-Evolution history index '{}' already exists.", historyIndex);
                 return false;
             }
-            logger.debug("Elasticsearch-Evolution history index '{}' does not yet exists. Res={}", historyIndex, existsRes);
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("Elasticsearch-Evolution history index '{}' does not yet exists. Res={}", historyIndex, existsRes.asString());
+            }
 
             // create index
-            Response createRes = restClient.performRequest(new Request("PUT", "/" + historyIndex));
+            EvolutionRestResponse createRes = restClient.execute(PUT, "/" + historyIndex);
             if (hasNotStatusCode2xx(createRes)) {
-                throw new IllegalStateException("Could not create Elasticsearch-Evolution history index '" + historyIndex + "'. Create res=" + createRes);
+                throw new IllegalStateException("Could not create Elasticsearch-Evolution history index '" + historyIndex +
+                        "'. Create res=" + createRes.asString() + " (body=" + createRes.body() + ")");
             }
             logger.debug("created Elasticsearch-Evolution history index '{}'", historyIndex);
             return true;
@@ -224,16 +241,16 @@ public class HistoryRepositoryImpl implements HistoryRepository {
         }
     }
 
-    private boolean hasNotStatusCode2xx(Response response) {
-        return isNotStatusCode2xx(response.getStatusLine().getStatusCode());
+    private boolean hasNotStatusCode2xx(EvolutionRestResponse response) {
+        return isNotStatusCode2xx(response.statusCode());
     }
 
     private boolean isNotStatusCode2xx(int statusCode) {
         return statusCode < 200 || statusCode > 299;
     }
 
-    private void validateHttpStatusIs2xx(Response response, String description) throws MigrationException {
-        validateHttpStatusIs2xx(response.getStatusLine().getStatusCode(), description + " (" + response.getStatusLine().getReasonPhrase() + ")");
+    private void validateHttpStatusIs2xx(EvolutionRestResponse response, String description) throws MigrationException {
+        validateHttpStatusIs2xx(response.statusCode(), description + " (" + response.statusReasonPhrase() + ")");
     }
 
     void validateHttpStatusIs2xx(int statusCode, String description) throws MigrationException {
@@ -248,10 +265,11 @@ public class HistoryRepositoryImpl implements HistoryRepository {
      */
     void refresh(String... indices) {
         try {
-            final Request refreshRequest = new Request("GET", "/" + expandIndicesForUrl(indices) + "/_refresh");
-            refreshRequest.addParameters(indicesOptions(IndexOptions.lenientExpandOpen()));
-
-            Response res = restClient.performRequest(refreshRequest);
+            EvolutionRestResponse res = restClient.execute(GET,
+                    "/" + expandIndicesForUrl(indices) + "/_refresh",
+                    null,
+                    indicesOptions(IndexOptions.lenientExpandOpen()),
+                    null);
 
             validateHttpStatusIs2xx(res, "refresh");
         } catch (IOException e) {

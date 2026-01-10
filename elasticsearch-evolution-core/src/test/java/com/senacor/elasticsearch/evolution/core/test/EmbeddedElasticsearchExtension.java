@@ -1,6 +1,8 @@
 package com.senacor.elasticsearch.evolution.core.test;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstracion.esclient.EvolutionESRestClient;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -134,6 +136,7 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
      * - Short Version Info
      * - EsUtils
      * - RestHighLevelClient
+     * - EvolutionRestClient
      */
     public static class ElasticsearchArgumentsProvider implements ArgumentsProvider {
         @Override
@@ -146,7 +149,8 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
                         RestHighLevelClient restHighLevelClient = createRestHighLevelClient(searchContainer.getInfo(), elasticsearchContainer);
                         EsUtils esUtils = new EsUtils(restHighLevelClient.getLowLevelClient());
                         cleanup(esUtils, searchContainer.getInfo(), restHighLevelClient);
-                        return Arguments.of(searchContainer.getShortInfo(), esUtils, restHighLevelClient);
+                        final EvolutionRestClient evolutionESRestClient = new EvolutionESRestClient(restHighLevelClient.getLowLevelClient());
+                        return Arguments.of(searchContainer.getShortInfo(), esUtils, restHighLevelClient, evolutionESRestClient);
                     });
         }
     }
