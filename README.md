@@ -53,12 +53,12 @@ and choose an `elasticsearch-evolution-rest-abstraction` implementation (here: E
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.7.0</version>
+    <version>0.7.1</version>
 </dependency>
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
-    <version>0.7.0</version>
+    <version>0.7.1</version>
 </dependency>
 ```
 
@@ -75,12 +75,12 @@ and choose an `elasticsearch-evolution-rest-abstraction` implementation (here: E
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.7.0</version>
+    <version>0.7.1</version>
 </dependency>
 <dependency>
   <groupId>com.senacor.elasticsearch.evolution</groupId>
   <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
-  <version>0.7.0</version>
+  <version>0.7.1</version>
 </dependency>
 ```
 
@@ -128,7 +128,7 @@ Elasticsearch-Evolution uses a REST client abstraction (`EvolutionRestClient`). 
   <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
-    <version>0.7.0</version>
+    <version>0.7.1</version>
   </dependency>
   ```
 * OpenSearch implementation is coming soon
@@ -138,7 +138,7 @@ You can provide your own implementation of `EvolutionRestClient` if you want to 
 <dependency>
   <groupId>com.senacor.elasticsearch.evolution</groupId>
   <artifactId>elasticsearch-evolution-rest-abstraction</artifactId>
-  <version>0.7.0</version>
+  <version>0.7.1</version>
 </dependency>
 ```
 - With the Spring Boot starter, you have to create a bean with your custom `EvolutionRestClient` implementation like this:
@@ -337,9 +337,12 @@ ElasticsearchEvolution.configure()
 
 ## 6 Changelog
 
-### v0.7.1-SNAPSHOT
+### v0.7.1
 
 - Release process: Replace archived `actions/create-release` with `softprops/action-gh-release` ([#554](https://github.com/senacor/elasticsearch-evolution/issues/554)).
+- Release process: Switch to new maven central publishing API / central-publishing-maven-plugin ([#538](https://github.com/senacor/elasticsearch-evolution/issues/538))
+- Added unique version number validation ([#551](https://github.com/senacor/elasticsearch-evolution/issues/551)).
+  - When two migration scripts have the same version number, the migration fails with a `MigrationException`.
 
 ### v0.7.0
 

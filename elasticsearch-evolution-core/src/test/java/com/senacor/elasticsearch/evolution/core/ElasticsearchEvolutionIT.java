@@ -231,4 +231,23 @@ class ElasticsearchEvolutionIT {
                     .allMatch(MigrationScriptProtocol::isSuccess);
         });
     }
+
+    @ParameterizedTest(name = "{0}")
+    @ArgumentsSource(ElasticsearchArgumentsProvider.class)
+    void migrate_failed_duplicate_versions(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient, EvolutionRestClient restClient) {
+
+        ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
+                .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/duplicate_versions"));
+        historyRepository = new HistoryRepositoryImpl(restClient, elasticsearchEvolutionConfig.getHistoryIndex(), new MigrationScriptProtocolMapper(), 1000, objectMapper);
+
+        assertSoftly(softly -> {
+            softly.assertThatThrownBy(() -> elasticsearchEvolutionConfig.load(restClient).migrate())
+                    .isInstanceOf(MigrationException.class)
+                    .hasMessage("There are multiple migration scripts with the same version '1': [V001.00__createTemplateWithIndexMapping1.http, V001.00__createTemplateWithIndexMapping2.http]");
+            NavigableSet<MigrationScriptProtocol> protocols = historyRepository.findAll();
+            softly.assertThat(protocols)
+                    .as("# of historyIndex entries (%s)", protocols)
+                    .isEmpty();
+        });
+    }
 }
