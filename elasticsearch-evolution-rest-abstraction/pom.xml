@@ -11,6 +11,8 @@
     </parent>
     <artifactId>elasticsearch-evolution-rest-abstraction</artifactId>
     <packaging>jar</packaging>
+
+    <name>${project.artifactId}</name>
     <description>REST client abstraction</description>
     <url>${project.parent.url}</url>
 
