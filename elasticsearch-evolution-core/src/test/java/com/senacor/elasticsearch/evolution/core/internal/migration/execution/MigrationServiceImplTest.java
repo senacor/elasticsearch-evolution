@@ -382,6 +382,21 @@ class MigrationServiceImplTest {
             assertThat(res).isEmpty();
             Mockito.verifyNoInteractions(historyRepository);
         }
+
+        @Test
+        void duplicateVersions_should_failWithMigrationException() {
+            MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
+                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+
+            List<ParsedMigrationScript> parsedMigrationScripts = asList(
+                    createParsedMigrationScript("1.0"),
+                    createParsedMigrationScript("1.0")
+            );
+
+            assertThatThrownBy(() -> underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts))
+                    .isInstanceOf(MigrationException.class)
+                    .hasMessage("There are multiple migration scripts with the same version '1': [V1.0__1.0.http, V1.0__1.0.http]");
+        }
     }
 
     @Nested

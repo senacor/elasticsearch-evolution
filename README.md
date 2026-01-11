@@ -341,6 +341,8 @@ ElasticsearchEvolution.configure()
 
 - Release process: Replace archived `actions/create-release` with `softprops/action-gh-release` ([#554](https://github.com/senacor/elasticsearch-evolution/issues/554)).
 - Release process: Switch to new maven central publishing API / central-publishing-maven-plugin ([#538](https://github.com/senacor/elasticsearch-evolution/issues/538))
+- Added unique version number validation ([#551](https://github.com/senacor/elasticsearch-evolution/issues/551)).
+  - When two migration scripts have the same version number, the migration fails with a `MigrationException`.
 
 ### v0.7.0
 

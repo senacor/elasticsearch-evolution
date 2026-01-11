@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireCondition;
@@ -184,8 +185,14 @@ public class MigrationServiceImpl implements MigrationService {
                 .filter(script -> script.getFileNameInfo().getVersion().isAtLeast(baselineVersion))
                 .collect(Collectors.toMap(
                         script -> script.getFileNameInfo().getVersion(),
-                        script -> script,
-                        (oldValue, newValue) -> newValue,
+                        Function.identity(),
+                        (oldValue, newValue) -> {
+                            throw new MigrationException(
+                                    "There are multiple migration scripts with the same version '%s': [%s, %s]".formatted(
+                                            oldValue.getFileNameInfo().getVersion(),
+                                            oldValue.getFileNameInfo().getScriptName(),
+                                            newValue.getFileNameInfo().getScriptName()));
+                        },
                         TreeMap::new));
 
         List<MigrationScriptProtocol> history = new ArrayList<>(historyRepository.findAll());
