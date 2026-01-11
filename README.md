@@ -235,23 +235,23 @@ In this example, version `1.0.1` is the smallest version and is executed first, 
 
 Elasticsearch-Evolution can be configured to your needs:
 
--   **enabled** (default=true): Whether to enable or disable Elasticsearch-Evolution.
--   **locations** (default=\[classpath:es/migration]): List of locations of migration scripts. Supported are `classpath:some/path` and `file:/some/path`. The location is scanned recursively, but only to a depth of 10. **NOTE**: All scripts in all locations/subdirectories will be flattened, and only the version number will be used to order them.
--   **encoding** (default=UTF-8): Encoding of migration files.
--   **defaultContentType** (default=application/json; charset=UTF-8): This content type will be used as the default if no `Content-Type` header is specified in the header section of a migration script. If no charset is defined, the `encoding` charset is used.
--   **esMigrationPrefix** (default=V): File name prefix for migration files.
--   **esMigrationSuffixes** (default=\[.http]): List of file name suffixes for migration files. The suffix is checked case-insensitively. 
--   **placeholderReplacement** (default=true): Whether to enable or disable placeholder replacement in migration scripts.
--   **placeholders** (default=\[]): Map of placeholders and their replacements to apply to migration scripts.
--   **placeholderPrefix** (default=${): Prefix of placeholders in migration scripts.
--   **placeholderSuffix** (default=}): Suffix of placeholders in migration scripts.
--   **historyIndex** (default=es_evolution): Name of the history index that will be used by Elasticsearch-Evolution. In this index, Elasticsearch-Evolution will persist its internal state and track which migration scripts have already been executed.
--   **historyMaxQuerySize** (default=1000): The maximum query size while validating already executed scripts. This query size must be higher than the total count of your migration scripts.
--   **validateOnMigrate** (default=true): Whether to fail when a previously applied migration script has been modified after it was applied.
--   **baselineVersion** (default=1.0): Version to use as a baseline. Versions lower than this will not be applied.
--   **lineSeparator** (default=\n): Line separator, used only temporarily between reading raw migration file line-by-line and parsing it later. Only needed for backward compatibility/checksum stability! Should be one of `\n`, `\r` or `\r\n`.
--   **outOfOrder** (default=false): Allows migrations to be run "out of order". If you already have versions 1.0 and 3.0 applied, and now version 2.0 is found, it will be applied too instead of being rejected.
-- **trimTrailingNewlineInMigrations** (default=false): Whether to remove a trailing newline in migration scripts. Only needed for backward compatibility/checksum stability!
+-   **enabled** (default=`true`): Whether to enable or disable Elasticsearch-Evolution.
+-   **locations** (default=`[classpath:es/migration]`): List of locations of migration scripts. Supported are `classpath:some/path` and `file:/some/path`. The location is scanned recursively, but only to a depth of 10. **NOTE**: All scripts in all locations/subdirectories will be flattened, and only the version number will be used to order them.
+-   **encoding** (default=`UTF-8`): Encoding of migration files.
+-   **defaultContentType** (default=`application/json; charset=UTF-8`): This content type will be used as the default if no `Content-Type` header is specified in the header section of a migration script. If no charset is defined, the `encoding` charset is used.
+-   **esMigrationPrefix** (default=`V`): File name prefix for migration files.
+-   **esMigrationSuffixes** (default=`[.http]`): List of file name suffixes for migration files. The suffix is checked case-insensitively. 
+-   **placeholderReplacement** (default=`true`): Whether to enable or disable placeholder replacement in migration scripts.
+-   **placeholders** (default=`[]`): Map of placeholders and their replacements to apply to migration scripts.
+-   **placeholderPrefix** (default=`${`): Prefix of placeholders in migration scripts.
+-   **placeholderSuffix** (default=`}`): Suffix of placeholders in migration scripts.
+-   **historyIndex** (default=`es_evolution`): Name of the history index that will be used by Elasticsearch-Evolution. In this index, Elasticsearch-Evolution will persist its internal state and track which migration scripts have already been executed.
+-   **historyMaxQuerySize** (default=`1000`): The maximum query size while validating already executed scripts. This query size must be higher than the total count of your migration scripts.
+-   **validateOnMigrate** (default=`true`): Whether to fail when a previously applied migration script has been modified after it was applied.
+-   **baselineVersion** (default=`1.0`): Version to use as a baseline. Versions lower than this will not be applied.
+-   **lineSeparator** (default=`\n`): Line separator, used only temporarily between reading raw migration file line-by-line and parsing it later. Only needed for backward compatibility/checksum stability! Should be one of `\n`, `\r` or `\r\n`.
+-   **outOfOrder** (default=`false`): Allows migrations to be run "out of order". If you already have versions 1.0 and 3.0 applied, and now version 2.0 is found, it will be applied too instead of being rejected.
+- **trimTrailingNewlineInMigrations** (default=`false`): Whether to remove a trailing newline in migration scripts. Only needed for backward compatibility/checksum stability!
 
 ### 5.1 Spring Boot
 
