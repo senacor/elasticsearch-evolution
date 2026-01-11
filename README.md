@@ -337,9 +337,13 @@ ElasticsearchEvolution.configure()
 
 ## 6 Changelog
 
+### v0.7.1-SNAPSHOT
+
+- ...
+
 ### v0.7.0
 
-- **Breaking change**: Added abstraction for the underlying HTTP Client (`EvolutionRestClient` in new artifact `com.senacor.elasticsearch.evolution:elasticsearch-evolution-rest-abstraction`) and an implementation for the Elasticsearch `RestClient` (`EvolutionESRestClient` in artifact `com.senacor.elasticsearch.evolution:elasticsearch-evolution-rest-abstraction-es-client`).
+- **Breaking change**: Added abstraction for the underlying HTTP Client (`EvolutionRestClient` in new artifact `com.senacor.elasticsearch.evolution:elasticsearch-evolution-rest-abstraction`) and an implementation for the Elasticsearch `RestClient` (`EvolutionESRestClient` in artifact `com.senacor.elasticsearch.evolution:elasticsearch-evolution-rest-abstraction-es-client`) ([#553](https://github.com/senacor/elasticsearch-evolution/pull/553)).
   - You have to add the dependency `com.senacor.elasticsearch.evolution:elasticsearch-evolution-rest-abstraction-es-client`.
 - Drop Spring Boot 3.0 and 3.1 compatibility tests. Further versions may run on Spring Boot 3.0 and 3.1, but they are not tested anymore.
 - Added regression tests for Spring Boot 3.4 and 3.5.
