@@ -11,6 +11,8 @@
     </parent>
     <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
     <packaging>jar</packaging>
+
+    <name>${project.artifactId}</name>
     <description>Impl of REST client abstraction with elasticsearch-rest-client</description>
     <url>${project.parent.url}</url>
 
