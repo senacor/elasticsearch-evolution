@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>test-spring-boot-3.3-scriptsInJarFile</artifactId>
-    <version>0.7.0-SNAPSHOT</version>
+    <version>0.7.0</version>
     <description>Demo project for Spring Boot</description>
 
     <properties>

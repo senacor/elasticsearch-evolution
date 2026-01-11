@@ -337,7 +337,7 @@ ElasticsearchEvolution.configure()
 
 ## 6 Changelog
 
-### v0.7.0-SNAPSHOT
+### v0.7.0
 
 - **Breaking change**: Added abstraction for the underlying HTTP Client (`EvolutionRestClient` in new artifact `com.senacor.elasticsearch.evolution:elasticsearch-evolution-rest-abstraction`) and an implementation for the Elasticsearch `RestClient` (`EvolutionESRestClient` in artifact `com.senacor.elasticsearch.evolution:elasticsearch-evolution-rest-abstraction-es-client`).
   - You have to add the dependency `com.senacor.elasticsearch.evolution:elasticsearch-evolution-rest-abstraction-es-client`.
