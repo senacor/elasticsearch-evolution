@@ -121,7 +121,7 @@ jobs:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        run: $MVN_CMD deploy -DskipTests=true -Drelease -Dmaven.deploy.skip=true -DskipNexusStagingDeployMojo=true
+        run: $MVN_CMD deploy -DskipTests=true -Drelease -Dmaven.deploy.skip=true -DskipNexusStagingDeployMojo=true -DskipPublishing=true
 
       - name: prepare release version
         run: source prepare_release_version.sh
