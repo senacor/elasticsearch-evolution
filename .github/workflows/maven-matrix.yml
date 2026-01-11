@@ -187,3 +187,23 @@ jobs:
           asset_path: ./elasticsearch-evolution-core/target/elasticsearch-evolution-core-${{ env.PROJECT_VERSION }}.jar
           asset_name: elasticsearch-evolution-core-${{ env.PROJECT_VERSION }}.jar
           asset_content_type: application/java-archive
+      - name: Upload Release Asset elasticsearch-evolution-rest-abstraction
+        id: upload-release-asset-elasticsearch-evolution-rest-abstraction
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./elasticsearch-evolution-rest-abstraction/target/elasticsearch-evolution-rest-abstraction-${{ env.PROJECT_VERSION }}.jar
+          asset_name: elasticsearch-evolution-rest-abstraction-${{ env.PROJECT_VERSION }}.jar
+          asset_content_type: application/java-archive
+      - name: Upload Release Asset elasticsearch-evolution-rest-abstraction-es-client
+        id: upload-release-asset-elasticsearch-evolution-rest-abstraction-es-client
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./elasticsearch-evolution-rest-abstraction-es-client/target/elasticsearch-evolution-rest-abstraction-es-client-${{ env.PROJECT_VERSION }}.jar
+          asset_name: elasticsearch-evolution-rest-abstraction-es-client-${{ env.PROJECT_VERSION }}.jar
+          asset_content_type: application/java-archive
