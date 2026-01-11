@@ -13,6 +13,7 @@ import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.Migrati
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.ElasticsearchArgumentsProvider;
 import com.senacor.elasticsearch.evolution.core.test.EsUtils;
+import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
 import org.apache.commons.io.IOUtils;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -51,14 +52,14 @@ class ElasticsearchEvolutionIT {
 
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-    void migrate_OK(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) throws IOException {
+    void migrate_OK(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient, EvolutionRestClient restClient) throws IOException {
 
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_OK"));
         String historyIndex = elasticsearchEvolutionConfig.getHistoryIndex();
-        historyRepository = new HistoryRepositoryImpl(restHighLevelClient.getLowLevelClient(), historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
+        historyRepository = new HistoryRepositoryImpl(restClient, historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
         ElasticsearchEvolution underTest = elasticsearchEvolutionConfig
-                .load(restHighLevelClient.getLowLevelClient());
+                .load(restClient);
 
         assertThatThrownBy(underTest::validate)
                 .isInstanceOf(ValidateException.class)
@@ -129,16 +130,16 @@ class ElasticsearchEvolutionIT {
 
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-    void migrate_failed_then_fixed_script_and_re_execute(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+    void migrate_failed_then_fixed_script_and_re_execute(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient, EvolutionRestClient restClient) {
 
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_failed_step1"));
-        historyRepository = new HistoryRepositoryImpl(restHighLevelClient.getLowLevelClient(), elasticsearchEvolutionConfig.getHistoryIndex(), new MigrationScriptProtocolMapper(), 1000, objectMapper);
+        historyRepository = new HistoryRepositoryImpl(restClient, elasticsearchEvolutionConfig.getHistoryIndex(), new MigrationScriptProtocolMapper(), 1000, objectMapper);
 
         assertSoftly(softly -> {
-            softly.assertThatThrownBy(() -> elasticsearchEvolutionConfig.load(restHighLevelClient.getLowLevelClient()).migrate())
+            softly.assertThatThrownBy(() -> elasticsearchEvolutionConfig.load(restClient).migrate())
                     .isInstanceOf(MigrationException.class)
-                    .hasMessage("execution of script 'FileNameInfoImpl{version=1.1, description='addDocument', scriptName='V001.01__addDocument.http'}' failed");
+                    .hasMessage("execution of script 'FileNameInfoImpl(version=1.1, description=addDocument, scriptName=V001.01__addDocument.http)' failed");
             NavigableSet<MigrationScriptProtocol> protocols = historyRepository.findAll();
             softly.assertThat(protocols)
                     .as("# of historyIndex entries (%s)", protocols)
@@ -154,7 +155,7 @@ class ElasticsearchEvolutionIT {
         elasticsearchEvolutionConfig.setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_failed_step2_fixed"));
 
         assertSoftly(softly -> {
-            softly.assertThat(elasticsearchEvolutionConfig.load(restHighLevelClient.getLowLevelClient()).migrate())
+            softly.assertThat(elasticsearchEvolutionConfig.load(restClient).migrate())
                     .as("# of successful executed scripts")
                     .isOne();
             NavigableSet<MigrationScriptProtocol> protocols = historyRepository.findAll();
@@ -167,15 +168,15 @@ class ElasticsearchEvolutionIT {
 
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-    void migrate_outOfOrder_disabled_will_fail(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+    void migrate_outOfOrder_disabled_will_fail(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient, EvolutionRestClient restClient) {
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_outOfOrder_1"));
         String historyIndex = elasticsearchEvolutionConfig.getHistoryIndex();
-        historyRepository = new HistoryRepositoryImpl(restHighLevelClient.getLowLevelClient(), historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
+        historyRepository = new HistoryRepositoryImpl(restClient, historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
 
 
         assertSoftly(softly -> {
-            softly.assertThat(elasticsearchEvolutionConfig.load(restHighLevelClient.getLowLevelClient()).migrate())
+            softly.assertThat(elasticsearchEvolutionConfig.load(restClient).migrate())
                     .as("# of successful executed scripts ")
                     .isEqualTo(2);
             softly.assertThat(historyRepository.findAll())
@@ -189,7 +190,7 @@ class ElasticsearchEvolutionIT {
         elasticsearchEvolutionConfig.setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_outOfOrder_2"));
 
 
-        final ElasticsearchEvolution underTest = elasticsearchEvolutionConfig.load(restHighLevelClient.getLowLevelClient());
+        final ElasticsearchEvolution underTest = elasticsearchEvolutionConfig.load(restClient);
         assertThatThrownBy(underTest::migrate)
                 .isInstanceOf(MigrationException.class)
                 .hasMessage("The logged execution in the Elasticsearch-Evolution history index at position 1 is version 3 and in the same position in the given migration scripts is version 2! Out of order execution is not supported. Or maybe you have added new migration scripts in between or have to cleanup the Elasticsearch-Evolution history index manually");
@@ -197,16 +198,16 @@ class ElasticsearchEvolutionIT {
 
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-    void migrate_outOfOrder_enabled(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient) {
+    void migrate_outOfOrder_enabled(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient, EvolutionRestClient restClient) {
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setOutOfOrder(true)
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_outOfOrder_1"));
         String historyIndex = elasticsearchEvolutionConfig.getHistoryIndex();
-        historyRepository = new HistoryRepositoryImpl(restHighLevelClient.getLowLevelClient(), historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
+        historyRepository = new HistoryRepositoryImpl(restClient, historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
 
 
         assertSoftly(softly -> {
-            softly.assertThat(elasticsearchEvolutionConfig.load(restHighLevelClient.getLowLevelClient()).migrate())
+            softly.assertThat(elasticsearchEvolutionConfig.load(restClient).migrate())
                     .as("# of successful executed scripts ")
                     .isEqualTo(2);
             softly.assertThat(historyRepository.findAll())
@@ -221,7 +222,7 @@ class ElasticsearchEvolutionIT {
 
 
         assertSoftly(softly -> {
-            softly.assertThat(elasticsearchEvolutionConfig.load(restHighLevelClient.getLowLevelClient()).migrate())
+            softly.assertThat(elasticsearchEvolutionConfig.load(restClient).migrate())
                     .as("# of successful executed scripts ")
                     .isOne();
             softly.assertThat(historyRepository.findAll())

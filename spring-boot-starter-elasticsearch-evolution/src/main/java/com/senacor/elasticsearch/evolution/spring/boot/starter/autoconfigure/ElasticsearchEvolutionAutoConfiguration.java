@@ -2,6 +2,8 @@ package com.senacor.elasticsearch.evolution.spring.boot.starter.autoconfigure;
 
 import com.senacor.elasticsearch.evolution.core.ElasticsearchEvolution;
 import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
+import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstracion.esclient.EvolutionESRestClient;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
@@ -35,7 +37,6 @@ import java.util.List;
         "org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration" // since spring-boot 1.5
 })
 @AutoConfigureAfter(name = {
-        "org.springframework.boot.autoconfigure.elasticsearch.rest.RestClientAutoConfiguration", // spring-boot 2.1 / 2.2
         "org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration" // spring-boot 2.3+
 })
 public class ElasticsearchEvolutionAutoConfiguration {
@@ -44,9 +45,9 @@ public class ElasticsearchEvolutionAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    @ConditionalOnBean(RestClient.class)
+    @ConditionalOnBean(EvolutionRestClient.class)
     public ElasticsearchEvolution elasticsearchEvolution(ElasticsearchEvolutionConfig elasticsearchEvolutionConfig,
-                                                         RestClient restClient) {
+                                                         EvolutionRestClient restClient) {
         return new ElasticsearchEvolution(elasticsearchEvolutionConfig, restClient);
     }
 
@@ -57,7 +58,7 @@ public class ElasticsearchEvolutionAutoConfiguration {
     }
 
     @Configuration
-    @ConditionalOnClass(RestClient.class)
+    @ConditionalOnClass({RestClient.class, EvolutionESRestClient.class})
     public static class RestClientConfiguration {
 
         /**
@@ -67,15 +68,10 @@ public class ElasticsearchEvolutionAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean({RestClientBuilder.class, RestClient.class})
         public RestClientBuilder restClientBuilder(
-                @Value("${spring.elasticsearch.rest.uris:http://localhost:9200}") String[] urisDeprecated,
-                @Value("${spring.elasticsearch.uris:}") String[] uris) {
+                @Value("${spring.elasticsearch.uris:http://localhost:9200}") String[] uris) {
             final List<String> urisList;
             if (uris != null && uris.length > 0) {
-                // prefer the new spring-boot (since 2.6) config properties
                 urisList = Arrays.asList(uris);
-            } else if (urisDeprecated != null && urisDeprecated.length > 0) {
-                // fallback to old deprecated spring-boot config properties
-                urisList = Arrays.asList(urisDeprecated);
             } else {
                 throw new IllegalStateException("spring configuration 'spring.elasticsearch.uris' does not exist");
             }
@@ -97,6 +93,14 @@ public class ElasticsearchEvolutionAutoConfiguration {
         public RestClient elasticRestClient(RestClientBuilder restClientBuilder) {
             logger.info("creating RestClient from {}", restClientBuilder);
             return restClientBuilder.build();
+        }
+
+        @Bean
+        @ConditionalOnBean(RestClient.class)
+        @ConditionalOnMissingBean(EvolutionRestClient.class)
+        public EvolutionESRestClient evolutionESRestClient(RestClient restClient) {
+            logger.info("creating EvolutionESRestClient from {}", restClient);
+            return new EvolutionESRestClient(restClient);
         }
     }
 }

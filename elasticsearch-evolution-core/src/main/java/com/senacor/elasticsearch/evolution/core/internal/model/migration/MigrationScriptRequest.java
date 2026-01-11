@@ -1,37 +1,40 @@
 package com.senacor.elasticsearch.evolution.core.internal.model.migration;
 
-import com.senacor.elasticsearch.evolution.core.api.MigrationException;
-import org.apache.http.entity.ContentType;
+import com.senacor.elasticsearch.evolution.rest.abstracion.HttpMethod;
+import lombok.Getter;
+import lombok.ToString;
 
-import java.util.*;
-
-import static java.util.Objects.requireNonNull;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents the HTTP request from the migration script
  *
  * @author Andreas Keefer
  */
+@ToString
 public class MigrationScriptRequest {
-
-    private static final String HEADER_NAME_CONTENT_TYPE = "Content-Type";
 
     /**
      * http method,like POST, PUT or DELETE
      * non-null
      */
+    @Getter
     private HttpMethod httpMethod;
 
     /**
      * relative path to the endpoint without hostname, like /my_index
      * nullable
      */
+    @Getter
     private String path;
 
     /**
      * additional http headers, like Content-Type: application/json
      * May be empty.
      */
+    @Getter
     private Map<String, String> httpHeader = new HashMap<>();
 
     /**
@@ -40,26 +43,14 @@ public class MigrationScriptRequest {
      */
     private StringBuilder body = new StringBuilder();
 
-    public HttpMethod getHttpMethod() {
-        return httpMethod;
-    }
-
     public MigrationScriptRequest setHttpMethod(HttpMethod httpMethod) {
         this.httpMethod = httpMethod;
         return this;
     }
 
-    public String getPath() {
-        return path;
-    }
-
     public MigrationScriptRequest setPath(String path) {
         this.path = path;
         return this;
-    }
-
-    public Map<String, String> getHttpHeader() {
-        return httpHeader;
     }
 
     public MigrationScriptRequest setHttpHeader(Map<String, String> httpHeader) {
@@ -87,16 +78,6 @@ public class MigrationScriptRequest {
     }
 
     @Override
-    public String toString() {
-        return "MigrationScript{" +
-                "httpMethod='" + httpMethod + '\'' +
-                ", path='" + path + '\'' +
-                ", httpHeader=" + httpHeader +
-                ", body='" + body + '\'' +
-                '}';
-    }
-
-    @Override
     public int hashCode() {
         return Objects.hash(httpMethod, path, httpHeader, body);
     }
@@ -117,39 +98,6 @@ public class MigrationScriptRequest {
     }
 
     public boolean isBodyEmpty() {
-        return body.length() == 0;
-    }
-
-    public Optional<ContentType> getContentType() {
-        if (null == httpHeader) {
-            return Optional.empty();
-        }
-        return httpHeader.entrySet()
-                .stream()
-                .filter(entry -> HEADER_NAME_CONTENT_TYPE.equalsIgnoreCase(entry.getKey()))
-                .map(entry -> ContentType.parse(entry.getValue()))
-                .findFirst();
-    }
-
-    public enum HttpMethod {
-        GET,
-        HEAD,
-        POST,
-        PUT,
-        DELETE,
-        OPTIONS,
-        PATCH;
-
-        public static HttpMethod create(String method) throws MigrationException {
-            String normalizedMethod = requireNonNull(method, "method must not be null")
-                    .toUpperCase()
-                    .trim();
-            return Arrays.stream(values())
-                    .filter(m -> m.name().equals(normalizedMethod))
-                    .findFirst()
-                    .orElseThrow(() -> new MigrationException(
-                    "Method '%s' not supported, only %s is supported.".formatted(
-                    method, Arrays.toString(values()))));
-        }
+        return body.isEmpty();
     }
 }

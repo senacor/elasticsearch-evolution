@@ -17,8 +17,7 @@ import com.senacor.elasticsearch.evolution.core.internal.migration.input.Migrati
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
-import org.apache.http.entity.ContentType;
-import org.elasticsearch.client.RestClient;
+import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +46,7 @@ public class ElasticsearchEvolution {
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchEvolution.class);
 
     private final ElasticsearchEvolutionConfig config;
-    private final RestClient restClient;
+    private final EvolutionRestClient restClient;
 
     private final MigrationScriptReader migrationScriptReader;
     private final MigrationScriptParser migrationScriptParser;
@@ -77,7 +76,7 @@ public class ElasticsearchEvolution {
      * @param restClient                   REST client to interact with Elasticsearch
      */
     public ElasticsearchEvolution(ElasticsearchEvolutionConfig elasticsearchEvolutionConfig,
-                                  RestClient restClient) {
+                                  EvolutionRestClient restClient) {
         this.config = requireNonNull(elasticsearchEvolutionConfig, "elasticsearchEvolutionConfig must not be null")
                 .validate();
         this.restClient = requireNonNull(restClient, "restClient must not be null");
@@ -86,8 +85,10 @@ public class ElasticsearchEvolution {
         this.migrationScriptParser = createMigrationScriptParser();
         this.migrationService = createMigrationService();
 
-        logger.info("Created ElasticsearchEvolution with config='{}' and client='{}'",
-                this.getConfig(), this.getRestClient().getNodes());
+        if (logger.isInfoEnabled()) {
+            logger.info("Created ElasticsearchEvolution with config='{}' and client='{}'",
+                    this.getConfig(), this.getRestClient().info());
+        }
     }
 
     /**
@@ -165,7 +166,7 @@ public class ElasticsearchEvolution {
         return config;
     }
 
-    protected RestClient getRestClient() {
+    protected EvolutionRestClient getRestClient() {
         return restClient;
     }
 
@@ -212,7 +213,7 @@ public class ElasticsearchEvolution {
                 1_000,
                 10_000,
                 getRestClient(),
-                ContentType.parse(getConfig().getDefaultContentType()),
+                getConfig().getDefaultContentType(),
                 getConfig().getEncoding(),
                 getConfig().isValidateOnMigrate(),
                 getConfig().getBaselineVersion(),
