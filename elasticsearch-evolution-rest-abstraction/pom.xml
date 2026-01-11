@@ -14,12 +14,12 @@
 
     <name>${project.artifactId}</name>
     <description>REST client abstraction</description>
-    <url>${project.parent.url}</url>
+    <url>https://github.com/senacor/elasticsearch-evolution</url>
 
     <scm>
-        <connection>${project.parent.scm.connection}</connection>
-        <developerConnection>${project.parent.scm.developerConnection}</developerConnection>
-        <url>${project.parent.scm.url}</url>
+        <connection>scm:git@github.com:senacor/elasticsearch-evolution.git</connection>
+        <developerConnection>scm:git@github.com:senacor/elasticsearch-evolution.git</developerConnection>
+        <url>https://github.com/senacor/elasticsearch-evolution</url>
     </scm>
 
     <properties>
