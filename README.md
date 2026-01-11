@@ -339,7 +339,7 @@ ElasticsearchEvolution.configure()
 
 ### v0.7.1-SNAPSHOT
 
-- ...
+- Release process: Replace archived `actions/create-release` with `softprops/action-gh-release` ([#554](https://github.com/senacor/elasticsearch-evolution/issues/554)).
 
 ### v0.7.0
 

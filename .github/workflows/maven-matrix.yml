@@ -158,52 +158,18 @@ jobs:
         run: source prepare_release_version.sh
       - name: Create Github Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TRAVIS_TAG }}
-          release_name: ${{ env.PROJECT_VERSION }}
-          body: ""
+          # Defaults to repository default branch, so we set the SHA of the current commit
+          target_commitish: ${{ github.sha }}
+          name: ${{ env.PROJECT_VERSION }}
           draft: false
           prerelease: ${{ env.IS_SNAPSHOT }}
-      - name: Upload Release Asset spring-boot-starter-elasticsearch-evolution
-        id: upload-release-asset-spring-boot-starter-elasticsearch-evolution
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./spring-boot-starter-elasticsearch-evolution/target/spring-boot-starter-elasticsearch-evolution-${{ env.PROJECT_VERSION }}.jar
-          asset_name: spring-boot-starter-elasticsearch-evolution-${{ env.PROJECT_VERSION }}.jar
-          asset_content_type: application/java-archive
-      - name: Upload Release Asset elasticsearch-evolution-core
-        id: upload-release-asset-elasticsearch-evolution-core
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./elasticsearch-evolution-core/target/elasticsearch-evolution-core-${{ env.PROJECT_VERSION }}.jar
-          asset_name: elasticsearch-evolution-core-${{ env.PROJECT_VERSION }}.jar
-          asset_content_type: application/java-archive
-      - name: Upload Release Asset elasticsearch-evolution-rest-abstraction
-        id: upload-release-asset-elasticsearch-evolution-rest-abstraction
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./elasticsearch-evolution-rest-abstraction/target/elasticsearch-evolution-rest-abstraction-${{ env.PROJECT_VERSION }}.jar
-          asset_name: elasticsearch-evolution-rest-abstraction-${{ env.PROJECT_VERSION }}.jar
-          asset_content_type: application/java-archive
-      - name: Upload Release Asset elasticsearch-evolution-rest-abstraction-es-client
-        id: upload-release-asset-elasticsearch-evolution-rest-abstraction-es-client
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./elasticsearch-evolution-rest-abstraction-es-client/target/elasticsearch-evolution-rest-abstraction-es-client-${{ env.PROJECT_VERSION }}.jar
-          asset_name: elasticsearch-evolution-rest-abstraction-es-client-${{ env.PROJECT_VERSION }}.jar
-          asset_content_type: application/java-archive
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            spring-boot-starter-elasticsearch-evolution/target/spring-boot-starter-elasticsearch-evolution-${{ env.PROJECT_VERSION }}.jar
+            elasticsearch-evolution-core/target/elasticsearch-evolution-core-${{ env.PROJECT_VERSION }}.jar
+            elasticsearch-evolution-rest-abstraction/target/elasticsearch-evolution-rest-abstraction-${{ env.PROJECT_VERSION }}.jar
+            elasticsearch-evolution-rest-abstraction-es-client/target/elasticsearch-evolution-rest-abstraction-es-client-${{ env.PROJECT_VERSION }}.jar
