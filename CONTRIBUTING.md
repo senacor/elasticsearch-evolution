@@ -9,7 +9,7 @@ If you find a bug or have a feature request, please open an issue on [GitHub Iss
 - A clear description of the issue or feature request
 - Steps to reproduce (for bugs)
 - Expected vs. actual behavior
-- Your environment (Elasticsearch-Evolution version, Java version, Spring Boot version, Elasticsearch/Opensearch version)
+- Your environment (Elasticsearch-Evolution version, Java version, Spring Boot version, Elasticsearch/OpenSearch version)
 
 ## Contributing Code
 
