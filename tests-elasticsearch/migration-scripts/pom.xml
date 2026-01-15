@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>migration-scripts</artifactId>
-    <version>0.7.2-SNAPSHOT</version>
+    <version>0.7.2</version>
     <description>jar containing migration files</description>
 
     <packaging>jar</packaging>

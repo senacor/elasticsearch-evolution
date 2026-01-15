@@ -53,12 +53,12 @@ and choose an `elasticsearch-evolution-rest-abstraction` implementation (here: E
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.7.1</version>
+    <version>0.7.2</version>
 </dependency>
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
-    <version>0.7.1</version>
+    <version>0.7.2</version>
 </dependency>
 ```
 
@@ -75,12 +75,12 @@ and choose an `elasticsearch-evolution-rest-abstraction` implementation (here: E
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.7.1</version>
+    <version>0.7.2</version>
 </dependency>
 <dependency>
   <groupId>com.senacor.elasticsearch.evolution</groupId>
   <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
-  <version>0.7.1</version>
+  <version>0.7.2</version>
 </dependency>
 ```
 
@@ -128,7 +128,7 @@ Elasticsearch-Evolution uses a REST client abstraction (`EvolutionRestClient`). 
   <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
-    <version>0.7.1</version>
+    <version>0.7.2</version>
   </dependency>
   ```
 * OpenSearch [RestClient](https://central.sonatype.com/artifact/org.opensearch.client/opensearch-rest-client) implementation: `EvolutionOpenSearchRestClient` which is designed for OpenSearch `2.x` because the `RestClientTransport` is deprecated for removal since `3.x`.
@@ -153,7 +153,7 @@ You can provide your own implementation of `EvolutionRestClient` if you want to 
 <dependency>
   <groupId>com.senacor.elasticsearch.evolution</groupId>
   <artifactId>elasticsearch-evolution-rest-abstraction</artifactId>
-  <version>0.7.1</version>
+  <version>0.7.2</version>
 </dependency>
 ```
 - With the Spring Boot starter, you have to create a bean with your custom `EvolutionRestClient` implementation like this:
@@ -385,8 +385,9 @@ ElasticsearchEvolution.configure()
 ```
 
 ## 6 Changelog
+## 6 Changelog
 
-### v0.7.2-SNAPSHOT
+### v0.7.2
 
 - Added 2 OpenSearch `EvolutionRestClient` implementations ([#198](https://github.com/senacor/elasticsearch-evolution/issues/198), [#220](https://github.com/senacor/elasticsearch-evolution/issues/220), [#287](https://github.com/senacor/elasticsearch-evolution/issues/287), [#348](https://github.com/senacor/elasticsearch-evolution/issues/348))
     - `EvolutionOpenSearchRestClient` for OpenSearch `RestClient`
