@@ -2,6 +2,7 @@ package com.senacor.elasticsearch.evolution.rest.abstracion.esclient;
 
 import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
 import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestResponse;
+import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestResponseImpl;
 import com.senacor.elasticsearch.evolution.rest.abstracion.HttpMethod;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -54,25 +55,12 @@ public class EvolutionESRestClient implements EvolutionRestClient {
 
         final Response response = restClient.performRequest(request);
 
-        return new EvolutionRestResponse() {
-
-            @Override
-            public int statusCode() {
-                return response.getStatusLine().getStatusCode();
-            }
-
-            @Override
-            public Optional<String> statusReasonPhrase() {
-                return Optional.ofNullable(response.getStatusLine().getReasonPhrase());
-            }
-
-            @Override
-            public Optional<String> body() throws IOException {
-                final HttpEntity entity = response.getEntity();
-                return null == entity
-                        ? Optional.empty()
-                        : Optional.ofNullable(EntityUtils.toString(entity));
-            }
-        };
+        final HttpEntity entity = response.getEntity();
+        Optional<String> responseBody = null == entity
+                ? Optional.empty()
+                : Optional.ofNullable(EntityUtils.toString(entity));
+        return new EvolutionRestResponseImpl(response.getStatusLine().getStatusCode(),
+                Optional.ofNullable(response.getStatusLine().getReasonPhrase()),
+                responseBody);
     }
 }

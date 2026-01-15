@@ -5,12 +5,12 @@
 
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-parent</artifactId>
-    <version>0.7.1</version>
+    <version>0.7.2</version>
     <packaging>pom</packaging>
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>3.5.8</version>
+        <version>3.5.9</version>
     </parent>
 
     <name>elasticsearch-evolution</name>
@@ -108,6 +108,7 @@
         <commons-io.version>2.21.0</commons-io.version>
         <!--when updating elasticsearch versions, also update "ElasticsearchContainer" version in EmbeddedElasticsearchExtension-->
         <elasticsearch.version>7.5.2</elasticsearch.version>
+        <opensearch-client.version>3.4.0</opensearch-client.version>
         <classgraph.version>4.8.184</classgraph.version>
         <testcontainers.elasticsearch.version>1.21.4</testcontainers.elasticsearch.version>
         <lombok.version>1.18.42</lombok.version>
@@ -160,6 +161,18 @@
                 <artifactId>elasticsearch</artifactId>
                 <version>${testcontainers.elasticsearch.version}</version>
                 <scope>test</scope>
+            </dependency>
+
+            <!-- OpenSearch -->
+            <dependency>
+                <groupId>org.opensearch.client</groupId>
+                <artifactId>opensearch-rest-client</artifactId>
+                <version>${opensearch-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.opensearch.client</groupId>
+                <artifactId>opensearch-java</artifactId>
+                <version>${opensearch-client.version}</version>
             </dependency>
 
             <dependency>
@@ -382,7 +395,9 @@
             </activation>
 
             <modules>
-                <module>tests</module>
+                <module>tests-elasticsearch</module>
+                <module>tests-opensearch-restclient</module>
+                <module>tests-opensearch-genericclient</module>
             </modules>
         </profile>
     </profiles>
@@ -390,6 +405,8 @@
     <modules>
         <module>elasticsearch-evolution-rest-abstraction</module>
         <module>elasticsearch-evolution-rest-abstraction-es-client</module>
+        <module>elasticsearch-evolution-rest-abstraction-os-restclient</module>
+        <module>elasticsearch-evolution-rest-abstraction-os-genericclient</module>
         <module>elasticsearch-evolution-core</module>
         <module>spring-boot-starter-elasticsearch-evolution</module>
     </modules>
