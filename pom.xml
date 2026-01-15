@@ -95,7 +95,7 @@
         <maven.compiler.proc>full</maven.compiler.proc>
 
         <!-- Plugin Versions -->
-        <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
+        <coveralls-maven-plugin.version>4.5.0-M6</coveralls-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
         <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
         <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
@@ -194,19 +194,9 @@
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <groupId>org.eluder.coveralls</groupId>
+                    <groupId>com.github.hazendaz.maven</groupId>
                     <artifactId>coveralls-maven-plugin</artifactId>
                     <version>${coveralls-maven-plugin.version}</version>
-                    <dependencies>
-                        <!-- fix https://github.com/trautonen/coveralls-maven-plugin/issues/141
-                         ClassNotFoundException: javax.xml.bind.DatatypeConverter
-                         when running on JDK 17-->
-                        <dependency>
-                            <groupId>javax.xml.bind</groupId>
-                            <artifactId>jaxb-api</artifactId>
-                            <version>2.3.1</version>
-                        </dependency>
-                    </dependencies>
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
@@ -335,7 +325,7 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.eluder.coveralls</groupId>
+                <groupId>com.github.hazendaz.maven</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
             </plugin>
         </plugins>
