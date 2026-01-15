@@ -385,7 +385,10 @@ ElasticsearchEvolution.configure()
 ```
 
 ## 6 Changelog
-## 6 Changelog
+
+### v0.7.3-SNAPSHOT
+
+- ...
 
 ### v0.7.2
 
