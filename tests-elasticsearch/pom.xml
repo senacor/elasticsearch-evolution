@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.senacor.elasticsearch.evolution</groupId>
+        <artifactId>elasticsearch-evolution-parent</artifactId>
+        <version>0.7.2-SNAPSHOT</version>
+        <relativePath>../</relativePath>
+    </parent>
+    <artifactId>tests-elasticsearch</artifactId>
+    <packaging>pom</packaging>
+    <description>aggregator module for integration test projects with Elasticsearch</description>
+
+    <properties>
+        <elasticsearch.version>7.5.2</elasticsearch.version>
+    </properties>
+
+    <modules>
+        <module>migration-scripts</module>
+        <module>test-es-spring-boot-3.2</module>
+        <module>test-es-spring-boot-3.3-scriptsInJarFile</module>
+        <module>test-es-spring-boot-3.4-scriptsInJarFile</module>
+        <module>test-es-spring-boot-3.5</module>
+    </modules>
+</project>

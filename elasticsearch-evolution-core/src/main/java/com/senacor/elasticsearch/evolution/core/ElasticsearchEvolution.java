@@ -86,8 +86,11 @@ public class ElasticsearchEvolution {
         this.migrationService = createMigrationService();
 
         if (logger.isInfoEnabled()) {
+            String restClientInfo = this.getConfig().isEnabled()
+                    ? this.getRestClient().info()
+                    : this.getRestClient().getClass().getName();
             logger.info("Created ElasticsearchEvolution with config='{}' and client='{}'",
-                    this.getConfig(), this.getRestClient().info());
+                    this.getConfig(), restClientInfo);
         }
     }
 
