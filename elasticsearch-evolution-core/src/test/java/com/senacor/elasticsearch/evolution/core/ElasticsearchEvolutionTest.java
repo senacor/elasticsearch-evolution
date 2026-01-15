@@ -82,7 +82,6 @@ class ElasticsearchEvolutionTest {
             assertThat(migrations).isZero();
 
             InOrder order = inOrder(evolutionRestClient);
-            order.verify(evolutionRestClient).info();
             order.verifyNoMoreInteractions();
         }
     }
@@ -139,7 +138,6 @@ class ElasticsearchEvolutionTest {
                     .doesNotThrowAnyException();
 
             InOrder order = inOrder(evolutionRestClient);
-            order.verify(evolutionRestClient).info();
             order.verifyNoMoreInteractions();
         }
 

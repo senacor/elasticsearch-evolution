@@ -66,7 +66,8 @@ class EvolutionESRestClientTest {
                 "/_search",
                 Map.of("Content-Type", "application/json"),
                 Map.of("refresh", "true"),
-                "{\"query\": \"bar\"}");
+                """
+                        {"query": "bar"}""");
 
 
         assertThat(res)
@@ -108,7 +109,8 @@ class EvolutionESRestClientTest {
                     String body = EntityUtils.toString(argument.getEntity());
                     softly.assertThat(body)
                             .as("body")
-                            .isEqualTo("{\"query\": \"bar\"}");
+                            .isEqualTo("""
+                                    {"query": "bar"}""");
                 } catch (IOException e) {
                     softly.fail("failed to validate body", e);
                 }
