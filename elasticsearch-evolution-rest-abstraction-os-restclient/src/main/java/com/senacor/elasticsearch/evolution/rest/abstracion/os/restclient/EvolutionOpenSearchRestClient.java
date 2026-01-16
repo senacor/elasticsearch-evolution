@@ -6,11 +6,10 @@ import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestResponse
 import com.senacor.elasticsearch.evolution.rest.abstracion.HttpMethod;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.ParseException;
-import org.apache.hc.core5.http.io.entity.EntityUtils;
-import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.http.HttpEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.nio.entity.NStringEntity;
+import org.apache.http.util.EntityUtils;
 import org.opensearch.client.Request;
 import org.opensearch.client.RequestOptions;
 import org.opensearch.client.Response;
@@ -46,7 +45,7 @@ public class EvolutionOpenSearchRestClient implements EvolutionRestClient {
             ContentType contentType = getContentType(headers)
                     .map(ContentType::parse)
                     .orElse(null);
-            request.setEntity(new StringEntity(body, contentType));
+            request.setEntity(new NStringEntity(body, contentType));
         }
         if (null != headers) {
             RequestOptions.Builder builder = RequestOptions.DEFAULT.toBuilder();
@@ -57,14 +56,9 @@ public class EvolutionOpenSearchRestClient implements EvolutionRestClient {
         final Response response = restClient.performRequest(request);
 
         final HttpEntity entity = response.getEntity();
-        final Optional<String> responseBody;
-        try {
-            responseBody = null == entity
-                    ? Optional.empty()
-                    : Optional.ofNullable(EntityUtils.toString(entity));
-        } catch (ParseException e) {
-            throw new IOException("header elements cannot be parsed", e);
-        }
+        Optional<String> responseBody = null == entity
+                ? Optional.empty()
+                : Optional.ofNullable(EntityUtils.toString(entity));
         return new EvolutionRestResponseImpl(response.getStatusLine().getStatusCode(),
                 Optional.ofNullable(response.getStatusLine().getReasonPhrase()),
                 responseBody);

@@ -168,7 +168,7 @@ jobs:
 
   release:
     # Release to maven central and create Github release
-    needs: [ build-with-jdk, build-with-es ]
+    needs: [ build-with-jdk, build-with-es, build-with-os-restclient, build-with-os-genericclient ]
     if: ${{ github.repository == 'senacor/elasticsearch-evolution' && github.event_name == 'push' && github.ref == 'refs/heads/release' }}
     runs-on: ubuntu-24.04
     steps:
