@@ -108,7 +108,8 @@
         <commons-io.version>2.21.0</commons-io.version>
         <!--when updating elasticsearch versions, also update "ElasticsearchContainer" version in EmbeddedElasticsearchExtension-->
         <elasticsearch.version>7.5.2</elasticsearch.version>
-        <opensearch-client.version>3.4.0</opensearch-client.version>
+        <opensearch-java.version>3.4.0</opensearch-java.version>
+        <opensearch-rest-client.version>2.19.4</opensearch-rest-client.version>
         <classgraph.version>4.8.184</classgraph.version>
         <testcontainers.elasticsearch.version>1.21.4</testcontainers.elasticsearch.version>
         <lombok.version>1.18.42</lombok.version>
@@ -167,12 +168,12 @@
             <dependency>
                 <groupId>org.opensearch.client</groupId>
                 <artifactId>opensearch-rest-client</artifactId>
-                <version>${opensearch-client.version}</version>
+                <version>${opensearch-rest-client.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.opensearch.client</groupId>
                 <artifactId>opensearch-java</artifactId>
-                <version>${opensearch-client.version}</version>
+                <version>${opensearch-java.version}</version>
             </dependency>
 
             <dependency>

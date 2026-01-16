@@ -132,15 +132,9 @@ public class ElasticsearchEvolutionAutoConfiguration {
 
             logger.info("creating OpenSearch RestClientBuilder with uris {}", urisList);
 
-            org.apache.hc.core5.http.HttpHost[] httpHosts = urisList.stream()
-                    .map(opensearchUri -> {
-                        try {
-                            return org.apache.hc.core5.http.HttpHost.create(opensearchUri);
-                        } catch (URISyntaxException e) {
-                            throw new IllegalArgumentException("OpenSearch uri '%s' is invalid".formatted(opensearchUri), e);
-                        }
-                    })
-                    .toArray(org.apache.hc.core5.http.HttpHost[]::new);
+            HttpHost[] httpHosts = urisList.stream()
+                    .map(HttpHost::create)
+                    .toArray(HttpHost[]::new);
             return org.opensearch.client.RestClient.builder(httpHosts);
         }
 

@@ -2,11 +2,11 @@ package com.senacor.elasticsearch.evolution.rest.abstracion.os.restclient;
 
 import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestResponse;
 import com.senacor.elasticsearch.evolution.rest.abstracion.HttpMethod;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.HttpHost;
-import org.apache.hc.core5.http.ParseException;
-import org.apache.hc.core5.http.io.entity.EntityUtils;
-import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.ParseException;
+import org.apache.http.entity.ContentType;
+import org.apache.http.nio.entity.NStringEntity;
+import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +19,6 @@ import org.opensearch.client.Response;
 import org.opensearch.client.RestClient;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 
@@ -44,7 +43,7 @@ class EvolutionOpenSearchRestClientTest {
     }
 
     @Test
-    void info() throws URISyntaxException {
+    void info() {
         when(restClient.getNodes())
                 .thenReturn(List.of(new Node(HttpHost.create("http://localhost:9200"))));
 
@@ -61,7 +60,7 @@ class EvolutionOpenSearchRestClientTest {
         when(response.getStatusLine().getReasonPhrase())
                 .thenReturn("OK");
         when(response.getEntity())
-                .thenReturn(new StringEntity("my body", ContentType.TEXT_PLAIN));
+                .thenReturn(new NStringEntity("my body", ContentType.TEXT_PLAIN));
 
 
         final EvolutionRestResponse res = underTest.execute(HttpMethod.POST,
