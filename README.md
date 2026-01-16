@@ -24,7 +24,7 @@ Successfully executed migration scripts will not be executed again!
 - runs on Spring-Boot 3.x (and of course without Spring-Boot)
 - runs on Elasticsearch version 7.5.x - 9.x
   - but focussing on maintained versions, see [elastic.co/support/eol](https://www.elastic.co/support/eol) or [endoflife.date/elasticsearch](https://endoflife.date/elasticsearch)
-- runs on OpenSearch version 1.x - 3.x
+- runs on OpenSearch version 2.x - 3.x
   - but focussing on maintained versions, see [opensearch.org/releases](https://opensearch.org/releases/) or [endoflife.date/opensearch](https://endoflife.date/opensearch)
 - highly configurable (e.g. location(s) of your migration files, migration file format patterns)
 - placeholder substitution in migration scripts
@@ -35,7 +35,7 @@ Successfully executed migration scripts will not be executed again!
 
 | Compatibility                    | Spring Boot                                      | Elasticsearch        | OpenSearch |
 |----------------------------------|--------------------------------------------------|----------------------|------------|
-| elasticsearch-evolution >= 0.7.0 | 3.2 - 3.5                                        | 7.5.x - 9.x          | 1.x - 3.x  |
+| elasticsearch-evolution >= 0.7.0 | 3.2 - 3.5                                        | 7.5.x - 9.x          | 2.x - 3.x  |
 | elasticsearch-evolution >= 0.6.1 | 3.0 - 3.2                                        | 7.5.x - 8.19.x       | 1.x - 2.x  |
 | elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1, 3.2 | 7.5.x - 8.13.x       | 1.x - 2.x  |
 | elasticsearch-evolution >= 0.4.0 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7                | 7.5.x - 8.6.x        | 1.x - 2.x  |
@@ -388,7 +388,7 @@ ElasticsearchEvolution.configure()
 
 ### v0.7.3-SNAPSHOT
 
-- ...
+- fixed `EvolutionOpenSearchRestClient` (`elasticsearch-evolution-rest-abstraction-os-restclient`) compatibility with OpenSearch 2.x client libs ([#565](https://github.com/senacor/elasticsearch-evolution/issues/565))
 
 ### v0.7.2
 
