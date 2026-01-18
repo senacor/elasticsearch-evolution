@@ -19,5 +19,6 @@
 
     <modules>
         <module>test-os-restclient-spring-boot-3.5</module>
+        <module>test-os-restclient-spring-boot-4.0</module>
     </modules>
 </project>
