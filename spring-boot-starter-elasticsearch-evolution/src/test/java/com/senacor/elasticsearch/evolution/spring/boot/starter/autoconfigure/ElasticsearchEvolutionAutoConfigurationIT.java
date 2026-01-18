@@ -26,7 +26,12 @@ import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFOR
  * @author Andreas Keefer
  */
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {
+                "spring.elasticsearch.evolution.es.rest5client.enabled=false",
+                "spring.elasticsearch.evolution.os.restclient.enabled=false",
+                "spring.elasticsearch.evolution.os.genericclient.enabled=false",
+        })
 @ContextConfiguration(classes = {EmbeddedElasticsearchConfiguration.class, SpringBootTestApplication.class})
 @DirtiesContext(classMode = BEFORE_CLASS)
 class ElasticsearchEvolutionAutoConfigurationIT {
@@ -54,7 +59,8 @@ class ElasticsearchEvolutionAutoConfigurationIT {
 
         assertThat(searchResponse.getHits().getTotalHits().value)
                 .as("searchResponse: %s", searchResponse)
-                .isEqualTo(1);
+                .as("Documents created by migration files")
+                .isOne();
     }
 
 }

@@ -1,11 +1,14 @@
 package com.senacor.elasticsearch.evolution.spring.boot.starter.autoconfigure;
 
+import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
 import com.senacor.elasticsearch.evolution.core.ElasticsearchEvolution;
 import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
 import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
 import com.senacor.elasticsearch.evolution.rest.abstracion.esclient.EvolutionESRestClient;
 import com.senacor.elasticsearch.evolution.rest.abstracion.os.genericclient.EvolutionOpenSearchGenericClient;
 import com.senacor.elasticsearch.evolution.rest.abstracion.os.restclient.EvolutionOpenSearchRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstracion.rest5client.EvolutionESRest5Client;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
@@ -38,9 +41,13 @@ import java.util.List;
  * @author Andreas Keefer
  */
 @AutoConfiguration(
-        beforeName = "org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration", // since spring-boot 1.5
+        beforeName = {
+                "org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration", // since spring-boot 1.5
+                "org.springframework.boot.kafka.autoconfigure.KafkaAutoConfiguration"  // since spring-boot 4.0
+        },
         afterName = {
                 "org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration", // spring-boot 2.3+
+                "org.springframework.boot.elasticsearch.autoconfigure.ElasticsearchRestClientAutoConfiguration", // spring-boot 4.0+
                 // if org.opensearch.client:spring-data-opensearch-starter is used, it should be preferred over this
                 "org.opensearch.spring.boot.autoconfigure.OpenSearchClientAutoConfiguration",
                 "org.opensearch.spring.boot.autoconfigure.OpenSearchRestClientAutoConfiguration"
@@ -68,6 +75,7 @@ public class ElasticsearchEvolutionAutoConfiguration {
 
     @Configuration
     @ConditionalOnClass({RestClient.class, EvolutionESRestClient.class})
+    @ConditionalOnProperty(prefix = "spring.elasticsearch.evolution.es.restclient", name = "enabled", havingValue = "true", matchIfMissing = true)
     public static class ElasticsearchRestClientConfiguration {
 
         /**
@@ -94,7 +102,7 @@ public class ElasticsearchEvolutionAutoConfiguration {
         }
 
         /**
-         * @return default RestClient no RestClient is available.
+         * @return default RestClient if no RestClient is available.
          */
         @Bean
         @ConditionalOnBean(RestClientBuilder.class)
@@ -114,7 +122,62 @@ public class ElasticsearchEvolutionAutoConfiguration {
     }
 
     @Configuration
+    @ConditionalOnClass({Rest5Client.class, EvolutionESRest5Client.class})
+    @ConditionalOnProperty(prefix = "spring.elasticsearch.evolution.es.rest5client", name = "enabled", havingValue = "true", matchIfMissing = true)
+    public static class ElasticsearchRest5ClientConfiguration {
+
+        /**
+         * @return default Rest5ClientBuilder if <code>org.springframework.boot.elasticsearch.autoconfigure.ElasticsearchRestClientAutoConfiguration</code> is not used
+         * and no Rest5Client is available.
+         */
+        @Bean
+        @ConditionalOnMissingBean({Rest5ClientBuilder.class, Rest5Client.class})
+        public Rest5ClientBuilder elasticRest5ClientBuilder(
+                @Value("${spring.elasticsearch.uris:http://localhost:9200}") String[] uris) {
+            final List<String> urisList;
+            if (uris != null && uris.length > 0) {
+                urisList = Arrays.asList(uris);
+            } else {
+                throw new IllegalStateException("spring configuration 'spring.elasticsearch.uris' does not exist");
+            }
+
+            logger.info("creating Elasticsearch Rest5ClientBuilder with uris {}", urisList);
+
+            org.apache.hc.core5.http.HttpHost[] httpHosts = urisList.stream()
+                    .map(uri -> {
+                        try {
+                            return org.apache.hc.core5.http.HttpHost.create(uri);
+                        } catch (URISyntaxException e) {
+                            throw new IllegalArgumentException("Elasticsearch uri '%s' is invalid".formatted(uri), e);
+                        }
+                    })
+                    .toArray(org.apache.hc.core5.http.HttpHost[]::new);
+            return Rest5Client.builder(httpHosts);
+        }
+
+        /**
+         * @return default Rest5Client if no Rest5Client is available.
+         */
+        @Bean
+        @ConditionalOnBean(Rest5ClientBuilder.class)
+        @ConditionalOnMissingBean
+        public Rest5Client elasticRest5Client(Rest5ClientBuilder restClientBuilder) {
+            logger.info("creating Elasticsearch Rest5Client from {}", restClientBuilder);
+            return restClientBuilder.build();
+        }
+
+        @Bean
+        @ConditionalOnBean(Rest5Client.class)
+        @ConditionalOnMissingBean(EvolutionRestClient.class)
+        public EvolutionESRest5Client evolutionESRest5Client(Rest5Client restClient) {
+            logger.info("creating EvolutionESRest5Client from {}", restClient);
+            return new EvolutionESRest5Client(restClient);
+        }
+    }
+
+    @Configuration
     @ConditionalOnClass({org.opensearch.client.RestClient.class, EvolutionOpenSearchRestClient.class})
+    @ConditionalOnProperty(prefix = "spring.elasticsearch.evolution.os.restclient", name = "enabled", havingValue = "true", matchIfMissing = true)
     public static class OpensearchRestClientConfiguration {
 
         @Bean
@@ -157,6 +220,7 @@ public class ElasticsearchEvolutionAutoConfiguration {
 
     @Configuration
     @ConditionalOnClass({OpenSearchGenericClient.class, EvolutionOpenSearchGenericClient.class})
+    @ConditionalOnProperty(prefix = "spring.elasticsearch.evolution.os.genericclient", name = "enabled", havingValue = "true", matchIfMissing = true)
     public static class OpenSearchGenericClientConfiguration {
 
         @Bean
