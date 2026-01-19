@@ -1,11 +1,14 @@
 package com.senacor.elasticsearch.evolution.spring.boot.starter.autoconfigure;
 
+import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
 import com.senacor.elasticsearch.evolution.core.ElasticsearchEvolution;
 import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
 import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
 import com.senacor.elasticsearch.evolution.rest.abstracion.esclient.EvolutionESRestClient;
 import com.senacor.elasticsearch.evolution.rest.abstracion.os.genericclient.EvolutionOpenSearchGenericClient;
 import com.senacor.elasticsearch.evolution.rest.abstracion.os.restclient.EvolutionOpenSearchRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstracion.rest5client.EvolutionESRest5Client;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.junit.jupiter.api.Test;
@@ -82,7 +85,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
     @Test
     void whenEvolutionRestClientIsMissing_thenADefautOneIsCreatedAndAlsoElasticsearchEvolution() {
         contextRunner
-                .withClassLoader(new FilteredClassLoader(EvolutionOpenSearchGenericClient.class, EvolutionOpenSearchRestClient.class))
+                .withClassLoader(new FilteredClassLoader(EvolutionESRest5Client.class, EvolutionOpenSearchGenericClient.class, EvolutionOpenSearchRestClient.class))
                 .run(context -> {
                     assertThat(context).hasSingleBean(ElasticsearchEvolutionConfig.class)
                             .hasSingleBean(RestClient.class)
@@ -93,7 +96,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
     @Test
     void whenElasticsearchRestClientExists_thenEvolutionESRestClientIsCreated() {
         contextRunner
-                .withClassLoader(new FilteredClassLoader(EvolutionOpenSearchGenericClient.class, EvolutionOpenSearchRestClient.class))
+                .withClassLoader(new FilteredClassLoader(EvolutionESRest5Client.class, EvolutionOpenSearchGenericClient.class, EvolutionOpenSearchRestClient.class))
                 .withUserConfiguration(ElasticsearchRestClientConfig.class)
                 .run(context -> {
                     assertThat(context).hasSingleBean(RestClient.class)
@@ -106,7 +109,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
     @Test
     void whenElasticsearchRestClientBuilderExists_thenRestClientIsCreated() {
         contextRunner
-                .withClassLoader(new FilteredClassLoader(EvolutionOpenSearchGenericClient.class, EvolutionOpenSearchRestClient.class))
+                .withClassLoader(new FilteredClassLoader(EvolutionESRest5Client.class, EvolutionOpenSearchGenericClient.class, EvolutionOpenSearchRestClient.class))
                 .withUserConfiguration(ElasticsearchRestClientBuilderConfig.class)
                 .run(context -> {
                     assertThat(context).hasSingleBean(RestClientBuilder.class)
@@ -120,7 +123,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
     @Test
     void whenNoElasticsearchRestClientOrBuilderExists_andUrisAreProvided_thenDefaultRestClientIsCreated() {
         contextRunner
-                .withClassLoader(new FilteredClassLoader(EvolutionOpenSearchGenericClient.class, EvolutionOpenSearchRestClient.class))
+                .withClassLoader(new FilteredClassLoader(EvolutionESRest5Client.class, EvolutionOpenSearchGenericClient.class, EvolutionOpenSearchRestClient.class))
                 .withPropertyValues("spring.elasticsearch.uris=http://localhost:9200,http://localhost:9201")
                 .run(context -> {
                     assertThat(context).hasSingleBean(RestClientBuilder.class)
@@ -134,7 +137,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
     @Test
     void whenCustomEvolutionRestClientExists_thenDefaultEvolutionESRestClientIsNotCreated() {
         contextRunner
-                .withClassLoader(new FilteredClassLoader(EvolutionOpenSearchGenericClient.class, EvolutionOpenSearchRestClient.class))
+                .withClassLoader(new FilteredClassLoader(EvolutionESRest5Client.class, EvolutionOpenSearchGenericClient.class, EvolutionOpenSearchRestClient.class))
                 .withUserConfiguration(CustomEvolutionRestClientConfig.class)
                 .run(context -> {
                     assertThat(context).hasSingleBean(EvolutionRestClient.class)
@@ -145,12 +148,66 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
                 });
     }
 
+    // ========== Elasticsearch Rest5Client Configuration Tests ==========
+
+    @Test
+    void whenElasticsearchRest5ClientExists_thenEvolutionESRest5ClientIsCreated() {
+        contextRunner
+                .withClassLoader(new FilteredClassLoader(EvolutionESRestClient.class, EvolutionOpenSearchGenericClient.class, EvolutionOpenSearchRestClient.class))
+                .withUserConfiguration(ElasticsearchRest5ClientConfig.class)
+                .run(context -> {
+                    assertThat(context).hasSingleBean(Rest5Client.class)
+                            .hasSingleBean(EvolutionESRest5Client.class)
+                            .hasSingleBean(EvolutionRestClient.class)
+                            .hasSingleBean(ElasticsearchEvolution.class);
+                });
+    }
+
+    @Test
+    void whenElasticsearchRest5ClientBuilderExists_thenRest5ClientIsCreated() {
+        contextRunner
+                .withClassLoader(new FilteredClassLoader(EvolutionESRestClient.class, EvolutionOpenSearchGenericClient.class, EvolutionOpenSearchRestClient.class))
+                .withUserConfiguration(ElasticsearchRest5ClientBuilderConfig.class)
+                .run(context -> {
+                    assertThat(context).hasSingleBean(Rest5ClientBuilder.class)
+                            .hasSingleBean(Rest5Client.class)
+                            .hasSingleBean(EvolutionRestClient.class)
+                            .hasSingleBean(EvolutionESRest5Client.class)
+                            .hasSingleBean(ElasticsearchEvolution.class);
+                });
+    }
+
+    @Test
+    void whenNoElasticsearchRest5ClientOrBuilderExists_andUrisAreProvided_thenDefaultRest5ClientIsCreated() {
+        contextRunner
+                .withClassLoader(new FilteredClassLoader(EvolutionESRestClient.class, EvolutionOpenSearchGenericClient.class, EvolutionOpenSearchRestClient.class))
+                .withPropertyValues("spring.elasticsearch.uris=http://localhost:9200,http://localhost:9201")
+                .run(context -> {
+                    assertThat(context).hasSingleBean(Rest5ClientBuilder.class)
+                            .hasSingleBean(Rest5Client.class)
+                            .hasSingleBean(EvolutionRestClient.class)
+                            .hasSingleBean(EvolutionESRest5Client.class)
+                            .hasSingleBean(ElasticsearchEvolution.class);
+                });
+    }
+
+    @Test
+    void whenElasticsearchRest5ClientConfigurationIsDisabled_thenEvolutionESRest5ClientIsNotCreated() {
+        contextRunner
+                .withClassLoader(new FilteredClassLoader(EvolutionESRestClient.class, EvolutionOpenSearchGenericClient.class, EvolutionOpenSearchRestClient.class))
+                .withPropertyValues("spring.elasticsearch.evolution.es.rest5client.enabled=false")
+                .withUserConfiguration(ElasticsearchRest5ClientConfig.class)
+                .run(context -> {
+                    assertThat(context).doesNotHaveBean(EvolutionESRest5Client.class);
+                });
+    }
+
     // ========== OpenSearch RestClient Configuration Tests ==========
 
     @Test
     void whenOpenSearchRestClientExists_thenEvolutionOpenSearchRestClientIsCreated() {
         contextRunner
-                .withClassLoader(new FilteredClassLoader(EvolutionESRestClient.class, EvolutionOpenSearchGenericClient.class))
+                .withClassLoader(new FilteredClassLoader(EvolutionESRest5Client.class, EvolutionESRestClient.class, EvolutionOpenSearchGenericClient.class))
                 .withUserConfiguration(OpenSearchRestClientConfig.class)
                 .run(context -> {
                     assertThat(context).hasSingleBean(org.opensearch.client.RestClient.class)
@@ -163,7 +220,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
     @Test
     void whenOpenSearchRestClientBuilderExists_thenOpenSearchRestClientIsCreated() {
         contextRunner
-                .withClassLoader(new FilteredClassLoader(EvolutionOpenSearchGenericClient.class, EvolutionESRestClient.class))
+                .withClassLoader(new FilteredClassLoader(EvolutionESRest5Client.class, EvolutionOpenSearchGenericClient.class, EvolutionESRestClient.class))
                 .withUserConfiguration(OpenSearchRestClientBuilderConfig.class)
                 .run(context -> {
                     assertThat(context).hasSingleBean(org.opensearch.client.RestClientBuilder.class)
@@ -177,7 +234,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
     @Test
     void whenNoOpenSearchRestClientOrBuilderExists_andUrisAreProvided_thenDefaultOpenSearchRestClientIsCreated() {
         contextRunner
-                .withClassLoader(new FilteredClassLoader(EvolutionOpenSearchGenericClient.class, EvolutionESRestClient.class))
+                .withClassLoader(new FilteredClassLoader(EvolutionESRest5Client.class, EvolutionOpenSearchGenericClient.class, EvolutionESRestClient.class))
                 .withPropertyValues("opensearch.uris=http://localhost:9200,http://localhost:9201")
                 .run(context -> {
                     assertThat(context).hasSingleBean(org.opensearch.client.RestClientBuilder.class)
@@ -193,7 +250,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
     @Test
     void whenOpenSearchGenericClientExists_thenEvolutionOpenSearchGenericClientIsCreated() {
         contextRunner
-                .withClassLoader(new FilteredClassLoader(EvolutionESRestClient.class, EvolutionOpenSearchRestClient.class))
+                .withClassLoader(new FilteredClassLoader(EvolutionESRest5Client.class, EvolutionESRestClient.class, EvolutionOpenSearchRestClient.class))
                 .withUserConfiguration(OpenSearchGenericClientConfig.class)
                 .run(context -> {
                     assertThat(context).hasSingleBean(OpenSearchGenericClient.class)
@@ -206,7 +263,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
     @Test
     void whenOpenSearchClientExists_thenEvolutionOpenSearchGenericClientIsCreated() {
         contextRunner
-                .withClassLoader(new FilteredClassLoader(EvolutionESRestClient.class, EvolutionOpenSearchRestClient.class))
+                .withClassLoader(new FilteredClassLoader(EvolutionESRest5Client.class, EvolutionESRestClient.class, EvolutionOpenSearchRestClient.class))
                 .withUserConfiguration(OpenSearchClientConfig.class)
                 .run(context -> {
                     assertThat(context).hasSingleBean(OpenSearchClient.class)
@@ -219,7 +276,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
     @Test
     void whenOpenSearchTransportExists_thenOpenSearchGenericClientIsCreated() {
         contextRunner
-                .withClassLoader(new FilteredClassLoader(EvolutionESRestClient.class, EvolutionOpenSearchRestClient.class))
+                .withClassLoader(new FilteredClassLoader(EvolutionESRest5Client.class, EvolutionESRestClient.class, EvolutionOpenSearchRestClient.class))
                 .withUserConfiguration(OpenSearchTransportConfig.class)
                 .run(context -> {
                     assertThat(context).hasSingleBean(OpenSearchTransport.class)
@@ -233,7 +290,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
     @Test
     void whenNoOpenSearchClientExists_andUrisAreProvided_thenDefaultOpenSearchGenericClientIsCreated() {
         contextRunner
-                .withClassLoader(new FilteredClassLoader(EvolutionESRestClient.class, EvolutionOpenSearchRestClient.class))
+                .withClassLoader(new FilteredClassLoader(EvolutionESRest5Client.class, EvolutionESRestClient.class, EvolutionOpenSearchRestClient.class))
                 .withPropertyValues("opensearch.uris=http://localhost:9200")
                 .run(context -> {
                     assertThat(context).hasSingleBean(OpenSearchGenericClient.class)
@@ -299,6 +356,22 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
         @Bean
         public EvolutionRestClient evolutionRestClient() {
             return evolutionRestClient;
+        }
+    }
+
+    @Configuration
+    static class ElasticsearchRest5ClientConfig {
+        @Bean
+        public Rest5Client rest5Client() {
+            return mock(Rest5Client.class);
+        }
+    }
+
+    @Configuration
+    static class ElasticsearchRest5ClientBuilderConfig {
+        @Bean
+        public Rest5ClientBuilder rest5ClientBuilder() {
+            return mock(Rest5ClientBuilder.class, Mockito.RETURNS_DEEP_STUBS);
         }
     }
 

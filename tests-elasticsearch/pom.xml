@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.senacor.elasticsearch.evolution</groupId>
         <artifactId>elasticsearch-evolution-parent</artifactId>
-        <version>0.7.3-SNAPSHOT</version>
+        <version>0.8.0</version>
         <relativePath>../</relativePath>
     </parent>
     <artifactId>tests-elasticsearch</artifactId>
@@ -23,5 +23,6 @@
         <module>test-es-spring-boot-3.3-scriptsInJarFile</module>
         <module>test-es-spring-boot-3.4-scriptsInJarFile</module>
         <module>test-es-spring-boot-3.5</module>
+        <module>test-es-spring-boot-4.0-scriptsInJarFile</module>
     </modules>
 </project>

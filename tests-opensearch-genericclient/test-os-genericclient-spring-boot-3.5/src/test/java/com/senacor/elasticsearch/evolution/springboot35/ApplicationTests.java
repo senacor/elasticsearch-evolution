@@ -35,7 +35,7 @@ class ApplicationTests {
     @TestConfiguration
     static class Config {
         @Bean(destroyMethod = "stop")
-        public OpenSearchContainer<?> elasticsearchContainer(@Value("${opensearch.version:2.19.4}") String osVersion) {
+        public OpenSearchContainer<?> opensearchContainer(@Value("${opensearch.version:2.19.4}") String osVersion) {
             OpenSearchContainer<?> container = new OpenSearchContainer<>(DockerImageName
                     .parse("quay.io/xtermi2/opensearch")
                     .asCompatibleSubstituteFor("opensearchproject/opensearch")

@@ -21,7 +21,7 @@ Successfully executed migration scripts will not be executed again!
 ## 2 Features
 
 - tested on Java 17, 21 and 25
-- runs on Spring-Boot 3.x (and of course without Spring-Boot)
+- runs on Spring-Boot 3.x and 4.x (and of course without Spring-Boot)
 - runs on Elasticsearch version 7.5.x - 9.x
   - but focussing on maintained versions, see [elastic.co/support/eol](https://www.elastic.co/support/eol) or [endoflife.date/elasticsearch](https://endoflife.date/elasticsearch)
 - runs on OpenSearch version 2.x - 3.x
@@ -35,6 +35,7 @@ Successfully executed migration scripts will not be executed again!
 
 | Compatibility                    | Spring Boot                                      | Elasticsearch        | OpenSearch |
 |----------------------------------|--------------------------------------------------|----------------------|------------|
+| elasticsearch-evolution >= 0.8.0 | 3.2 - 4.0                                        | 7.5.x - 9.x          | 2.x - 3.x  |
 | elasticsearch-evolution >= 0.7.0 | 3.2 - 3.5                                        | 7.5.x - 9.x          | 2.x - 3.x  |
 | elasticsearch-evolution >= 0.6.1 | 3.0 - 3.2                                        | 7.5.x - 8.19.x       | 1.x - 2.x  |
 | elasticsearch-evolution >= 0.4.2 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 3.0, 3.1, 3.2 | 7.5.x - 8.13.x       | 1.x - 2.x  |
@@ -53,12 +54,12 @@ and choose an `elasticsearch-evolution-rest-abstraction` implementation (here: E
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.7.2</version>
+    <version>0.8.0</version>
 </dependency>
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
-    <version>0.7.2</version>
+    <version>0.8.0</version>
 </dependency>
 ```
 
@@ -75,12 +76,12 @@ and choose an `elasticsearch-evolution-rest-abstraction` implementation (here: E
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.7.2</version>
+    <version>0.8.0</version>
 </dependency>
 <dependency>
   <groupId>com.senacor.elasticsearch.evolution</groupId>
   <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
-  <version>0.7.2</version>
+  <version>0.8.0</version>
 </dependency>
 ```
 
@@ -128,15 +129,23 @@ Elasticsearch-Evolution uses a REST client abstraction (`EvolutionRestClient`). 
   <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
-    <version>0.7.2</version>
+    <version>0.8.0</version>
   </dependency>
   ```
+* Elasticsearch [Rest5Client](https://central.sonatype.com/artifact/co.elastic.clients/elasticsearch-rest5-client) implementation: `EvolutionESRest5Client` which is designed for Elasticsearch `9.x` and Spring Boot `4.x`.
+  ```xml
+  <dependency>
+    <groupId>com.senacor.elasticsearch.evolution</groupId>
+    <artifactId>elasticsearch-evolution-rest-abstraction-es-rest5client</artifactId>
+    <version>0.8.0</version>
+  </dependency>
+  ```  
 * OpenSearch [RestClient](https://central.sonatype.com/artifact/org.opensearch.client/opensearch-rest-client) implementation: `EvolutionOpenSearchRestClient` which is designed for OpenSearch `2.x` because the `RestClientTransport` is deprecated for removal since `3.x`.
   ```xml
   <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-os-restclient</artifactId>
-    <version>0.7.2</version>
+    <version>0.8.0</version>
   </dependency>
   ```
 * OpenSearch [OpenSearchGenericClient](https://central.sonatype.com/artifact/org.opensearch.client/opensearch-java) implementation: `EvolutionOpenSearchGenericClient` which is designed for OpenSearch `3.x` and later.
@@ -144,7 +153,7 @@ Elasticsearch-Evolution uses a REST client abstraction (`EvolutionRestClient`). 
   <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-os-genericclient</artifactId>
-    <version>0.7.2</version>
+    <version>0.8.0</version>
   </dependency>
   ```  
 
@@ -153,7 +162,7 @@ You can provide your own implementation of `EvolutionRestClient` if you want to 
 <dependency>
   <groupId>com.senacor.elasticsearch.evolution</groupId>
   <artifactId>elasticsearch-evolution-rest-abstraction</artifactId>
-  <version>0.7.2</version>
+  <version>0.8.0</version>
 </dependency>
 ```
 - With the Spring Boot starter, you have to create a bean with your custom `EvolutionRestClient` implementation like this:
@@ -284,8 +293,8 @@ spring.elasticsearch.evolution.historyIndex=es_evolution
 
 #### 5.1.1 Elasticsearch AutoConfiguration (since Spring Boot 2.1)
 
-Since Spring Boot 2.1, AutoConfiguration for Elasticsearch's REST client is provided (see `org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration`).
-You can configure the `RestClient`, required for Elasticsearch-Evolution, just like this in your `application.properties`:
+Since Spring Boot 2.1, AutoConfiguration for Elasticsearch's REST client is provided (see `org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration` or `org.springframework.boot.elasticsearch.autoconfigure.ElasticsearchRestClientAutoConfiguration` for Spring Boot 4).
+You can configure the client, required for Elasticsearch-Evolution, just like this in your `application.properties`:
 
 ```properties
 spring.elasticsearch.uris[0]=https://example.com:9200
@@ -293,9 +302,25 @@ spring.elasticsearch.username=my-user-name
 spring.elasticsearch.password=my-secret-pw
 ```
 
-#### 5.1.2 Customize Elasticsearch-Evolutions AutoConfiguration
+#### 5.1.2 OpenSearch AutoConfiguration
 
-##### 5.1.2.1 Custom Elasticsearch RestClient
+Elasticsearch-Evolution tries to be compatible with [spring-data-opensearch-starter](https://github.com/opensearch-project/spring-data-opensearch) and its AutoConfiguration.
+
+AutoConfiguration for OpenSearch's REST client is provided (see `org.opensearch.spring.boot.autoconfigure.OpenSearchRestClientAutoConfiguration`).
+
+AutoConfiguration for OpenSearch's java client is provided (see `org.opensearch.spring.boot.autoconfigure.OpenSearchClientAutoConfiguration`).
+
+You can configure the client, required for Elasticsearch-Evolution, just like this in your `application.properties`:
+
+```properties
+opensearch.uris[0]=https://example.com:9200
+opensearch.username=my-user-name
+opensearch.password=my-secret-pw
+```
+
+#### 5.1.3 Customize Elasticsearch-Evolutions AutoConfiguration
+
+##### 5.1.3.1 Custom Elasticsearch RestClient
 
 Elasticsearch-Evolution just needs an `EvolutionRestClient` as a Spring bean. The Elasticsearch `EvolutionESRestClient` implementation needs a `RestClient` Spring bean.
 If you don't have Spring Boot 2.1 or later, or you need a special `RestClient` configuration (e.g., to accept self-signed certificates or disable hostname validation), you can provide a custom `RestClient` like this:
@@ -322,12 +347,12 @@ public RestClient myRestClient() {
 }
 ```
 
-##### 5.1.2.2 Custom OpenSearch RestClient
+##### 5.1.3.2 Custom OpenSearch RestClient
 
 Elasticsearch-Evolution just needs an `EvolutionRestClient` as a Spring bean. The OpenSearch `EvolutionOpenSearchRestClient` implementation needs a `RestClient` Spring bean.
 If you don't use already the [spring-data-opensearch-starter](https://central.sonatype.com/artifact/org.opensearch.client/spring-data-opensearch-starter) or you need a special `RestClient` configuration (e.g., to accept self-signed certificates or disable hostname validation), you can provide a custom `RestClient` similar to the Elasticsearch example above.
 
-##### 5.1.2.3 Custom OpenSearchGenericClient
+##### 5.1.3.3 Custom OpenSearchGenericClient
 
 Elasticsearch-Evolution just needs an `EvolutionRestClient` as a Spring bean. The OpenSearch `EvolutionOpenSearchGenericClient` implementation needs a `OpenSearchGenericClient` or `OpenSearchClient` Spring bean.
 If you don't use already the [spring-data-opensearch-starter](https://central.sonatype.com/artifact/org.opensearch.client/spring-data-opensearch-starter) or you need a special `OpenSearch*Client` configuration (e.g., to accept self-signed certificates or disable hostname validation), you can provide a custom `OpenSearchGenericClient` or `OpenSearchClient` as Spring bean like this:
@@ -356,7 +381,7 @@ public OpenSearchTransport myOpenSearchTransport() throws URISyntaxException {
 }
 ```
 
-##### 5.1.2.4 Custom ElasticsearchEvolutionInitializer
+##### 5.1.3.4 Custom ElasticsearchEvolutionInitializer
 
 If you want to provide a customized initializer for Elasticsearch-Evolution (e.g., with a different order):
 
@@ -386,9 +411,11 @@ ElasticsearchEvolution.configure()
 
 ## 6 Changelog
 
-### v0.7.3-SNAPSHOT
+### v0.8.0
 
 - fixed `EvolutionOpenSearchRestClient` (`elasticsearch-evolution-rest-abstraction-os-restclient`) compatibility with OpenSearch 2.x client libs ([#565](https://github.com/senacor/elasticsearch-evolution/issues/565))
+- added Spring Boot 4 compatibility [#564](https://github.com/senacor/elasticsearch-evolution/issues/564)
+  - Added Elasticsearch `EvolutionRestClient` implementation: `EvolutionESRest5Client`. It uses the [Apache HttpClient 5](https://hc.apache.org/) based `Rest5Client` from `co.elastic.clients:elasticsearch-rest5-client`
 
 ### v0.7.2
 

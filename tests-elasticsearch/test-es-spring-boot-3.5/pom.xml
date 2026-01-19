@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.senacor.elasticsearch.evolution</groupId>
 	<artifactId>test-es-spring-boot-3.5</artifactId>
-	<version>0.7.3-SNAPSHOT</version>
+	<version>0.8.0</version>
 	<description>Demo project for Spring Boot</description>
 
 	<properties>
@@ -18,7 +18,7 @@
 
 		<commons-io.version>2.21.0</commons-io.version>
 		<elasticsearch.version>7.5.2</elasticsearch.version>
-		<testcontainers.elasticsearch.version>1.21.4</testcontainers.elasticsearch.version>
+		<testcontainers.elasticsearch.version>2.0.3</testcontainers.elasticsearch.version>
 	</properties>
 
 	<dependencies>
@@ -48,7 +48,7 @@
 		<!--Embedded Elasticsearch dependencies-->
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>elasticsearch</artifactId>
+			<artifactId>testcontainers-elasticsearch</artifactId>
 			<version>${testcontainers.elasticsearch.version}</version>
 			<scope>test</scope>
 		</dependency>
@@ -82,7 +82,6 @@
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<!--jacoco snapshot to support java 17/18-->
 				<version>0.8.14</version>
 				<executions>
 					<execution>
