@@ -411,6 +411,10 @@ ElasticsearchEvolution.configure()
 
 ## 6 Changelog
 
+### v0.8.1-SNAPSHOT
+
+- ...
+
 ### v0.8.0
 
 - fixed `EvolutionOpenSearchRestClient` (`elasticsearch-evolution-rest-abstraction-os-restclient`) compatibility with OpenSearch 2.x client libs ([#565](https://github.com/senacor/elasticsearch-evolution/issues/565))

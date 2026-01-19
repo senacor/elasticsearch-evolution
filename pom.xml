@@ -5,7 +5,7 @@
 
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-parent</artifactId>
-    <version>0.8.0</version>
+    <version>0.8.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -289,6 +289,13 @@
                         <publishingServerId>ossrh</publishingServerId>
                         <autoPublish>true</autoPublish>
                         <waitUntil>published</waitUntil>
+                        <!-- Amount of seconds between intervals before checking if a state has been reached.
+                        Cannot be less than 5 seconds. -->
+                        <waitPollingInterval>10</waitPollingInterval>
+                        <!-- Maximum amount of seconds to waitUntil a state has been reached.
+                        Cannot be less than 1800 seconds.
+                        Sometimes the publishing at maven central takes longer than 30 Minutes (Default wait time) -->
+                        <waitMaxTime>3600</waitMaxTime>
                     </configuration>
                 </plugin>
                 <plugin>
