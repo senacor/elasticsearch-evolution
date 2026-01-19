@@ -132,7 +132,7 @@ Elasticsearch-Evolution uses a REST client abstraction (`EvolutionRestClient`). 
     <version>0.7.2</version>
   </dependency>
   ```
-* Elasticsearch [Rest5Client](https://central.sonatype.com/artifact/co.elastic.clients/elasticsearch-rest5-client) implementation: `EvolutionESRest5Client`
+* Elasticsearch [Rest5Client](https://central.sonatype.com/artifact/co.elastic.clients/elasticsearch-rest5-client) implementation: `EvolutionESRest5Client` which is designed for Elasticsearch `9.x` and Spring Boot `4.x`.
   ```xml
   <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
