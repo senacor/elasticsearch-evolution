@@ -2,31 +2,38 @@ package com.senacor.elasticsearch.evolution.core.test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.IOUtils;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestClient;
+import org.opensearch.client.Request;
+import org.opensearch.client.Response;
+import org.opensearch.client.RestClient;
+import org.opensearch.client.opensearch.OpenSearchClient;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
  * @author Andreas Keefer
  */
+@RequiredArgsConstructor
+@Getter
 public class EsUtils {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    @NonNull
     private final RestClient restClient;
-
-    public EsUtils(RestClient restClient) {
-        this.restClient = restClient;
-    }
+    @NonNull
+    private final EvolutionRestClient evolutionRestClient;
+    @NonNull
+    private final OpenSearchClient openSearchClient;
 
     public void refreshIndices() {
         try {
@@ -55,7 +62,7 @@ public class EsUtils {
             String body = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
 
             return parseDocuments(body)
-                    .collect(Collectors.toList());
+                    .toList();
         } catch (IOException e) {
             throw new IllegalStateException("fetchAllDocuments(" + index + ") failed", e);
         }

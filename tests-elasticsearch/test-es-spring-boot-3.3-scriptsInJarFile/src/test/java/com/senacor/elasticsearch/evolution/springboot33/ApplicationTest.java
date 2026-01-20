@@ -36,7 +36,7 @@ class ApplicationTest {
     @TestConfiguration
     static class Config {
         @Bean(destroyMethod = "stop")
-        public ElasticsearchContainer elasticsearchContainer(@Value("${elasticsearch.version:7.5.2}") String esVersion) {
+        public ElasticsearchContainer elasticsearchContainer(@Value("${elasticsearch.version:8.19.10}") String esVersion) {
             ElasticsearchContainer container = new ElasticsearchContainer(DockerImageName
                     .parse("docker.elastic.co/elasticsearch/elasticsearch")
                     .withTag(esVersion)) {

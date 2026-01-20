@@ -2,22 +2,25 @@ package com.senacor.elasticsearch.evolution.core.test;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
-import com.senacor.elasticsearch.evolution.rest.abstracion.esclient.EvolutionESRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstracion.os.restclient.EvolutionOpenSearchRestClient;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 import org.apache.http.HttpHost;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.support.IndicesOptions;
-import org.elasticsearch.client.*;
-import org.elasticsearch.client.indices.GetIndexRequest;
-import org.elasticsearch.client.indices.GetIndexResponse;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
 import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.opensearch.client.Request;
+import org.opensearch.client.Response;
+import org.opensearch.client.RestClient;
+import org.opensearch.client.json.jackson.JacksonJsonpMapper;
+import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch.indices.GetIndexResponse;
+import org.opensearch.client.transport.OpenSearchTransport;
+import org.opensearch.client.transport.rest_client.RestClientTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.util.TestSocketUtils;
@@ -33,7 +36,6 @@ import java.util.stream.Stream;
 import static com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.SearchContainer.ofElasticsearch;
 import static com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.SearchContainer.ofOpensearch;
 import static java.time.Duration.ofMinutes;
-import static org.elasticsearch.client.RequestOptions.DEFAULT;
 
 /**
  * Extension to test with multiple Embedded Elasticsearch versions.
@@ -49,12 +51,10 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
             ofOpensearch("3.4.0"),
             ofOpensearch("3.3.2"),
             ofOpensearch("2.19.4"),
-            ofOpensearch("1.3.20"),
 
             ofElasticsearch("9.2.4"),
-            ofElasticsearch("9.1.9"),
-            ofElasticsearch("8.19.9"),
-            ofElasticsearch("7.17.28")
+            ofElasticsearch("9.1.10"),
+            ofElasticsearch("8.19.10")
     )));
 
     @Override
@@ -64,11 +64,17 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
                         .getOrComputeIfAbsent(searchContainer, EmbeddedElasticsearchExtension::createElasticsearchContainer, ElasticsearchContainer.class));
     }
 
-    private static RestHighLevelClient createRestHighLevelClient(String versionInfo, ElasticsearchContainer elasticsearchContainer) {
+    private static RestClient createRestClient(String versionInfo, ElasticsearchContainer elasticsearchContainer) {
         HttpHost host = HttpHost.create(elasticsearchContainer.getHttpHostAddress());
         logger.debug("create RestClient for {} at {}", versionInfo, host);
-        RestClientBuilder builder = RestClient.builder(host);
-        return new RestHighLevelClient(builder);
+        return RestClient.builder(host)
+                .build();
+    }
+
+    private static OpenSearchClient createOpenSearchClient(RestClient restClient) {
+        OpenSearchTransport transport = new RestClientTransport(
+                restClient, new JacksonJsonpMapper());
+        return new OpenSearchClient(transport);
     }
 
     private static ElasticsearchContainer createElasticsearchContainer(SearchContainer searchContainer) {
@@ -109,17 +115,22 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
         elasticsearchContainer.start();
     }
 
-    private static void cleanup(EsUtils esUtils, String versionInfo, RestHighLevelClient restHighLevelClient) {
+    private static void cleanup(EsUtils esUtils,
+                                String versionInfo,
+                                OpenSearchClient openSearchClient,
+                                RestClient restClient) {
         logger.debug("cleanup ElasticsearchContainer {}", versionInfo);
         try {
             // get all indices
-            final GetIndexResponse allIndices = restHighLevelClient.indices().get(new GetIndexRequest("_all")
-                    .indicesOptions(IndicesOptions.lenientExpandOpen()), DEFAULT);
-            if (allIndices.getIndices().length > 0) {
-                logger.debug("delete indices {}", Arrays.toString(allIndices.getIndices()));
-                restHighLevelClient.indices().delete(new DeleteIndexRequest(allIndices.getIndices()), DEFAULT);
+            final GetIndexResponse allIndices = openSearchClient.indices().get(get -> get
+                    .index("_all")
+                    .ignoreUnavailable(true)
+                    .allowNoIndices(true));
+            if (!allIndices.result().isEmpty()) {
+                logger.debug("delete indices {}", allIndices.result().keySet());
+                openSearchClient.indices().delete(builder -> builder.index(List.copyOf((allIndices.result().keySet()))));
             }
-            Response deleteRes = restHighLevelClient.getLowLevelClient().performRequest(new Request("DELETE", "/_template/*"));
+            Response deleteRes = restClient.performRequest(new Request("DELETE", "/_template/*"));
             logger.debug("deleted all templates: {}", deleteRes);
         } catch (IOException e) {
             throw new IllegalStateException("ElasticsearchContainer cleanup failed", e);
@@ -135,8 +146,6 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
      * provides in this order:
      * - Short Version Info
      * - EsUtils
-     * - RestHighLevelClient
-     * - EvolutionRestClient
      */
     public static class ElasticsearchArgumentsProvider implements ArgumentsProvider {
         @Override
@@ -146,11 +155,12 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
                         ElasticsearchContainer elasticsearchContainer = getStore(context)
                                 .getOrComputeIfAbsent(searchContainer, EmbeddedElasticsearchExtension::createElasticsearchContainer, ElasticsearchContainer.class);
                         start(elasticsearchContainer, searchContainer.getInfo());
-                        RestHighLevelClient restHighLevelClient = createRestHighLevelClient(searchContainer.getInfo(), elasticsearchContainer);
-                        EsUtils esUtils = new EsUtils(restHighLevelClient.getLowLevelClient());
-                        cleanup(esUtils, searchContainer.getInfo(), restHighLevelClient);
-                        final EvolutionRestClient evolutionESRestClient = new EvolutionESRestClient(restHighLevelClient.getLowLevelClient());
-                        return Arguments.of(searchContainer.getShortInfo(), esUtils, restHighLevelClient, evolutionESRestClient);
+                        final RestClient restClient = createRestClient(searchContainer.getInfo(), elasticsearchContainer);
+                        final OpenSearchClient openSearchClient = createOpenSearchClient(restClient);
+                        final EvolutionRestClient evolutionRestClient = new EvolutionOpenSearchRestClient(restClient);
+                        final EsUtils esUtils = new EsUtils(restClient, evolutionRestClient, openSearchClient);
+                        cleanup(esUtils, searchContainer.getInfo(), openSearchClient, restClient);
+                        return Arguments.of(searchContainer.getShortInfo(), esUtils);
                     });
         }
     }

@@ -1,12 +1,10 @@
 package com.senacor.elasticsearch.evolution.spring.boot.starter.autoconfigure;
 
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Node;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +17,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.elasticsearch.client.RequestOptions.DEFAULT;
 import static org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_CLASS;
 
 /**
@@ -38,26 +35,26 @@ class ElasticsearchEvolutionAutoConfigurationIT {
 
     @Autowired
     private RestClient restClient;
-    private RestHighLevelClient restHighLevelClient;
+    private ElasticsearchClient elasticsearchClient;
 
     @Autowired
     private EsUtils esUtils;
 
     @BeforeEach
     void setUp() {
-        restHighLevelClient = new RestHighLevelClient(RestClient.builder(restClient.getNodes().toArray(new Node[0])));
+        elasticsearchClient = new ElasticsearchClient(new RestClientTransport(restClient, new JacksonJsonpMapper()));
     }
 
     @Test
     void migrateOnApplicationStartViaInitializer() throws IOException {
         esUtils.refreshIndices();
-        SearchResponse searchResponse = restHighLevelClient.search(
-                new SearchRequest("test_*")
-                        .source(new SearchSourceBuilder()
-                                .query(QueryBuilders.termQuery("searchable.version", "1"))),
-                DEFAULT);
+        SearchResponse searchResponse = elasticsearchClient.search(search -> search
+                        .index("test_*")
+                        .query(q -> q.term(t -> t
+                                .field("searchable.version")
+                                .value("1"))));
 
-        assertThat(searchResponse.getHits().getTotalHits().value)
+        assertThat(searchResponse.hits().total().value())
                 .as("searchResponse: %s", searchResponse)
                 .as("Documents created by migration files")
                 .isOne();

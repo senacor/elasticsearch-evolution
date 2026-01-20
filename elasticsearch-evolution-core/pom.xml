@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.senacor.elasticsearch.evolution</groupId>
         <artifactId>elasticsearch-evolution-parent</artifactId>
-        <version>0.8.1-SNAPSHOT</version>
+        <version>0.9.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
     <artifactId>elasticsearch-evolution-core</artifactId>
@@ -69,13 +69,14 @@
         <!--Elasticsearch-->
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
+            <artifactId>elasticsearch-evolution-rest-abstraction-os-restclient</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
+            <groupId>org.opensearch.client</groupId>
+            <artifactId>opensearch-java</artifactId>
+            <version>2.26.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
