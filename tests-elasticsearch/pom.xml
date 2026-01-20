@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.senacor.elasticsearch.evolution</groupId>
         <artifactId>elasticsearch-evolution-parent</artifactId>
-        <version>0.8.1-SNAPSHOT</version>
+        <version>0.9.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
     <artifactId>tests-elasticsearch</artifactId>
@@ -14,12 +14,11 @@
     <description>aggregator module for integration test projects with Elasticsearch</description>
 
     <properties>
-        <elasticsearch.version>7.5.2</elasticsearch.version>
+        <elasticsearch.version>8.19.10</elasticsearch.version>
     </properties>
 
     <modules>
         <module>migration-scripts</module>
-        <module>test-es-spring-boot-3.2</module>
         <module>test-es-spring-boot-3.3-scriptsInJarFile</module>
         <module>test-es-spring-boot-3.4-scriptsInJarFile</module>
         <module>test-es-spring-boot-3.5</module>

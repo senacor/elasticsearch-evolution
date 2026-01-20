@@ -6,18 +6,9 @@ updates:
       interval: daily
     open-pull-requests-limit: 20
     ignore:
-      - dependency-name: org.elasticsearch.client:elasticsearch-rest-high-level-client
-        versions:
-          - 7.17.x
-          - 8.x
       - dependency-name: org.elasticsearch.client:elasticsearch-rest-client
         versions:
-          - 7.17.x
-          - 8.x
-      - dependency-name: org.elasticsearch:elasticsearch
-        versions:
-          - 7.17.x
-          - 8.x
+          - 9.x
   - package-ecosystem: github-actions
     directory: "/"
     schedule:

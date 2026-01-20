@@ -9,7 +9,6 @@ import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtens
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.ElasticsearchArgumentsProvider;
 import com.senacor.elasticsearch.evolution.core.test.EsUtils;
 import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -50,12 +49,12 @@ class MigrationServiceImplIT {
 
         @ParameterizedTest(name = "{0}")
         @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-        void OK_indexDocumentIsWrittenToElasticsearch(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient, EvolutionRestClient restClient) {
+        void OK_indexDocumentIsWrittenToElasticsearch(String versionInfo, EsUtils esUtils) {
             String index = "myindex";
             ParsedMigrationScript script = createParsedMigrationScript("1.1", index);
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepositoryMock,
-                    0, 0, restClient,
+                    0, 0, esUtils.getEvolutionRestClient(),
                     defaultContentType, encoding, true, "1.0", false);
 
             MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();

@@ -22,7 +22,7 @@ Successfully executed migration scripts will not be executed again!
 
 - tested on Java 17, 21 and 25
 - runs on Spring-Boot 3.x and 4.x (and of course without Spring-Boot)
-- runs on Elasticsearch version 7.5.x - 9.x
+- runs on Elasticsearch version 8.x - 9.x
   - but focussing on maintained versions, see [elastic.co/support/eol](https://www.elastic.co/support/eol) or [endoflife.date/elasticsearch](https://endoflife.date/elasticsearch)
 - runs on OpenSearch version 2.x - 3.x
   - but focussing on maintained versions, see [opensearch.org/releases](https://opensearch.org/releases/) or [endoflife.date/opensearch](https://endoflife.date/opensearch)
@@ -35,6 +35,7 @@ Successfully executed migration scripts will not be executed again!
 
 | Compatibility                    | Spring Boot                                      | Elasticsearch        | OpenSearch |
 |----------------------------------|--------------------------------------------------|----------------------|------------|
+| elasticsearch-evolution >= 0.9.0 | 3.3 - 4.0                                        | 8.x - 9.x            | 2.x - 3.x  |
 | elasticsearch-evolution >= 0.8.0 | 3.2 - 4.0                                        | 7.5.x - 9.x          | 2.x - 3.x  |
 | elasticsearch-evolution >= 0.7.0 | 3.2 - 3.5                                        | 7.5.x - 9.x          | 2.x - 3.x  |
 | elasticsearch-evolution >= 0.6.1 | 3.0 - 3.2                                        | 7.5.x - 8.19.x       | 1.x - 2.x  |
@@ -411,26 +412,29 @@ ElasticsearchEvolution.configure()
 
 ## 6 Changelog
 
-### v0.8.1-SNAPSHOT
+### v0.9.0-SNAPSHOT
 
-- ...
+- Drop Elasticsearch 7.x and OpenSearch 1.x support ([#570](https://github.com/senacor/elasticsearch-evolution/issues/570)).
+  - Focusing on maintained versions.
+- Drop deprecated RestHighLevelClient in tests ([#549](https://github.com/senacor/elasticsearch-evolution/issues/549))
+- Drop Spring Boot 3.2 compatibility tests. Further versions may run on Spring Boot 3.2, but they are not tested anymore.
 
 ### v0.8.0
 
-- fixed `EvolutionOpenSearchRestClient` (`elasticsearch-evolution-rest-abstraction-os-restclient`) compatibility with OpenSearch 2.x client libs ([#565](https://github.com/senacor/elasticsearch-evolution/issues/565))
-- added Spring Boot 4 compatibility [#564](https://github.com/senacor/elasticsearch-evolution/issues/564)
-  - Added Elasticsearch `EvolutionRestClient` implementation: `EvolutionESRest5Client`. It uses the [Apache HttpClient 5](https://hc.apache.org/) based `Rest5Client` from `co.elastic.clients:elasticsearch-rest5-client`
+- fixed `EvolutionOpenSearchRestClient` (`elasticsearch-evolution-rest-abstraction-os-restclient`) compatibility with OpenSearch 2.x client libs ([#565](https://github.com/senacor/elasticsearch-evolution/issues/565)),
+- added Spring Boot 4 compatibility ([#564](https://github.com/senacor/elasticsearch-evolution/issues/564)).
+  - Added Elasticsearch `EvolutionRestClient` implementation: `EvolutionESRest5Client`. It uses the [Apache HttpClient 5](https://hc.apache.org/) based `Rest5Client` from `co.elastic.clients:elasticsearch-rest5-client`.
 
 ### v0.7.2
 
-- Added 2 OpenSearch `EvolutionRestClient` implementations ([#198](https://github.com/senacor/elasticsearch-evolution/issues/198), [#220](https://github.com/senacor/elasticsearch-evolution/issues/220), [#287](https://github.com/senacor/elasticsearch-evolution/issues/287), [#348](https://github.com/senacor/elasticsearch-evolution/issues/348))
-    - `EvolutionOpenSearchRestClient` for OpenSearch `RestClient`
-    - `EvolutionOpenSearchGenericClient` for `OpenSearchGenericClient` and `OpenSearchClient`
+- Added 2 OpenSearch `EvolutionRestClient` implementations ([#198](https://github.com/senacor/elasticsearch-evolution/issues/198), [#220](https://github.com/senacor/elasticsearch-evolution/issues/220), [#287](https://github.com/senacor/elasticsearch-evolution/issues/287), [#348](https://github.com/senacor/elasticsearch-evolution/issues/348)).
+    - `EvolutionOpenSearchRestClient` for OpenSearch `RestClient`.
+    - `EvolutionOpenSearchGenericClient` for `OpenSearchGenericClient` and `OpenSearchClient`.
 
 ### v0.7.1
 
 - Release process: Replace archived `actions/create-release` with `softprops/action-gh-release` ([#554](https://github.com/senacor/elasticsearch-evolution/issues/554)).
-- Release process: Switch to new maven central publishing API / central-publishing-maven-plugin ([#538](https://github.com/senacor/elasticsearch-evolution/issues/538))
+- Release process: Switch to new maven central publishing API / central-publishing-maven-plugin ([#538](https://github.com/senacor/elasticsearch-evolution/issues/538)).
 - Added unique version number validation ([#551](https://github.com/senacor/elasticsearch-evolution/issues/551)).
   - When two migration scripts have the same version number, the migration fails with a `MigrationException`.
 

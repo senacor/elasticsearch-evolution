@@ -13,30 +13,26 @@ import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.Migrati
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.ElasticsearchArgumentsProvider;
 import com.senacor.elasticsearch.evolution.core.test.EsUtils;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
 import org.apache.commons.io.IOUtils;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.opensearch.client.Request;
+import org.opensearch.client.Response;
+import org.opensearch.client.opensearch._types.FieldValue;
+import org.opensearch.client.opensearch.core.SearchResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
-import static org.elasticsearch.client.RequestOptions.DEFAULT;
 
 /**
  * @author Andreas Keefer
@@ -52,14 +48,14 @@ class ElasticsearchEvolutionIT {
 
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-    void migrate_OK(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient, EvolutionRestClient restClient) throws IOException {
+    void migrate_OK(String versionInfo, EsUtils esUtils) throws IOException {
 
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_OK"));
         String historyIndex = elasticsearchEvolutionConfig.getHistoryIndex();
-        historyRepository = new HistoryRepositoryImpl(restClient, historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
+        historyRepository = new HistoryRepositoryImpl(esUtils.getEvolutionRestClient(), historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
         ElasticsearchEvolution underTest = elasticsearchEvolutionConfig
-                .load(restClient);
+                .load(esUtils.getEvolutionRestClient());
 
         assertThatThrownBy(underTest::validate)
                 .isInstanceOf(ValidateException.class)
@@ -80,7 +76,7 @@ class ElasticsearchEvolutionIT {
                 .doesNotThrowAnyException();
 
         String testIndex = "test_*";
-        Response getIndexResponse = restHighLevelClient.getLowLevelClient().performRequest(new Request("GET", "/" + testIndex));
+        Response getIndexResponse = esUtils.getRestClient().performRequest(new Request("GET", "/" + testIndex));
         String getIndexResponseBody = IOUtils.toString(getIndexResponse.getEntity().getContent(), StandardCharsets.UTF_8);
         logger.debug("GetIndexResponse: {}; BODY={}", getIndexResponse, getIndexResponseBody);
         Map<String, Map<String, Map>> bodyParsed = new ObjectMapper().readValue(getIndexResponseBody,
@@ -97,47 +93,74 @@ class ElasticsearchEvolutionIT {
         });
 
         // search for indexed documents:
-        SearchResponse search = restHighLevelClient.search(
-                new SearchRequest(testIndex)
-                        .source(new SearchSourceBuilder()
-                                .query(QueryBuilders.boolQuery()
-                                        .must(QueryBuilders.termsQuery("searchable.version", "1", "2")))),
-                DEFAULT);
-        assertThat(search.getHits().getTotalHits().value)
+        SearchResponse<Map> search = esUtils.getOpenSearchClient().search(s -> s
+                .index(testIndex)
+                .query(q -> q
+                        .bool(b -> b
+                                .must(m -> m
+                                        .terms(t -> t
+                                                .field("searchable.version")
+                                                .terms(v -> v.value(List.of(
+                                                        FieldValue.of("1"),
+                                                        FieldValue.of("2")
+                                                )))
+                                        )
+                                )
+                        )
+                ), Map.class);
+        assertThat(search.hits().total().value())
                 .as("search res by version: %s", search)
                 .isEqualTo(3);
 
-        search = restHighLevelClient.search(
-                new SearchRequest(testIndex)
-                        .source(new SearchSourceBuilder()
-                                .query(QueryBuilders.boolQuery()
-                                        .must(QueryBuilders.termsQuery("searchable.version.text", "1", "2")))),
-                DEFAULT);
-        assertThat(search.getHits().getTotalHits().value)
+        search = esUtils.getOpenSearchClient().search(s -> s
+                .index(testIndex)
+                .query(q -> q
+                        .bool(b -> b
+                                .must(m -> m
+                                        .terms(t -> t
+                                                .field("searchable.version.text")
+                                                .terms(v -> v.value(List.of(
+                                                        FieldValue.of("1"),
+                                                        FieldValue.of("2")
+                                                )))
+                                        )
+                                )
+                        )
+                ), Map.class);
+        assertThat(search.hits().total().value())
                 .as("search res by version.text: %s", search)
                 .isEqualTo(3);
 
-        search = restHighLevelClient.search(
-                new SearchRequest(testIndex)
-                        .source(new SearchSourceBuilder()
-                                .query(QueryBuilders.boolQuery()
-                                        .must(QueryBuilders.termsQuery("searchable.version.bm25", "1", "2")))),
-                DEFAULT);
-        assertThat(search.getHits().getTotalHits().value)
+        search = esUtils.getOpenSearchClient().search(s -> s
+                .index(testIndex)
+                .query(q -> q
+                        .bool(b -> b
+                                .must(m -> m
+                                        .terms(t -> t
+                                                .field("searchable.version.bm25")
+                                                .terms(v -> v.value(List.of(
+                                                        FieldValue.of("1"),
+                                                        FieldValue.of("2")
+                                                )))
+                                        )
+                                )
+                        )
+                ), Map.class);
+        assertThat(search.hits().total().value())
                 .as("search res by version.bm25: %s", search)
                 .isEqualTo(3);
     }
 
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-    void migrate_failed_then_fixed_script_and_re_execute(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient, EvolutionRestClient restClient) {
+    void migrate_failed_then_fixed_script_and_re_execute(String versionInfo, EsUtils esUtils) {
 
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_failed_step1"));
-        historyRepository = new HistoryRepositoryImpl(restClient, elasticsearchEvolutionConfig.getHistoryIndex(), new MigrationScriptProtocolMapper(), 1000, objectMapper);
+        historyRepository = new HistoryRepositoryImpl(esUtils.getEvolutionRestClient(), elasticsearchEvolutionConfig.getHistoryIndex(), new MigrationScriptProtocolMapper(), 1000, objectMapper);
 
         assertSoftly(softly -> {
-            softly.assertThatThrownBy(() -> elasticsearchEvolutionConfig.load(restClient).migrate())
+            softly.assertThatThrownBy(() -> elasticsearchEvolutionConfig.load(esUtils.getEvolutionRestClient()).migrate())
                     .isInstanceOf(MigrationException.class)
                     .hasMessage("execution of script 'FileNameInfoImpl(version=1.1, description=addDocument, scriptName=V001.01__addDocument.http)' failed");
             NavigableSet<MigrationScriptProtocol> protocols = historyRepository.findAll();
@@ -155,7 +178,7 @@ class ElasticsearchEvolutionIT {
         elasticsearchEvolutionConfig.setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_failed_step2_fixed"));
 
         assertSoftly(softly -> {
-            softly.assertThat(elasticsearchEvolutionConfig.load(restClient).migrate())
+            softly.assertThat(elasticsearchEvolutionConfig.load(esUtils.getEvolutionRestClient()).migrate())
                     .as("# of successful executed scripts")
                     .isOne();
             NavigableSet<MigrationScriptProtocol> protocols = historyRepository.findAll();
@@ -168,15 +191,15 @@ class ElasticsearchEvolutionIT {
 
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-    void migrate_outOfOrder_disabled_will_fail(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient, EvolutionRestClient restClient) {
+    void migrate_outOfOrder_disabled_will_fail(String versionInfo, EsUtils esUtils) {
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_outOfOrder_1"));
         String historyIndex = elasticsearchEvolutionConfig.getHistoryIndex();
-        historyRepository = new HistoryRepositoryImpl(restClient, historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
+        historyRepository = new HistoryRepositoryImpl(esUtils.getEvolutionRestClient(), historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
 
 
         assertSoftly(softly -> {
-            softly.assertThat(elasticsearchEvolutionConfig.load(restClient).migrate())
+            softly.assertThat(elasticsearchEvolutionConfig.load(esUtils.getEvolutionRestClient()).migrate())
                     .as("# of successful executed scripts ")
                     .isEqualTo(2);
             softly.assertThat(historyRepository.findAll())
@@ -190,7 +213,7 @@ class ElasticsearchEvolutionIT {
         elasticsearchEvolutionConfig.setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_outOfOrder_2"));
 
 
-        final ElasticsearchEvolution underTest = elasticsearchEvolutionConfig.load(restClient);
+        final ElasticsearchEvolution underTest = elasticsearchEvolutionConfig.load(esUtils.getEvolutionRestClient());
         assertThatThrownBy(underTest::migrate)
                 .isInstanceOf(MigrationException.class)
                 .hasMessage("The logged execution in the Elasticsearch-Evolution history index at position 1 is version 3 and in the same position in the given migration scripts is version 2! Out of order execution is not supported. Or maybe you have added new migration scripts in between or have to cleanup the Elasticsearch-Evolution history index manually");
@@ -198,16 +221,16 @@ class ElasticsearchEvolutionIT {
 
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-    void migrate_outOfOrder_enabled(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient, EvolutionRestClient restClient) {
+    void migrate_outOfOrder_enabled(String versionInfo, EsUtils esUtils) {
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setOutOfOrder(true)
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_outOfOrder_1"));
         String historyIndex = elasticsearchEvolutionConfig.getHistoryIndex();
-        historyRepository = new HistoryRepositoryImpl(restClient, historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
+        historyRepository = new HistoryRepositoryImpl(esUtils.getEvolutionRestClient(), historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
 
 
         assertSoftly(softly -> {
-            softly.assertThat(elasticsearchEvolutionConfig.load(restClient).migrate())
+            softly.assertThat(elasticsearchEvolutionConfig.load(esUtils.getEvolutionRestClient()).migrate())
                     .as("# of successful executed scripts ")
                     .isEqualTo(2);
             softly.assertThat(historyRepository.findAll())
@@ -222,7 +245,7 @@ class ElasticsearchEvolutionIT {
 
 
         assertSoftly(softly -> {
-            softly.assertThat(elasticsearchEvolutionConfig.load(restClient).migrate())
+            softly.assertThat(elasticsearchEvolutionConfig.load(esUtils.getEvolutionRestClient()).migrate())
                     .as("# of successful executed scripts ")
                     .isOne();
             softly.assertThat(historyRepository.findAll())
@@ -234,14 +257,14 @@ class ElasticsearchEvolutionIT {
 
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
-    void migrate_failed_duplicate_versions(String versionInfo, EsUtils esUtils, RestHighLevelClient restHighLevelClient, EvolutionRestClient restClient) {
+    void migrate_failed_duplicate_versions(String versionInfo, EsUtils esUtils) {
 
         ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/duplicate_versions"));
-        historyRepository = new HistoryRepositoryImpl(restClient, elasticsearchEvolutionConfig.getHistoryIndex(), new MigrationScriptProtocolMapper(), 1000, objectMapper);
+        historyRepository = new HistoryRepositoryImpl(esUtils.getEvolutionRestClient(), elasticsearchEvolutionConfig.getHistoryIndex(), new MigrationScriptProtocolMapper(), 1000, objectMapper);
 
         assertSoftly(softly -> {
-            softly.assertThatThrownBy(() -> elasticsearchEvolutionConfig.load(restClient).migrate())
+            softly.assertThatThrownBy(() -> elasticsearchEvolutionConfig.load(esUtils.getEvolutionRestClient()).migrate())
                     .isInstanceOf(MigrationException.class)
                     .hasMessage("There are multiple migration scripts with the same version '1': [V001.00__createTemplateWithIndexMapping1.http, V001.00__createTemplateWithIndexMapping2.http]");
             NavigableSet<MigrationScriptProtocol> protocols = historyRepository.findAll();
