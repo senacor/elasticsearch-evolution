@@ -48,6 +48,8 @@ if GIT_PAGER=cat git log --oneline -10 | grep -q "${COMMIT_MESSAGE}"; then
 elif [ "$CURRENT_VERSION" != "${NEW_VERSION}" ]; then
   ./setVersion.sh "${NEW_VERSION}"
   git add pom.xml "**/pom.xml"
+  # debug: show the status of the git repo before commit an push
+  git status
   git commit -m "${COMMIT_MESSAGE}"
   git push origin "${GIT_BRANCH}"
 else
