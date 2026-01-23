@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,7 +30,7 @@ class ElasticsearchEvolutionConfigTest {
                             throw new IllegalStateException(e);
                         }
                     })
-                    .collect(Collectors.toList());
+                    .toList();
         }
 
         assertThat(springConfigMetadata)
