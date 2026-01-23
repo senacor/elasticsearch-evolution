@@ -1,0 +1,123 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Version to release (e.g. 1.0.0)'
+        required: true
+        type: string
+      next_version:
+        description: 'Next development version (e.g. 1.0.1-SNAPSHOT)'
+        required: true
+        type: string
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '*.md'
+  # pull_request to run the pipeline on PRs from external, because "push" does not create this pipeline on external PRs
+  pull_request:
+    paths-ignore:
+      - '*.md'
+  schedule:
+    # * is a special character in YAML, so you have to quote this string
+    - cron: '0 2 * * 4'
+
+env:
+  MVN_CMD: "./mvnw --settings .cicd.settings.xml -e -B"
+  GPG_EXECUTABLE: gpg
+
+jobs:
+  release-dry-run:
+    # this will just build like the real release job, but not do a release (dry run)
+    if: ${{ github.event_name != 'workflow_dispatch' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # Fetch all history for all tags and branches
+          fetch-depth: 0
+      - name: Import GPG key to sign maven build artifacts (this may fail when this job was triggered from an untrusted source because then the required environment variable is not available)
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_SECRET_KEYS }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+      - name: Set up JDK 17
+        # with JDK 11 the maven-javadoc-plugin > 3.0.1 fails with "cannot find symbol org.elasticsearch.*"
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 17
+      - name: Release to maven central
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+        run: $MVN_CMD deploy -DskipTests=true -Drelease -Dmaven.deploy.skip=true -DskipNexusStagingDeployMojo=true -DskipPublishing=true
+      - name: prepare release version
+        run: source prepare_release_version.sh
+
+  release:
+    # Release to maven central and create Github release
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+      issues: write
+      pull-requests: write
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # Fetch all history for all tags and branches
+          fetch-depth: 0
+      - name: Import GPG key to sign maven build artifacts
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_SECRET_KEYS }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 17
+      - name: Set release version
+        run: ./setNextVersion.sh "${{ github.event.inputs.release_version }}" "${{ github.ref_name }}"
+      - name: Release to maven central
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+        run: $MVN_CMD deploy -DskipTests=true -Drelease
+      - name: prepare release version
+        run: source prepare_release_version.sh
+      - name: Create Github Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TRAVIS_TAG }}
+          # Defaults to repository default branch, so we set the SHA of the current commit (set in prepare_release_version.sh)
+          target_commitish: ${{ env.RELEASE_GIT_COMMIT_SHA }}
+          name: ${{ github.event.inputs.release_version }}
+          draft: false
+          prerelease: ${{ env.IS_SNAPSHOT }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            spring-boot-starter-elasticsearch-evolution/target/spring-boot-starter-elasticsearch-evolution-${{ github.event.inputs.release_version }}.jar
+            elasticsearch-evolution-core/target/elasticsearch-evolution-core-${{ github.event.inputs.release_version }}.jar
+            elasticsearch-evolution-rest-abstraction/target/elasticsearch-evolution-rest-abstraction-${{ github.event.inputs.release_version }}.jar
+            elasticsearch-evolution-rest-abstraction-es-client/target/elasticsearch-evolution-rest-abstraction-es-client-${{ github.event.inputs.release_version }}.jar
+            elasticsearch-evolution-rest-abstraction-es-rest5client/target/elasticsearch-evolution-rest-abstraction-es-rest5client-${{ github.event.inputs.release_version }}.jar
+            elasticsearch-evolution-rest-abstraction-os-genericclient/target/elasticsearch-evolution-rest-abstraction-os-genericclient-${{ github.event.inputs.release_version }}.jar
+            elasticsearch-evolution-rest-abstraction-os-restclient/target/elasticsearch-evolution-rest-abstraction-os-restclient-${{ github.event.inputs.release_version }}.jar
+      - name: Set next development version
+        run: ./setNextVersion.sh "${{ github.event.inputs.next_version }}" "${{ github.ref_name }}"

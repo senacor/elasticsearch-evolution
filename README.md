@@ -418,6 +418,9 @@ ElasticsearchEvolution.configure()
   - Focusing on maintained versions.
 - Drop deprecated RestHighLevelClient in tests ([#549](https://github.com/senacor/elasticsearch-evolution/issues/549))
 - Drop Spring Boot 3.2 compatibility tests. Further versions may run on Spring Boot 3.2, but they are not tested anymore.
+- Improve release process ([#562](https://github.com/senacor/elasticsearch-evolution/issues/562)).
+  - Trigger a release from within the GitHub Actions Website ([via workflow_dispatch Event](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)).
+  - Automatically set the release version and the next development version after the release finished.
 
 ### v0.8.0
 

@@ -11,7 +11,7 @@ on:
     paths-ignore:
       - '*.md'
   schedule:
-    - cron: '42 16 * * 4'
+    - cron: '25 2 * * 4'
 
 env:
   MVN_CMD: "./mvnw --settings .cicd.settings.xml -e -B -V"

@@ -13,7 +13,7 @@ on:
       - '*.md'
   schedule:
     # * is a special character in YAML, so you have to quote this string
-    - cron: '11 16 * * 4'
+    - cron: '12 2 * * 4'
 
 env:
   MVN_CMD: "./mvnw --settings .cicd.settings.xml -e -B -V"
@@ -135,37 +135,8 @@ jobs:
 #      - name: Build and test with Maven
 #        run: $MVN_CMD install
 
-  release-dry-run:
-    # this will just build like the real release job, but not do a release (dry run)
-    if: ${{ github.ref != 'refs/heads/release' }}
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Import GPG key to sign maven build artifacts (this may fail when this job was triggered from an untrusted source because then the required environment variable is not available)
-        uses: crazy-max/ghaction-import-gpg@v6
-        with:
-          gpg_private_key: ${{ secrets.GPG_SECRET_KEYS }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          git_user_signingkey: true
-          git_commit_gpgsign: true
-      - name: Set up JDK 17
-        # with JDK 11 the maven-javadoc-plugin > 3.0.1 fails with "cannot find symbol org.elasticsearch.*"
-        uses: actions/setup-java@v5
-        with:
-          distribution: zulu
-          java-version: 17
-      - name: Release to maven central
-        env:
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        run: $MVN_CMD deploy -DskipTests=true -Drelease -Dmaven.deploy.skip=true -DskipNexusStagingDeployMojo=true -DskipPublishing=true
-
-      - name: prepare release version
-        run: source prepare_release_version.sh
-
-  release:
+  # This is the old, deprecated release job which is only triggered on pushes to the "release" branch
+  release-from-release-branch:
     # Release to maven central and create Github release
     needs: [ build-with-jdk, build-with-es, build-with-os-restclient, build-with-os-genericclient ]
     if: ${{ github.repository == 'senacor/elasticsearch-evolution' && github.event_name == 'push' && github.ref == 'refs/heads/release' }}
@@ -192,7 +163,6 @@ jobs:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
         run: $MVN_CMD deploy -DskipTests=true -Drelease
-
       - name: prepare release version
         run: source prepare_release_version.sh
       - name: Create Github Release
