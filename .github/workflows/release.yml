@@ -103,7 +103,8 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.TRAVIS_TAG }}
+#          tag_name: ${{ env.TRAVIS_TAG }}
+          tag_name: ${{ github.event.inputs.release_version }}
           # Defaults to repository default branch, so we set the SHA of the current commit (set in prepare_release_version.sh)
           target_commitish: ${{ env.RELEASE_GIT_COMMIT_SHA }}
           name: ${{ github.event.inputs.release_version }}
