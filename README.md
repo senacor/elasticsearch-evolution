@@ -55,12 +55,12 @@ and choose an `elasticsearch-evolution-rest-abstraction` implementation (here: E
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
 </dependency>
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
 </dependency>
 ```
 
@@ -77,12 +77,12 @@ and choose an `elasticsearch-evolution-rest-abstraction` implementation (here: E
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
 </dependency>
 <dependency>
-  <groupId>com.senacor.elasticsearch.evolution</groupId>
-  <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
-  <version>0.8.0</version>
+    <groupId>com.senacor.elasticsearch.evolution</groupId>
+    <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
+    <version>0.9.0</version>
 </dependency>
 ```
 
@@ -130,7 +130,7 @@ Elasticsearch-Evolution uses a REST client abstraction (`EvolutionRestClient`). 
   <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
   </dependency>
   ```
 * Elasticsearch [Rest5Client](https://central.sonatype.com/artifact/co.elastic.clients/elasticsearch-rest5-client) implementation: `EvolutionESRest5Client` which is designed for Elasticsearch `9.x` and Spring Boot `4.x`.
@@ -138,7 +138,7 @@ Elasticsearch-Evolution uses a REST client abstraction (`EvolutionRestClient`). 
   <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-es-rest5client</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
   </dependency>
   ```  
 * OpenSearch [RestClient](https://central.sonatype.com/artifact/org.opensearch.client/opensearch-rest-client) implementation: `EvolutionOpenSearchRestClient` which is designed for OpenSearch `2.x` because the `RestClientTransport` is deprecated for removal since `3.x`.
@@ -146,7 +146,7 @@ Elasticsearch-Evolution uses a REST client abstraction (`EvolutionRestClient`). 
   <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-os-restclient</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
   </dependency>
   ```
 * OpenSearch [OpenSearchGenericClient](https://central.sonatype.com/artifact/org.opensearch.client/opensearch-java) implementation: `EvolutionOpenSearchGenericClient` which is designed for OpenSearch `3.x` and later.
@@ -154,7 +154,7 @@ Elasticsearch-Evolution uses a REST client abstraction (`EvolutionRestClient`). 
   <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-os-genericclient</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
   </dependency>
   ```  
 
@@ -163,7 +163,7 @@ You can provide your own implementation of `EvolutionRestClient` if you want to 
 <dependency>
   <groupId>com.senacor.elasticsearch.evolution</groupId>
   <artifactId>elasticsearch-evolution-rest-abstraction</artifactId>
-  <version>0.8.0</version>
+  <version>0.9.0</version>
 </dependency>
 ```
 - With the Spring Boot starter, you have to create a bean with your custom `EvolutionRestClient` implementation like this:
@@ -412,7 +412,7 @@ ElasticsearchEvolution.configure()
 
 ## 6 Changelog
 
-### v0.9.0-SNAPSHOT
+### v0.9.0
 
 - Drop Elasticsearch 7.x and OpenSearch 1.x support ([#570](https://github.com/senacor/elasticsearch-evolution/issues/570)).
   - Focusing on maintained versions.
