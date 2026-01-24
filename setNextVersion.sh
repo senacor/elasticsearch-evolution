@@ -28,8 +28,11 @@ if [ -z "$MVN_CMD" ]; then
 fi
 
 # Configure git for any operations
-git config --global user.name "GitHub Actions"
-git config --global user.email "actions@github.com"
+# this is already done by github action 'crazy-max/ghaction-import-gpg'
+# defaults to the name associated with the GPG key
+#git config --global user.name "GitHub Actions"
+# defaults to the email address associated with the GPG key
+#git config --global user.email "actions@github.com"
 
 CURRENT_VERSION=$($MVN_CMD help:evaluate -Dexpression=project.version -q -DforceStdout)
 
