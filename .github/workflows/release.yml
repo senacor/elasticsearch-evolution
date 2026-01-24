@@ -77,6 +77,7 @@ jobs:
         with:
           # Fetch all history for all tags and branches
           fetch-depth: 0
+          token: ${{ secrets.PUSH_TO_MASTER_GH_TOKEN }}
       - name: Import GPG key to sign maven build artifacts
         uses: crazy-max/ghaction-import-gpg@v6
         with:
@@ -90,6 +91,8 @@ jobs:
           distribution: zulu
           java-version: 17
       - name: Set release version
+        env:
+          GH_TOKEN: ${{ secrets.PUSH_TO_MASTER_GH_TOKEN }}
         run: ./setNextVersion.sh "${{ github.event.inputs.release_version }}" "${{ github.ref_name }}"
       - name: Release to maven central
         env:
