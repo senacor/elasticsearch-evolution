@@ -67,6 +67,7 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
      *
      * @return a list of {@link RawMigrationScript}
      */
+    @Override
     public List<RawMigrationScript> read() {
         return this.locations.stream()
                 .flatMap(location -> {
