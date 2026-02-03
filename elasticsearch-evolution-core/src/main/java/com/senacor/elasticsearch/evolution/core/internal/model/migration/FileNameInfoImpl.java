@@ -33,7 +33,7 @@ public class FileNameInfoImpl implements FileNameInfo {
      * The name of the script to execute for this migration, relative to the configured location.
      * not-null
      */
-    @Getter
+    @Getter(onMethod_ = @Override)
     private final String scriptName;
 
     public FileNameInfoImpl(MigrationVersion version, String description, String scriptName) {
