@@ -26,7 +26,7 @@ public class FileNameInfoImpl implements FileNameInfo {
      * migration description
      * not-null
      */
-    @Getter
+    @Getter(onMethod_ = {@Override})
     private final String description;
 
     /**
