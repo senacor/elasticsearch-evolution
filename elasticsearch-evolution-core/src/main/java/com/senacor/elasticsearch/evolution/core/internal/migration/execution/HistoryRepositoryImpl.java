@@ -47,7 +47,7 @@ public class HistoryRepositoryImpl implements HistoryRepository {
                                  int querySize,
                                  ObjectMapper objectMapper) {
         this.restClient = requireNonNull(restClient, "restClient must not be null");
-        this.historyIndex = requireNotBlank(historyIndex, "historyIndex must not be blank: {}", historyIndex);
+        this.historyIndex = requireNotBlank(historyIndex, "historyIndex must not be blank: %s", historyIndex);
         this.migrationScriptProtocolMapper = requireNonNull(migrationScriptProtocolMapper, "migrationScriptProtocolMapper must not be null");
         this.querySize = querySize;
         this.objectMapper = objectMapper;
