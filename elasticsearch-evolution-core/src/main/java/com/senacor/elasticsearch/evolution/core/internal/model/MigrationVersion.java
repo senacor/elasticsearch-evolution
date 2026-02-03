@@ -163,6 +163,7 @@ public final class MigrationVersion implements Comparable<MigrationVersion> {
     }
 
     @SuppressWarnings("NullableProblems")
+    @Override
     public int compareTo(MigrationVersion o) {
         if (o == null) {
             return 1;
