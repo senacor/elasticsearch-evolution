@@ -33,6 +33,7 @@ public class RawMigrationScript {
         return this;
     }
 
+    @Override
     public String toString() {
         return "filename: " + fileName + ", content: " + content;
     }
