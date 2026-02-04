@@ -19,7 +19,7 @@ public class FileNameInfoImpl implements FileNameInfo {
     /**
      * not-null
      */
-    @Getter
+    @Getter(onMethod_ = @Override)
     private final MigrationVersion version;
 
     /**
