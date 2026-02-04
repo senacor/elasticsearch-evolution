@@ -19,7 +19,6 @@ public class FileNameInfoImpl implements FileNameInfo {
     /**
      * not-null
      */
-    @Getter
     private final MigrationVersion version;
 
     /**
@@ -40,5 +39,10 @@ public class FileNameInfoImpl implements FileNameInfo {
         this.version = requireNonNull(version, "version must not be null");
         this.description = requireNotEmpty(description, "description must not be empty");
         this.scriptName = requireNotEmpty(scriptName, "scriptName must not be empty");
+    }
+
+    @Override
+    public MigrationVersion getVersion() {
+        return version;
     }
 }
