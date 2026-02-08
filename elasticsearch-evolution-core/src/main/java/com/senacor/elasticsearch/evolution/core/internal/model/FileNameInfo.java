@@ -1,5 +1,7 @@
 package com.senacor.elasticsearch.evolution.core.internal.model;
 
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationVersion;
+
 /**
  * @author Andreas Keefer
  */

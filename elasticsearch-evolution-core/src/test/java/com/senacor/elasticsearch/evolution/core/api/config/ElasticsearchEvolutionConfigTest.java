@@ -34,7 +34,7 @@ class ElasticsearchEvolutionConfigTest {
         }
 
         assertThat(springConfigMetadata)
-                .anySatisfy(metadataContent -> assertThat(metadataContent).contains(ElasticsearchEvolutionConfig.class.getName()));
+                .anySatisfy(metadataContent -> assertThat(metadataContent).contains(ElasticsearchEvolutionConfigImpl.class.getName()));
     }
 
     @Nested
@@ -42,12 +42,12 @@ class ElasticsearchEvolutionConfigTest {
 
         @Test
         void defaultConfig() {
-            assertThat(new ElasticsearchEvolutionConfig().validate()).isNotNull();
+            assertThat(new ElasticsearchEvolutionConfigImpl().validate()).isNotNull();
         }
 
         @Test
         void noValidEncoding() {
-            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+            final ElasticsearchEvolutionConfigImpl config = new ElasticsearchEvolutionConfigImpl()
                     .setEncoding(null);
 
             assertThatThrownBy(config::validate)
@@ -57,7 +57,7 @@ class ElasticsearchEvolutionConfigTest {
 
         @Test
         void noValidPlaceholders() {
-            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+            final ElasticsearchEvolutionConfigImpl config = new ElasticsearchEvolutionConfigImpl()
                     .setPlaceholders(null);
 
             assertThatThrownBy(config::validate)
@@ -67,7 +67,7 @@ class ElasticsearchEvolutionConfigTest {
 
         @Test
         void noValidLocations() {
-            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+            final ElasticsearchEvolutionConfigImpl config = new ElasticsearchEvolutionConfigImpl()
                     .setLocations(Collections.emptyList());
 
             assertThatThrownBy(config::validate)
@@ -77,7 +77,7 @@ class ElasticsearchEvolutionConfigTest {
 
         @Test
         void noValidEsMigrationPrefix() {
-            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+            final ElasticsearchEvolutionConfigImpl config = new ElasticsearchEvolutionConfigImpl()
                     .setEsMigrationPrefix("");
 
             assertThatThrownBy(config::validate)
@@ -87,7 +87,7 @@ class ElasticsearchEvolutionConfigTest {
 
         @Test
         void noValidEsMigrationSuffixes() {
-            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+            final ElasticsearchEvolutionConfigImpl config = new ElasticsearchEvolutionConfigImpl()
                     .setEsMigrationSuffixes(Collections.emptyList());
 
             assertThatThrownBy(config::validate)
@@ -97,7 +97,7 @@ class ElasticsearchEvolutionConfigTest {
 
         @Test
         void noValidPlaceholderPrefix() {
-            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+            final ElasticsearchEvolutionConfigImpl config = new ElasticsearchEvolutionConfigImpl()
                     .setPlaceholderPrefix("");
 
             assertThatThrownBy(config::validate)
@@ -107,7 +107,7 @@ class ElasticsearchEvolutionConfigTest {
 
         @Test
         void noValidPlaceholderSuffix() {
-            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+            final ElasticsearchEvolutionConfigImpl config = new ElasticsearchEvolutionConfigImpl()
                     .setPlaceholderSuffix("");
 
             assertThatThrownBy(config::validate)
@@ -117,7 +117,7 @@ class ElasticsearchEvolutionConfigTest {
 
         @Test
         void placeholderNameMustNotContainPlaceholderSuffix() {
-            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+            final ElasticsearchEvolutionConfigImpl config = new ElasticsearchEvolutionConfigImpl()
                     .setPlaceholders(Collections.singletonMap("x}x", "x"));
 
             assertThatThrownBy(config::validate)
@@ -127,7 +127,7 @@ class ElasticsearchEvolutionConfigTest {
 
         @Test
         void placeholderNameMustNotContainPlaceholderPrefix() {
-            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+            final ElasticsearchEvolutionConfigImpl config = new ElasticsearchEvolutionConfigImpl()
                     .setPlaceholders(Collections.singletonMap("x${x", "x"));
 
             assertThatThrownBy(config::validate)
@@ -137,7 +137,7 @@ class ElasticsearchEvolutionConfigTest {
 
         @Test
         void placeholderValueMustNotContainPlaceholderSuffix() {
-            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+            final ElasticsearchEvolutionConfigImpl config = new ElasticsearchEvolutionConfigImpl()
                     .setPlaceholders(Collections.singletonMap("x", "x}x"));
 
             assertThatThrownBy(config::validate)
@@ -147,7 +147,7 @@ class ElasticsearchEvolutionConfigTest {
 
         @Test
         void placeholderValueMustNotContainPlaceholderPrefix() {
-            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+            final ElasticsearchEvolutionConfigImpl config = new ElasticsearchEvolutionConfigImpl()
                     .setPlaceholders(Collections.singletonMap("x", "x${x"));
 
             assertThatThrownBy(config::validate)
@@ -157,7 +157,7 @@ class ElasticsearchEvolutionConfigTest {
 
         @Test
         void noValidHistoryMaxQuerySize_mustBeGreaterThan0() {
-            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+            final ElasticsearchEvolutionConfigImpl config = new ElasticsearchEvolutionConfigImpl()
                     .setHistoryMaxQuerySize(0);
 
             assertThatThrownBy(config::validate)
@@ -167,7 +167,7 @@ class ElasticsearchEvolutionConfigTest {
 
         @Test
         void baselineVersion_must_be_at_least_1() {
-            final ElasticsearchEvolutionConfig config = new ElasticsearchEvolutionConfig()
+            final ElasticsearchEvolutionConfigImpl config = new ElasticsearchEvolutionConfigImpl()
                     .setBaselineVersion("0");
 
             assertThatThrownBy(config::validate)

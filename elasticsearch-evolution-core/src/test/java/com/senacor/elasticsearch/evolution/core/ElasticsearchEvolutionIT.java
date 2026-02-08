@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.ValidateException;
-import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
+import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfigImpl;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
 import com.senacor.elasticsearch.evolution.core.internal.migration.execution.HistoryRepositoryImpl;
 import com.senacor.elasticsearch.evolution.core.internal.migration.execution.MigrationScriptProtocolMapper;
@@ -50,7 +50,7 @@ class ElasticsearchEvolutionIT {
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
     void migrate_OK(String versionInfo, EsUtils esUtils) throws IOException {
 
-        ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
+        ElasticsearchEvolutionConfigImpl elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_OK"));
         String historyIndex = elasticsearchEvolutionConfig.getHistoryIndex();
         historyRepository = new HistoryRepositoryImpl(esUtils.getEvolutionRestClient(), historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
@@ -155,14 +155,14 @@ class ElasticsearchEvolutionIT {
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
     void migrate_failed_then_fixed_script_and_re_execute(String versionInfo, EsUtils esUtils) {
 
-        ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
+        ElasticsearchEvolutionConfigImpl elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_failed_step1"));
         historyRepository = new HistoryRepositoryImpl(esUtils.getEvolutionRestClient(), elasticsearchEvolutionConfig.getHistoryIndex(), new MigrationScriptProtocolMapper(), 1000, objectMapper);
 
         assertSoftly(softly -> {
             softly.assertThatThrownBy(() -> elasticsearchEvolutionConfig.load(esUtils.getEvolutionRestClient()).migrate())
                     .isInstanceOf(MigrationException.class)
-                    .hasMessage("execution of script 'FileNameInfoImpl(version=1.1, description=addDocument, scriptName=V001.01__addDocument.http)' failed");
+                    .hasMessage("execution of migration 'FileNameInfoImpl(version=1.1, description=addDocument, scriptName=V001.01__addDocument.http)' failed");
             NavigableSet<MigrationScriptProtocol> protocols = historyRepository.findAll();
             softly.assertThat(protocols)
                     .as("# of historyIndex entries (%s)", protocols)
@@ -192,7 +192,7 @@ class ElasticsearchEvolutionIT {
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
     void migrate_outOfOrder_disabled_will_fail(String versionInfo, EsUtils esUtils) {
-        ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
+        ElasticsearchEvolutionConfigImpl elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_outOfOrder_1"));
         String historyIndex = elasticsearchEvolutionConfig.getHistoryIndex();
         historyRepository = new HistoryRepositoryImpl(esUtils.getEvolutionRestClient(), historyIndex, new MigrationScriptProtocolMapper(), 1000, objectMapper);
@@ -222,7 +222,7 @@ class ElasticsearchEvolutionIT {
     @ParameterizedTest(name = "{0}")
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
     void migrate_outOfOrder_enabled(String versionInfo, EsUtils esUtils) {
-        ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
+        ElasticsearchEvolutionConfigImpl elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setOutOfOrder(true)
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/migrate_outOfOrder_1"));
         String historyIndex = elasticsearchEvolutionConfig.getHistoryIndex();
@@ -259,14 +259,14 @@ class ElasticsearchEvolutionIT {
     @ArgumentsSource(ElasticsearchArgumentsProvider.class)
     void migrate_failed_duplicate_versions(String versionInfo, EsUtils esUtils) {
 
-        ElasticsearchEvolutionConfig elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
+        ElasticsearchEvolutionConfigImpl elasticsearchEvolutionConfig = ElasticsearchEvolution.configure()
                 .setLocations(singletonList("classpath:es/ElasticsearchEvolutionTest/duplicate_versions"));
         historyRepository = new HistoryRepositoryImpl(esUtils.getEvolutionRestClient(), elasticsearchEvolutionConfig.getHistoryIndex(), new MigrationScriptProtocolMapper(), 1000, objectMapper);
 
         assertSoftly(softly -> {
             softly.assertThatThrownBy(() -> elasticsearchEvolutionConfig.load(esUtils.getEvolutionRestClient()).migrate())
                     .isInstanceOf(MigrationException.class)
-                    .hasMessage("There are multiple migration scripts with the same version '1': [V001.00__createTemplateWithIndexMapping1.http, V001.00__createTemplateWithIndexMapping2.http]");
+                    .hasMessage("There are multiple migrations with the same version '1': [V001.00__createTemplateWithIndexMapping1.http, V001.00__createTemplateWithIndexMapping2.http]");
             NavigableSet<MigrationScriptProtocol> protocols = historyRepository.findAll();
             softly.assertThat(protocols)
                     .as("# of historyIndex entries (%s)", protocols)

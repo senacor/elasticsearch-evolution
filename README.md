@@ -13,7 +13,7 @@
 ![Libraries.io dependency status for GitHub repo](https://img.shields.io/librariesio/github/senacor/elasticsearch-evolution)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11573/badge)](https://www.bestpractices.dev/projects/11573)
 
-<img src="Elasticsearch-Evolution-logo-544x545.png" alt="Elasticsearch-Evolution logo" width="200"/>
+<img src="Elasticsearch-Evolution-logo-544x545.png" alt="Elasticsearch-Evolution logo" width="200" height="200" title="Elasticsearch-Evolution logo"/>
 
 ## 1 Evolve your Elasticsearch and OpenSearch mappings easily and reliably across all your instances
 
@@ -34,6 +34,7 @@ Successfully executed migration scripts will not be executed again!
 - supports microservices / multiple parallel running instances via logical database locks
 - ready to use default configuration
 - line comments in migration files
+- Migrations as Java code
 
 | Compatibility                    | Spring Boot                                      | Elasticsearch        | OpenSearch |
 |----------------------------------|--------------------------------------------------|----------------------|------------|
@@ -258,6 +259,43 @@ In this example, version `1.0.1` is the smallest version and is executed first, 
 
 **NOTE:** Versions with major version `0` are reserved for internal usage, so the smallest version you can define is `1`.
 
+### 4.3 Java Migrations
+
+Elasticsearch-Evolution also supports Java Migrations. A Java Migration is a Java class that implements the `JavaMigration` interface. 
+
+* The filename must follow the same pattern as described in the previous section, but the suffix check is ignored. 
+  * For the version dots `.` can be replaced with underscores `_` in the class name, so `V1_2__my_description.java` is a valid filename for a Java Migration with version `1.2`.
+  * You can provide a version and description directly in your `JavaMigration`, just overwrite the default implementation of the `getMetadata()` method. In this case, the filename is not relevant for the version and description.
+* The Java class must be located in the same location as your other migration scripts (e.g., `classpath:es/migration`). 
+  * Only `classpath` locations are supported for Java Migrations, `file` locations are not supported.
+* The `JavaMigration` must have a public no-args constructor, so that Elasticsearch-Evolution can create an instance of it via reflection.
+
+Here is an example of a Java Migration:
+```java
+public class V1_2__AddDocument implements JavaMigration {
+
+    @Override
+    public void migrate(Context context) throws Exception {
+        String body = """
+                {
+                  "doc": {
+                    "version": "2",
+                    "success": true,
+                    "a": "a a a"
+                  }
+                }""";
+        final EvolutionRestResponse res = context.getEvolutionRestClient().execute(HttpMethod.PUT,
+                "/test_1/_doc/2?refresh",
+                Map.of("Content-Type", "application/json"),
+                null,
+                body);
+        if (res.statusCode() != 201) {
+            throw new IllegalArgumentException("Failed to add document. " + res.asString());
+        }
+    }
+}
+```
+
 ## 5 Configuration options
 
 Elasticsearch-Evolution can be configured to your needs:
@@ -279,6 +317,8 @@ Elasticsearch-Evolution can be configured to your needs:
 -   **lineSeparator** (default=`\n`): Line separator, used only temporarily between reading raw migration file line-by-line and parsing it later. Only needed for backward compatibility/checksum stability! Should be one of `\n`, `\r` or `\r\n`.
 -   **outOfOrder** (default=`false`): Allows migrations to be run "out of order". If you already have versions 1.0 and 3.0 applied, and now version 2.0 is found, it will be applied too instead of being rejected.
 - **trimTrailingNewlineInMigrations** (default=`false`): Whether to remove a trailing newline in migration scripts. Only needed for backward compatibility/checksum stability!
+- **javaMigrations** (default=`[]`): These are not Java-based migrations discovered through classpath scanning and instantiated by Elasticsearch-Evolution. Instead, these are manually added instances of `JavaMigration` This is particularly useful when working with a dependency injection container, where you may want the DI container to instantiate the class and wire up its dependencies for you.
+- **javaMigrationClassProvider** (default=`null`): A custom ClassProvider to be used to look up `JavaMigration` classes. If not set, the default strategy will be used which is described in the Java Migrations section.
 
 ### 5.1 Spring Boot
 
@@ -414,11 +454,15 @@ ElasticsearchEvolution.configure()
 
 ## 6 Changelog
 
+### v1.0.0
+
+- Support Java Migrations ([#577](https://github.com/senacor/elasticsearch-evolution/issues/577)).
+
 ### v0.9.0
 
 - Drop Elasticsearch 7.x and OpenSearch 1.x support ([#570](https://github.com/senacor/elasticsearch-evolution/issues/570)).
   - Focusing on maintained versions.
-- Drop deprecated RestHighLevelClient in tests ([#549](https://github.com/senacor/elasticsearch-evolution/issues/549))
+- Drop deprecated RestHighLevelClient in tests ([#549](https://github.com/senacor/elasticsearch-evolution/issues/549)).
 - Drop Spring Boot 3.2 compatibility tests. Further versions may run on Spring Boot 3.2, but they are not tested anymore.
 - Improve release process ([#562](https://github.com/senacor/elasticsearch-evolution/issues/562)).
   - Trigger a release from within the GitHub Actions Website ([via workflow_dispatch Event](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)).

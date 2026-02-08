@@ -1,43 +1,37 @@
 package com.senacor.elasticsearch.evolution.core.internal.model.migration;
 
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.FileNameInfo;
-import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.NonNull;
+import lombok.Value;
 
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotEmpty;
-import static java.util.Objects.requireNonNull;
 
 /**
  * @author Andreas Keefer
  */
-@ToString
-@EqualsAndHashCode
+@Value
 public class FileNameInfoImpl implements FileNameInfo {
 
-    /**
-     * not-null
-     */
-    @Getter(onMethod_ = @Override)
-    private final MigrationVersion version;
+    @NonNull
+    MigrationVersion version;
 
     /**
      * migration description
-     * not-null
      */
-    @Getter(onMethod_ = {@Override})
-    private final String description;
+    @NonNull
+    String description;
 
     /**
      * The name of the script to execute for this migration, relative to the configured location.
-     * not-null
      */
-    @Getter(onMethod_ = @Override)
-    private final String scriptName;
+    @NonNull
+    String scriptName;
 
-    public FileNameInfoImpl(MigrationVersion version, String description, String scriptName) {
-        this.version = requireNonNull(version, "version must not be null");
+    public FileNameInfoImpl(@NonNull MigrationVersion version,
+                            String description,
+                            String scriptName) {
+        this.version = version;
         this.description = requireNotEmpty(description, "description must not be empty");
         this.scriptName = requireNotEmpty(scriptName, "scriptName must not be empty");
     }

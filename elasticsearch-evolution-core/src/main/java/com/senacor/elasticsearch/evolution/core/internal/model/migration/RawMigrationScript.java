@@ -9,7 +9,7 @@ import lombok.Getter;
  * @author Andreas Keefer
  */
 @EqualsAndHashCode
-public class RawMigrationScript {
+public class RawMigrationScript<T extends MigrationContent> {
 
     /**
      * script file name without any packages/directories
@@ -18,17 +18,17 @@ public class RawMigrationScript {
     private String fileName;
 
     /**
-     * raw content of the migration file
+     * raw content of the migration
      */
     @Getter
-    private String content;
+    private T content;
 
-    public RawMigrationScript setFileName(String fileName) {
+    public RawMigrationScript<T> setFileName(String fileName) {
         this.fileName = fileName;
         return this;
     }
 
-    public RawMigrationScript setContent(String content) {
+    public RawMigrationScript<T> setContent(T content) {
         this.content = content;
         return this;
     }

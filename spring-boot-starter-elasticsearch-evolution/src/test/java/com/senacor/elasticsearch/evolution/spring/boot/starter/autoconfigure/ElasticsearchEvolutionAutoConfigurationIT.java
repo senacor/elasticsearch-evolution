@@ -57,7 +57,7 @@ class ElasticsearchEvolutionAutoConfigurationIT {
         assertThat(searchResponse.hits().total().value())
                 .as("searchResponse: %s", searchResponse)
                 .as("Documents created by migration files")
-                .isOne();
+                .isEqualTo(2);
     }
 
 }

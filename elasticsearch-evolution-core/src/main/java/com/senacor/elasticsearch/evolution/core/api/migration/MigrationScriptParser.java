@@ -1,6 +1,6 @@
 package com.senacor.elasticsearch.evolution.core.api.migration;
 
-import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigration;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
 
 import java.util.Collection;
@@ -15,5 +15,5 @@ public interface MigrationScriptParser {
      * @param rawMigrationScripts the migration scripts to parse
      * @return List of {@link RawMigrationScript}'s
      */
-    Collection<ParsedMigrationScript> parse(Collection<RawMigrationScript> rawMigrationScripts);
+    Collection<ParsedMigration<?>> parse(Collection<RawMigrationScript<?>> rawMigrationScripts);
 }

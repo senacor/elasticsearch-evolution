@@ -1,10 +1,15 @@
 package com.senacor.elasticsearch.evolution.core.internal.migration.input;
 
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
+import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptReader;
+import com.senacor.elasticsearch.evolution.core.api.migration.java.ClassProvider;
+import com.senacor.elasticsearch.evolution.core.api.migration.java.JavaMigration;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.JavaMigrationRequestContent;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
-import io.github.classgraph.ClassGraph;
-import io.github.classgraph.ScanResult;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.ScriptMigrationContent;
+import io.github.classgraph.*;
+import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +17,8 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -20,12 +27,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
  * @author Andreas Keefer
  */
-
 public class MigrationScriptReaderImpl implements MigrationScriptReader {
 
     private static final Logger logger = LoggerFactory.getLogger(MigrationScriptReaderImpl.class);
@@ -39,47 +46,63 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
     private final List<String> esMigrationSuffixes;
     private final String lineSeparator;
     private final boolean trimTrailingNewlineInMigrations;
+    @NonNull
+    private final ElasticsearchEvolutionConfig config;
 
-    /**
-     * @param locations                       Locations of migrations scripts, e.g classpath:es/migration or file:/home/migration
-     * @param encoding                        migrations scripts encoding
-     * @param esMigrationFilePrefix           File name prefix for ES migrations.
-     * @param esMigrationFileSuffixes         File name suffix for ES migrations.
-     * @param lineSeparator                   Line separator. should be '\n' per default and only something else for backward compatibility / checksum stability
-     * @param trimTrailingNewlineInMigrations Whether to remove a trailing newline in migration scripts.
-     */
-    public MigrationScriptReaderImpl(List<String> locations,
-                                     Charset encoding,
-                                     String esMigrationFilePrefix,
-                                     List<String> esMigrationFileSuffixes,
-                                     String lineSeparator,
-                                     boolean trimTrailingNewlineInMigrations) {
-        this.locations = locations;
-        this.encoding = encoding;
-        this.esMigrationPrefix = esMigrationFilePrefix;
-        this.esMigrationSuffixes = esMigrationFileSuffixes;
-        this.lineSeparator = lineSeparator;
-        this.trimTrailingNewlineInMigrations = trimTrailingNewlineInMigrations;
+    public MigrationScriptReaderImpl(@NonNull ElasticsearchEvolutionConfig config) {
+        this.config = config;
+        this.locations = config.getLocations();
+        this.encoding = config.getEncoding();
+        this.esMigrationPrefix = config.getEsMigrationPrefix();
+        this.esMigrationSuffixes = config.getEsMigrationSuffixes();
+        this.lineSeparator = config.getLineSeparator();
+        this.trimTrailingNewlineInMigrations = config.isTrimTrailingNewlineInMigrations();
     }
 
     /**
-     * Reads all migration scripts from the specified locations that match prefixes and suffixes
+     * Reads all migrations from the specified locations that match prefixes and suffixes
+     * <p>
+     * Also reads JavaMigrations from the specified locations and from the custom JavaMigrations ClassProvider (if provided)
+     * and creates corresponding RawMigrationScripts for them.
+     * <p>
+     * Also converts provided additional JavaMigration instances from the config to corresponding RawMigrationScripts.
      *
      * @return a list of {@link RawMigrationScript}
      */
     @Override
-    public List<RawMigrationScript> read() {
-        return this.locations.stream()
+    public List<RawMigrationScript<?>> read() {
+        final Stream<RawMigrationScript<?>> rarMigrationsFromLocations = this.locations.stream()
                 .flatMap(location -> {
                     try {
                         return readFromLocation(location);
                     } catch (URISyntaxException | IOException e) {
                         throw new MigrationException(
-                                "couldn't read scripts from %s".formatted(location), e);
+                                "couldn't read migrations from %s".formatted(location), e);
                     }
-                })
+                });
+        final Stream<RawMigrationScript<?>> rarMigrationsFromCustomJavaMigrationsClassProvider = readFromCustomJavaMigrationsClassProvider(config.getJavaMigrationClassProvider());
+        final Stream<RawMigrationScript<?>> additionalRawJavaMigrations = config.getJavaMigrations().stream()
+                .map(this::createRawMigrationScript);
+        return Stream.concat(Stream.concat(rarMigrationsFromLocations, rarMigrationsFromCustomJavaMigrationsClassProvider), additionalRawJavaMigrations)
                 .distinct()
                 .toList();
+    }
+
+    private Stream<RawMigrationScript<?>> readFromCustomJavaMigrationsClassProvider(ClassProvider<JavaMigration> customJavaMigrationsClassProvider) {
+        if (null == customJavaMigrationsClassProvider) {
+            return Stream.empty();
+        }
+        return customJavaMigrationsClassProvider.apply(config).stream()
+                .map(javaMigrationClass -> {
+                    logger.debug("reading JavaMigration '{}' from custom JavaMigrations ClassProvider...", javaMigrationClass.getName());
+                    try {
+                        final JavaMigration javaMigrationInstance = javaMigrationClass.getDeclaredConstructor().newInstance();
+                        return createRawMigrationScript(javaMigrationInstance);
+                    } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
+                             InvocationTargetException e) {
+                        throw new MigrationException("Couldn't create instance of JavaMigration: " + javaMigrationClass.getName(), e);
+                    }
+                });
     }
 
     /**
@@ -90,10 +113,9 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
      * @throws URISyntaxException if the location is not formatted strictly according to RFC2396 and cannot be converted to a URI.
      * @throws IOException        if an I/O error is thrown when accessing the files at the location(s).
      */
-    protected Stream<RawMigrationScript> readFromLocation(String location) throws URISyntaxException, IOException {
+    protected Stream<RawMigrationScript<?>> readFromLocation(String location) throws URISyntaxException, IOException {
         if (location.startsWith(CLASSPATH_PREFIX)) {
             return readScriptsFromClassPath(location);
-
         } else if (location.startsWith(FILE_PREFIX)) {
             return readScriptsFromFilesystem(location);
         } else {
@@ -105,7 +127,7 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         }
     }
 
-    private Stream<RawMigrationScript> readScriptsFromFilesystem(String location) throws IOException {
+    private Stream<RawMigrationScript<?>> readScriptsFromFilesystem(String location) throws IOException {
         String locationWithoutPrefix = location.substring(FILE_PREFIX.length());
         URI uri = Paths.get(locationWithoutPrefix).toUri();
         logger.debug("URI of location '{}' = '{}'", location, uri);
@@ -114,9 +136,9 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
         }
         Path path = Paths.get(uri);
         return Files.find(path, 10, (pathToCheck, basicFileAttributes) ->
-                !basicFileAttributes.isDirectory()
-                        && basicFileAttributes.size() > 0
-                        && isValidFilename(pathToCheck.getFileName().toString()))
+                        !basicFileAttributes.isDirectory()
+                                && basicFileAttributes.size() > 0
+                                && isValidFilename(pathToCheck.getFileName().toString()))
                 .flatMap(file -> {
                     logger.debug("reading migration script '{}' from filesystem...", file);
                     String filename = file.getFileName().toString();
@@ -128,7 +150,7 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
                 });
     }
 
-    private Stream<RawMigrationScript> readScriptsFromClassPath(String location) {
+    private Stream<RawMigrationScript<?>> readScriptsFromClassPath(String location) {
         if (!location.endsWith("/")) {
             // fixes https://github.com/senacor/elasticsearch-evolution/issues/36
             // otherwise e.g. "...location_some_suffix" will also be found when search for "...location".
@@ -137,12 +159,14 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
 
         final String locationWithoutPrefix = location.substring(CLASSPATH_PREFIX.length());
 
-        List<RawMigrationScript> res = new ArrayList<>();
+        List<RawMigrationScript<?>> res = new ArrayList<>();
+        // scan for script resources
         try (ScanResult scanResult = new ClassGraph()
                 .acceptPaths(locationWithoutPrefix)
-                .scan()) {
-            scanResult.getAllResources()
-                    .filter(resource -> isValidFilename(Paths.get(resource.getPath()).getFileName().toString()))
+                .scan();
+             ResourceList resourceList = scanResult.getAllResources()) {
+
+            resourceList.filter(resource -> isValidFilename(Paths.get(resource.getPath()).getFileName().toString()))
                     .forEach(resource -> {
                         logger.debug("reading migration script '{}' from classpath...", resource);
                         try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(resource.load()), encoding))) {
@@ -153,10 +177,59 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
                         }
                     });
         }
+
+        if (null == config.getJavaMigrationClassProvider()) {
+            // scan for JavaMigrations
+            String packageToScan = locationWithoutPrefix
+                    .substring(0, locationWithoutPrefix.length() - 1)
+                    .replace('/', '.');
+            try (ScanResult scanResult = new ClassGraph()
+                    .enableClassInfo()
+                    .enableMethodInfo()
+                    .acceptPackages(packageToScan)
+                    .scan()) {
+                scanResult.getClassesImplementing(JavaMigration.class)
+                        .filter(classInfo -> !classInfo.isAbstract())
+                        .filter(classInfo -> !classInfo.isInterface())
+                        .forEach(classInfo -> {
+                            logger.debug("reading JavaMigration '{}' ...", classInfo.getName());
+                            MethodInfo constructorInfo = findPublicNoArgsConstructor(classInfo)
+                                    .orElseThrow(() -> new MigrationException("JavaMigration " + classInfo.getName() + " does not have a public no-args constructor!"));
+                            final Constructor<?> constructor = constructorInfo.loadClassAndGetConstructor();
+                            final JavaMigration javaMigrationInstance;
+                            try {
+                                javaMigrationInstance = (JavaMigration) constructor.newInstance();
+                            } catch (Exception e) {
+                                throw new MigrationException("Couldn't create instance of JavaMigration: " + classInfo.getName(), e);
+                            }
+                            res.add(createRawMigrationScript(javaMigrationInstance));
+                        });
+            }
+        }
         return res.stream();
     }
 
-    Stream<RawMigrationScript> read(BufferedReader reader, String filename) throws IOException {
+    private RawMigrationScript<JavaMigrationRequestContent> createRawMigrationScript(JavaMigration javaMigrationInstance) {
+        final String fileName = javaMigrationInstance.getClass().getSimpleName();
+        if (javaMigrationInstance.getMetadata() == null
+                && !fileName.startsWith(this.esMigrationPrefix)) {
+            throw new MigrationException("JavaMigration " + javaMigrationInstance.getClass().getName() +
+                    " does not provide metadata and does not match migration file name pattern!");
+        }
+        return new RawMigrationScript<JavaMigrationRequestContent>()
+                .setFileName(fileName)
+                .setContent(new JavaMigrationRequestContent(javaMigrationInstance));
+    }
+
+    private Optional<MethodInfo> findPublicNoArgsConstructor(ClassInfo classInfo) {
+        return classInfo.getDeclaredConstructorInfo()
+                .filter(ClassMemberInfo::isPublic)
+                .filter(constructorInfo -> constructorInfo.getParameterInfo().length == 0)
+                .stream()
+                .findFirst();
+    }
+
+    Stream<RawMigrationScript<ScriptMigrationContent>> read(BufferedReader reader, String filename) throws IOException {
         StringBuilder sb = new StringBuilder();
         int ch;
         while ((ch = reader.read()) != -1) {
@@ -173,7 +246,7 @@ public class MigrationScriptReaderImpl implements MigrationScriptReader {
             content = content.substring(0, content.length() - lineSeparator.length());
         }
 
-        return Stream.of(new RawMigrationScript().setFileName(filename).setContent(content));
+        return Stream.of(new RawMigrationScript<ScriptMigrationContent>().setFileName(filename).setContent(new ScriptMigrationContent(content)));
     }
 
     private boolean hasValidSuffix(String path) {

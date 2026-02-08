@@ -1,8 +1,8 @@
 package com.senacor.elasticsearch.evolution.core.test;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
-import com.senacor.elasticsearch.evolution.rest.abstracion.os.restclient.EvolutionOpenSearchRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.os.restclient.EvolutionOpenSearchRestClient;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -157,7 +157,7 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
                         start(elasticsearchContainer, searchContainer.getInfo());
                         final RestClient restClient = createRestClient(searchContainer.getInfo(), elasticsearchContainer);
                         final OpenSearchClient openSearchClient = createOpenSearchClient(restClient);
-                        final EvolutionRestClient evolutionRestClient = new EvolutionOpenSearchRestClient(restClient);
+                        final EvolutionRestClient<?> evolutionRestClient = new EvolutionOpenSearchRestClient(restClient);
                         final EsUtils esUtils = new EsUtils(restClient, evolutionRestClient, openSearchClient);
                         cleanup(esUtils, searchContainer.getInfo(), openSearchClient, restClient);
                         return Arguments.of(searchContainer.getShortInfo(), esUtils);

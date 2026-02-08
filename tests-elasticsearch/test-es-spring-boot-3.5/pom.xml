@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.senacor.elasticsearch.evolution</groupId>
 	<artifactId>test-es-spring-boot-3.5</artifactId>
-	<version>0.9.1-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<description>Demo project for Spring Boot</description>
 
 	<properties>
@@ -95,6 +95,18 @@
 						<phase>post-integration-test</phase>
 						<goals>
 							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>dev.jeschke.maven.mockito</groupId>
+				<artifactId>mockito-maven-plugin</artifactId>
+				<version>1.0.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepareAgent</goal>
 						</goals>
 					</execution>
 				</executions>

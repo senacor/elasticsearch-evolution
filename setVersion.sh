@@ -31,7 +31,9 @@ for dir in tests-*/ ; do
     for subdir in "$dir"*/ ; do
       if [ -d "$subdir" ]; then
         # check if a "pom.xml" file exists in this subdirectory
-        if [ -f "$subdir/pom.xml" ]; then
+        # and the subdir is not named `migration-scripts` (this is part of the main project and is already handled above)
+        subdirname=$(basename "$subdir")
+        if [ -f "$subdir/pom.xml" ] && [ "$subdirname" != "migration-scripts" ]; then
           echo "Setting version to '${VERSION}' in directory '$subdir'"
           $MVN_CMD -f "$subdir/pom.xml" versions:set -DgenerateBackupPoms=false -DnewVersion="${VERSION}"
         fi

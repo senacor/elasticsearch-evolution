@@ -32,7 +32,7 @@ class ApplicationTests {
 
         List<String> documents = esUtils.fetchAllDocuments("test_1");
 
-        assertThat(documents).hasSize(1);
+        assertThat(documents).hasSize(2);
     }
 
     @TestConfiguration
@@ -48,7 +48,7 @@ class ApplicationTests {
                     .withEnv("cluster.routing.allocation.disk.watermark.low", "97%")
                     .withEnv("cluster.routing.allocation.disk.watermark.high", "98%")
                     .withEnv("cluster.routing.allocation.disk.watermark.flood_stage", "99%")
-                    .setPortBindings(List.of(OPENSEARCH_PORT + ":9200"));
+                    .setPortBindings(List.of(OPENSEARCH_PORT + ":9200", (OPENSEARCH_PORT + 1000) + ":9300"));
             container.start();
             return container;
         }

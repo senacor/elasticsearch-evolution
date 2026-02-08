@@ -1,6 +1,6 @@
 package com.senacor.elasticsearch.evolution.core.internal.model.migration;
 
-import com.senacor.elasticsearch.evolution.rest.abstracion.HttpMethod;
+import com.senacor.elasticsearch.evolution.rest.abstraction.HttpMethod;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -14,7 +14,7 @@ import java.util.Objects;
  * @author Andreas Keefer
  */
 @ToString
-public class MigrationScriptRequest {
+public final class MigrationScriptRequest implements MigrationRequest {
 
     /**
      * http method,like POST, PUT or DELETE

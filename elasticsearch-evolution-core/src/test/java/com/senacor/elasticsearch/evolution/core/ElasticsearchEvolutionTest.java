@@ -4,10 +4,10 @@ import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.ValidateException;
 import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationService;
-import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.FileNameInfoImpl;
-import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigration;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestClient;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.*;
 class ElasticsearchEvolutionTest {
 
     @Mock
-    private EvolutionRestClient evolutionRestClient;
+    private EvolutionRestClient<?> evolutionRestClient;
 
     @Nested
     class MigrateShould {
@@ -150,7 +150,7 @@ class ElasticsearchEvolutionTest {
                     return migrationService;
                 }
             };
-            final ParsedMigrationScript pendingMigration = new ParsedMigrationScript();
+            final ParsedMigration<?> pendingMigration = new ParsedMigration<>();
             pendingMigration.setFileNameInfo(new FileNameInfoImpl(MigrationVersion.fromVersion("1.0"), "des", "scriptName"));
             when(migrationService.getPendingScriptsToBeExecuted(anyCollection()))
                     .thenReturn(List.of(pendingMigration));
@@ -169,7 +169,7 @@ class ElasticsearchEvolutionTest {
                     return migrationService;
                 }
             };
-            final ParsedMigrationScript pendingMigration = new ParsedMigrationScript();
+            final ParsedMigration<?> pendingMigration = new ParsedMigration<>();
             pendingMigration.setFileNameInfo(new FileNameInfoImpl(MigrationVersion.fromVersion("1.0"), "des", "scriptName"));
             when(migrationService.getPendingScriptsToBeExecuted(anyCollection()))
                     .thenThrow(new MigrationException("MigrationService failure"));

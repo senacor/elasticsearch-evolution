@@ -33,11 +33,11 @@ public class EsUtils {
         String body = restClient.post()
                 .uri("/" + index + "/_search")
                 .body("""
-                        {\
-                            "query": {\
-                                "match_all": {}\
-                            }\
-                        }\
+                        {
+                            "query": {
+                                "match_all": {}
+                            }
+                        }
                         """)
                 .contentType(MediaType.APPLICATION_JSON)
                 .retrieve()
