@@ -2,18 +2,18 @@ package com.senacor.elasticsearch.evolution.core.internal.migration.input;
 
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptParser;
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationVersion;
+import com.senacor.elasticsearch.evolution.core.api.migration.java.JavaMigration;
 import com.senacor.elasticsearch.evolution.core.internal.model.FileNameInfo;
-import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
-import com.senacor.elasticsearch.evolution.core.internal.model.migration.FileNameInfoImpl;
-import com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest;
-import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
-import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
-import com.senacor.elasticsearch.evolution.rest.abstracion.HttpMethod;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.*;
+import com.senacor.elasticsearch.evolution.rest.abstraction.HttpMethod;
+import lombok.NonNull;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireCondition;
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotBlank;
@@ -56,54 +56,60 @@ public class MigrationScriptParserImpl implements MigrationScriptParser {
     }
 
     @Override
-    public Collection<ParsedMigrationScript> parse(Collection<RawMigrationScript> rawMigrationScripts) {
+    public Collection<ParsedMigration<?>> parse(Collection<RawMigrationScript<?>> rawMigrationScripts) {
         requireNonNull(rawMigrationScripts, "rawMigrationScripts must not be null");
         return rawMigrationScripts.stream()
                 .map(this::parse)
-                .toList();
+                .collect(Collectors.toUnmodifiableList());
     }
 
-    ParsedMigrationScript parse(RawMigrationScript rawMigrationScript) {
+    ParsedMigration<?> parse(RawMigrationScript<?> rawMigrationScript) {
+        if (rawMigrationScript.getContent() instanceof ScriptMigrationContent scriptMigrationContent) {
+            return new ParsedMigration<>()
+                    .setFileNameInfo(parseFileNameFromScriptMigration(rawMigrationScript.getFileName()))
+                    .setChecksum(rawMigrationScript.getContent().checksum())
+                    .setMigrationRequest(parseContent(scriptMigrationContent));
+        } else if (rawMigrationScript.getContent() instanceof JavaMigrationRequestContent javaMigrationRequestContent) {
+            return new ParsedMigration<>()
+                    .setFileNameInfo(parseFileNameFromJavaMigration(rawMigrationScript.getFileName(), javaMigrationRequestContent.javaMigration()))
+                    .setChecksum(rawMigrationScript.getContent().checksum())
+                    .setMigrationRequest(javaMigrationRequestContent);
+        }
 
-        return new ParsedMigrationScript()
-                .setFileNameInfo(parseFileName(rawMigrationScript.getFileName()))
-                .setChecksum(rawMigrationScript.getContent().hashCode())
-                .setMigrationScriptRequest(parseContent(rawMigrationScript));
+        throw new IllegalStateException("Unsupported migration content type: '%s'".formatted(rawMigrationScript.getContent().getClass().getName()));
     }
 
-    private MigrationScriptRequest parseContent(RawMigrationScript script) {
+    private MigrationScriptRequest parseContent(ScriptMigrationContent scriptMigrationContent) {
         String contentReplaced = placeholderReplacement
-                ? replaceParams(script.getContent())
-                : script.getContent();
+                ? replaceParams(scriptMigrationContent.content())
+                : scriptMigrationContent.content();
         MigrationScriptRequest res = new MigrationScriptRequest();
 
         final AtomicReference<ParseState> state = new AtomicReference<>(ParseState.METHOD_PATH);
         for (String line : contentReplaced.split(lineSeparator, -1)) {
             if (!line.trim().startsWith("#") && !line.trim().startsWith("//")) {
                 switch (state.get()) {
-                    case METHOD_PATH:
+                    case METHOD_PATH -> {
                         parseMethodWithPath(res, line);
                         state.set(ParseState.HEADER);
-                        break;
-                    case HEADER:
+                    }
+                    case HEADER -> {
                         if (line.trim().isEmpty()) {
                             state.set(ParseState.CONTENT);
                         } else {
                             parseHeader(res, line);
                         }
-                        break;
-                    case CONTENT:
+                    }
+                    case CONTENT -> {
                         if (!res.isBodyEmpty()) {
                             res.addToBody(lineSeparator);
                         }
                         res.addToBody(line);
-                        break;
-                    default:
-                        throw new UnsupportedOperationException("state '" + state + "' not supportet");
+                    }
+                    default -> throw new UnsupportedOperationException("state '" + state + "' not supported");
                 }
             }
         }
-
         return res;
     }
 
@@ -128,11 +134,28 @@ public class MigrationScriptParserImpl implements MigrationScriptParser {
                 .setPath(methodAndPath[1].trim());
     }
 
-    FileNameInfo parseFileName(String fileName) {
+    FileNameInfo parseFileNameFromScriptMigration(String fileName) {
         return parseFileName(fileName,
                 esMigrationPrefix,
                 VERSION_DESCRIPTION_SEPARATOR,
                 esMigrationSuffixes);
+    }
+
+    private FileNameInfo parseFileNameFromJavaMigration(String fileName,
+                                                        @NonNull JavaMigration javaMigration) {
+        if (javaMigration.getMetadata() != null) {
+            // Use version and description from JavaMigration implementation
+            final MigrationVersion version = requireMajorVersionIsGreaterThan0(javaMigration.getMetadata().version(), fileName);
+            final String description = requireNotBlank(javaMigration.getMetadata().description(),
+                    "defined description in JavaMigration file '%s' must not be blank", fileName);
+            return new FileNameInfoImpl(version, description, fileName);
+        }
+
+        // determine version and description from file name ignoring the suffixes
+        return parseFileName(fileName,
+                esMigrationPrefix,
+                VERSION_DESCRIPTION_SEPARATOR,
+                List.of(""));
     }
 
     String replaceParams(String template) {
@@ -151,7 +174,7 @@ public class MigrationScriptParserImpl implements MigrationScriptParser {
      * @param suffixes      The migration suffixes
      * @return The extracted schema version.
      */
-    FileNameInfo parseFileName(String migrationName,
+    private FileNameInfo parseFileName(String migrationName,
                                String prefix,
                                String separator,
                                List<String> suffixes) {
@@ -173,12 +196,16 @@ public class MigrationScriptParserImpl implements MigrationScriptParser {
                         + "' (It must contain a version and should look like this: "
                         + prefix + "1.2" + separator + description + suffixes.get(0) + ")");
 
-        MigrationVersion migrationVersion = MigrationVersion.fromVersion(version);
-        requireCondition(migrationVersion,
+        MigrationVersion migrationVersion = requireMajorVersionIsGreaterThan0(MigrationVersion.fromVersion(version), migrationName);
+        return new FileNameInfoImpl(migrationVersion, description, migrationName);
+    }
+
+    private static MigrationVersion requireMajorVersionIsGreaterThan0(MigrationVersion migrationVersion,
+                                                                      String migrationName) {
+        return requireCondition(migrationVersion,
                 vers -> vers.isMajorNewerThan("0"),
                 "used version '%s' in migration file '%s' is not allowed. Major version must be greater than 0",
                 migrationVersion, migrationName);
-        return new FileNameInfoImpl(migrationVersion, description, migrationName);
     }
 
     /**

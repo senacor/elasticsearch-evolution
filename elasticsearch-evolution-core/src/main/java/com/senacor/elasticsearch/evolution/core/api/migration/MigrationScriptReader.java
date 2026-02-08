@@ -9,9 +9,9 @@ import java.util.List;
  */
 public interface MigrationScriptReader {
     /**
-     * Reads all migration scrips to {@link RawMigrationScript}'s objects.
+     * Reads all migrations to {@link RawMigrationScript}'s objects.
      *
      * @return List of {@link RawMigrationScript}'s
      */
-    List<RawMigrationScript> read();
+    List<RawMigrationScript<?>> read();
 }

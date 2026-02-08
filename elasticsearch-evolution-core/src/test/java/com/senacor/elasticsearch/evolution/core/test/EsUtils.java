@@ -2,7 +2,7 @@ package com.senacor.elasticsearch.evolution.core.test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestClient;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ public class EsUtils {
     @NonNull
     private final RestClient restClient;
     @NonNull
-    private final EvolutionRestClient evolutionRestClient;
+    private final EvolutionRestClient<?> evolutionRestClient;
     @NonNull
     private final OpenSearchClient openSearchClient;
 

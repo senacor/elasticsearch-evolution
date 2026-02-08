@@ -1,19 +1,25 @@
 package com.senacor.elasticsearch.evolution.core.internal.migration.execution;
 
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
+import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationService;
-import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationVersion;
+import com.senacor.elasticsearch.evolution.core.api.migration.java.Context;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
-import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.JavaMigrationRequestContent;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigration;
 import com.senacor.elasticsearch.evolution.core.internal.utils.RandomUtils;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestResponse;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestResponse;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -33,10 +39,11 @@ public class MigrationServiceImpl implements MigrationService {
     private final HistoryRepository historyRepository;
     private final int waitUntilUnlockedMinTimeInMillis;
     private final int waitUntilUnlockedMaxTimeInMillis;
-    private final EvolutionRestClient restClient;
+    private final EvolutionRestClient<?> restClient;
     private final String defaultContentType;
     private final Charset encoding;
     private final boolean validateOnMigrate;
+    private final ElasticsearchEvolutionConfig config;
     private final boolean outOfOrder;
 
     private final String baselineVersion;
@@ -44,29 +51,26 @@ public class MigrationServiceImpl implements MigrationService {
     public MigrationServiceImpl(HistoryRepository historyRepository,
                                 int waitUntilUnlockedMinTimeInMillis,
                                 int waitUntilUnlockedMaxTimeInMillis,
-                                EvolutionRestClient restClient,
-                                String defaultContentType,
-                                Charset encoding,
-                                boolean validateOnMigrate,
-                                String baselineVersion,
-                                boolean outOfOrder) {
+                                EvolutionRestClient<?> restClient,
+                                @NonNull ElasticsearchEvolutionConfig config) {
         this.historyRepository = requireNonNull(historyRepository, "historyRepository must not be null");
         this.restClient = requireNonNull(restClient, "restClient must not be null");
-        this.defaultContentType = requireNonNull(defaultContentType);
-        this.encoding = requireNonNull(encoding);
-        this.validateOnMigrate = validateOnMigrate;
+        this.defaultContentType = requireNonNull(config.getDefaultContentType());
+        this.encoding = requireNonNull(config.getEncoding());
+        this.validateOnMigrate = config.isValidateOnMigrate();
+        this.config = config;
         this.waitUntilUnlockedMinTimeInMillis = requireCondition(waitUntilUnlockedMinTimeInMillis,
                 min -> min >= 0 && min <= waitUntilUnlockedMaxTimeInMillis,
                 "waitUntilUnlockedMinTimeInMillis (%s) must not be negative and must not be greater than waitUntilUnlockedMaxTimeInMillis (%s)",
                 waitUntilUnlockedMinTimeInMillis, waitUntilUnlockedMaxTimeInMillis);
         this.waitUntilUnlockedMaxTimeInMillis = waitUntilUnlockedMaxTimeInMillis;
-        this.baselineVersion = baselineVersion;
-        this.outOfOrder = outOfOrder;
+        this.baselineVersion = config.getBaselineVersion();
+        this.outOfOrder = config.isOutOfOrder();
     }
 
     @Override
     @NonNull
-    public List<MigrationScriptProtocol> executePendingScripts(@NonNull Collection<ParsedMigrationScript> migrationScripts)
+    public List<MigrationScriptProtocol> executePendingScripts(@NonNull Collection<ParsedMigration<?>> migrationScripts)
             throws MigrationException {
         if (!getPendingScriptsToBeExecuted(migrationScripts).isEmpty()) {
             return executePendingScriptsWithLock(migrationScripts);
@@ -75,7 +79,7 @@ public class MigrationServiceImpl implements MigrationService {
         }
     }
 
-    private List<MigrationScriptProtocol> executePendingScriptsWithLock(Collection<ParsedMigrationScript> migrationScripts)
+    private List<MigrationScriptProtocol> executePendingScriptsWithLock(Collection<ParsedMigration<?>> migrationScripts)
             throws MigrationException {
         final List<MigrationScriptProtocol> executedScripts = new ArrayList<>();
         try {
@@ -87,14 +91,14 @@ public class MigrationServiceImpl implements MigrationService {
             }
 
             // get scripts which needs to be executed
-            List<ParsedMigrationScript> scriptsToExecute = getPendingScriptsToBeExecuted(migrationScripts);
+            List<ParsedMigration<?>> scriptsToExecute = getPendingScriptsToBeExecuted(migrationScripts);
 
             // now execute scripts and write protocols to history index
-            for (ParsedMigrationScript script : scriptsToExecute) {
+            for (ParsedMigration<?> script : scriptsToExecute) {
                 // execute scripts
-                ExecutionResult res = executeScript(script);
+                ExecutionResult res = executeMigration(script);
                 MigrationScriptProtocol executedScriptProtocol = res.getProtocol();
-                logger.info("executed migration script {}", executedScriptProtocol);
+                logger.info("executed migration {}", executedScriptProtocol);
                 executedScripts.add(executedScriptProtocol);
                 // write protocols to history index
                 historyRepository.saveOrUpdate(executedScriptProtocol);
@@ -112,62 +116,70 @@ public class MigrationServiceImpl implements MigrationService {
     }
 
     /**
-     * executes the given script and returns a protocol ready to save in the history index
+     * executes the given migrations and returns a protocol ready to save in the history index
      *
-     * @param scriptToExecute the script
+     * @param migrationToExecute the migrations to execute
      * @return unsaved protocol
      */
-    ExecutionResult executeScript(ParsedMigrationScript scriptToExecute) {
-        logger.info("executing script {}", scriptToExecute.getFileNameInfo().getScriptName());
+    ExecutionResult executeMigration(ParsedMigration<?> migrationToExecute) {
+        logger.info("executing migration {}", migrationToExecute.getFileNameInfo().getScriptName());
         boolean success = false;
         long startTimeInMillis = System.currentTimeMillis();
         Optional<RuntimeException> error = Optional.empty();
         try {
-            Map<String, String> headers = new HashMap<>(scriptToExecute.getMigrationScriptRequest().getHttpHeader());
-            if (null != scriptToExecute.getMigrationScriptRequest().getBody()
-                    && !scriptToExecute.getMigrationScriptRequest().getBody().trim().isEmpty()) {
-                String contentType = restClient.getContentType(scriptToExecute.getMigrationScriptRequest().getHttpHeader())
-                        .orElse(defaultContentType);
-                if (!contentType.contains("charset=")) {
-                    logger.debug("no charset is defined for {}, setting to configured encoding {}", scriptToExecute.getFileNameInfo(), encoding);
-                    contentType += "; charset=" + encoding;
+            if (migrationToExecute.getMigrationRequest() instanceof MigrationScriptRequest migrationScriptRequest) {
+                Map<String, String> headers = new HashMap<>(migrationScriptRequest.getHttpHeader());
+                if (null != migrationScriptRequest.getBody()
+                        && !migrationScriptRequest.getBody().trim().isEmpty()) {
+                    String contentType = restClient.getContentType(migrationScriptRequest.getHttpHeader())
+                            .orElse(defaultContentType);
+                    if (!contentType.contains("charset=")) {
+                        logger.debug("no charset is defined for {}, setting to configured encoding {}", migrationToExecute.getFileNameInfo(), encoding);
+                        contentType += "; charset=" + encoding;
+                    }
+                    // remove any existing content-type header (ignore case)
+                    headers.entrySet()
+                            .removeIf(entry -> EvolutionRestClient.HEADER_NAME_CONTENT_TYPE.equalsIgnoreCase(entry.getKey()));
+                    headers.put(EvolutionRestClient.HEADER_NAME_CONTENT_TYPE, contentType);
                 }
-                // remove any existing content-type header (ignore case)
-                headers.entrySet()
-                        .removeIf(entry -> EvolutionRestClient.HEADER_NAME_CONTENT_TYPE.equalsIgnoreCase(entry.getKey()));
-                headers.put(EvolutionRestClient.HEADER_NAME_CONTENT_TYPE, contentType);
-            }
-            EvolutionRestResponse response = restClient.execute(
-                    scriptToExecute.getMigrationScriptRequest().getHttpMethod(),
-                    scriptToExecute.getMigrationScriptRequest().getPath(),
-                    headers,
-                    null,
-                    scriptToExecute.getMigrationScriptRequest().getBody()
-            );
+                EvolutionRestResponse response = restClient.execute(
+                        migrationScriptRequest.getHttpMethod(),
+                        migrationScriptRequest.getPath(),
+                        headers,
+                        null,
+                        migrationScriptRequest.getBody()
+                );
 
-            int statusCode = response.statusCode();
-            if (statusCode >= 200 && statusCode < 300) {
+                int statusCode = response.statusCode();
+                if (statusCode >= 200 && statusCode < 300) {
+                    success = true;
+                } else {
+                    error = Optional.of(new MigrationException(
+                            "execution of script '%s' failed with HTTP status %s: %s (body=%s)".formatted(
+                                    migrationToExecute.getFileNameInfo(),
+                                    statusCode,
+                                    response.asString(),
+                                    response.body())));
+                }
+            } else if (migrationToExecute.getMigrationRequest() instanceof JavaMigrationRequestContent javaMigrationRequest) {
+                javaMigrationRequest.javaMigration().migrate(Context.of(config, restClient));
                 success = true;
             } else {
-                error = Optional.of(new MigrationException(
-                        "execution of script '%s' failed with HTTP status %s: %s (body=%s)".formatted(
-                                scriptToExecute.getFileNameInfo(),
-                                statusCode,
-                                response.asString(),
-                                response.body())));
+                throw new IllegalArgumentException("migration request of type '%s' is not supported".formatted(
+                        migrationToExecute.getMigrationRequest().getClass()));
             }
-        } catch (RuntimeException | IOException e) {
-            error = Optional.of(new MigrationException("execution of script '%s' failed".formatted(scriptToExecute.getFileNameInfo()), e));
+        } catch (Exception e) {
+            error = Optional.of(new MigrationException("execution of migration '%s' failed".formatted(migrationToExecute.getFileNameInfo()), e));
         }
 
         return new ExecutionResult(
                 new MigrationScriptProtocol()
                         .setExecutionRuntimeInMillis((int) (System.currentTimeMillis() - startTimeInMillis))
                         .setSuccess(success)
-                        .setVersion(scriptToExecute.getFileNameInfo().getVersion())
-                        .setScriptName(scriptToExecute.getFileNameInfo().getScriptName())
-                        .setDescription(scriptToExecute.getFileNameInfo().getDescription())
-                        .setChecksum(scriptToExecute.getChecksum())
+                        .setVersion(migrationToExecute.getFileNameInfo().getVersion())
+                        .setScriptName(migrationToExecute.getFileNameInfo().getScriptName())
+                        .setDescription(migrationToExecute.getFileNameInfo().getDescription())
+                        .setChecksum(migrationToExecute.getChecksum())
                         .setExecutionTimestamp(OffsetDateTime.now())
                         .setLocked(true),
                 error);
@@ -175,20 +187,20 @@ public class MigrationServiceImpl implements MigrationService {
 
     @Override
     @NonNull
-    public List<ParsedMigrationScript> getPendingScriptsToBeExecuted(@NonNull Collection<ParsedMigrationScript> migrationScripts) throws MigrationException {
+    public List<ParsedMigration<?>> getPendingScriptsToBeExecuted(@NonNull Collection<ParsedMigration<?>> migrationScripts) throws MigrationException {
         if (migrationScripts.isEmpty()) {
             return new ArrayList<>();
         }
 
         // order migrationScripts by version
-        final TreeMap<MigrationVersion, ParsedMigrationScript> scriptsInFilesystemMap = migrationScripts.stream()
+        final TreeMap<MigrationVersion, ParsedMigration<?>> scriptsInFilesystemMap = migrationScripts.stream()
                 .filter(script -> script.getFileNameInfo().getVersion().isAtLeast(baselineVersion))
                 .collect(Collectors.toMap(
                         script -> script.getFileNameInfo().getVersion(),
                         Function.identity(),
                         (oldValue, newValue) -> {
                             throw new MigrationException(
-                                    "There are multiple migration scripts with the same version '%s': [%s, %s]".formatted(
+                                    "There are multiple migrations with the same version '%s': [%s, %s]".formatted(
                                             oldValue.getFileNameInfo().getVersion(),
                                             oldValue.getFileNameInfo().getScriptName(),
                                             newValue.getFileNameInfo().getScriptName()));
@@ -196,11 +208,11 @@ public class MigrationServiceImpl implements MigrationService {
                         TreeMap::new));
 
         List<MigrationScriptProtocol> history = new ArrayList<>(historyRepository.findAll());
-        List<ParsedMigrationScript> res = new ArrayList<>(scriptsInFilesystemMap.values());
+        List<ParsedMigration<?>> res = new ArrayList<>(scriptsInFilesystemMap.values());
         if (outOfOrder) {
             for (MigrationScriptProtocol protocol : history) {
-                final ParsedMigrationScript parsedMigrationScript = scriptsInFilesystemMap.get(protocol.getVersion());
-                if (null == parsedMigrationScript) {
+                final ParsedMigration<?> parsedMigration = scriptsInFilesystemMap.get(protocol.getVersion());
+                if (null == parsedMigration) {
                     logger.warn("""
                             there are less migration scripts than already executed history entries! \
                             You should never delete migration scripts you have already executed. \
@@ -208,15 +220,15 @@ public class MigrationServiceImpl implements MigrationService {
                             Already executed history version {} is not present in migration files\
                             """, protocol.getVersion());
                 } else {
-                    validateOnMigrateIfEnabled(protocol, parsedMigrationScript);
+                    validateOnMigrateIfEnabled(protocol, parsedMigration);
 
                     if (protocol.isSuccess()) {
-                        res.remove(parsedMigrationScript);
+                        res.remove(parsedMigration);
                     }
                 }
             }
         } else {
-            List<ParsedMigrationScript> orderedScripts = new ArrayList<>(scriptsInFilesystemMap.values());
+            List<ParsedMigration<?>> orderedScripts = new ArrayList<>(scriptsInFilesystemMap.values());
             for (int i = 0; i < history.size(); i++) {
                 // do some checks
                 MigrationScriptProtocol protocol = history.get(i);
@@ -229,8 +241,8 @@ public class MigrationServiceImpl implements MigrationService {
                             """, i, protocol.getVersion());
                     break;
                 }
-                ParsedMigrationScript parsedMigrationScript = orderedScripts.get(i);
-                if (!protocol.getVersion().equals(parsedMigrationScript.getFileNameInfo().getVersion())) {
+                ParsedMigration<?> parsedMigration = orderedScripts.get(i);
+                if (!protocol.getVersion().equals(parsedMigration.getFileNameInfo().getVersion())) {
                     throw new MigrationException((
                             """
                             The logged execution in the Elasticsearch-Evolution history index at position %s \
@@ -238,12 +250,12 @@ public class MigrationServiceImpl implements MigrationService {
                             Out of order execution is not supported. Or maybe you have added new migration scripts \
                             in between or have to cleanup the Elasticsearch-Evolution history index manually\
                             """).formatted(
-                            i, protocol.getVersion(), parsedMigrationScript.getFileNameInfo().getVersion()));
+                            i, protocol.getVersion(), parsedMigration.getFileNameInfo().getVersion()));
                 }
-                validateOnMigrateIfEnabled(protocol, parsedMigrationScript);
+                validateOnMigrateIfEnabled(protocol, parsedMigration);
 
                 if (protocol.isSuccess()) {
-                    res.remove(parsedMigrationScript);
+                    res.remove(parsedMigration);
                 }
             }
         }
@@ -252,14 +264,14 @@ public class MigrationServiceImpl implements MigrationService {
     }
 
     private void validateOnMigrateIfEnabled(MigrationScriptProtocol protocol,
-                                            ParsedMigrationScript parsedMigrationScript) {
+                                            ParsedMigration<?> parsedMigration) {
         // failed scripts can be edited and retried, but successfully executed scripts may not be modified afterward
-        if (validateOnMigrate && protocol.isSuccess() && protocol.getChecksum() != parsedMigrationScript.getChecksum()) {
+        if (validateOnMigrate && protocol.isSuccess() && protocol.getChecksum() != parsedMigration.getChecksum()) {
             throw new MigrationException((
                     """
-                    The logged execution for the migration script version %s (%s) \
-                    has a different checksum from the given migration script! \
-                    Modifying already-executed scripts is not supported.\
+                    The logged execution for the migration version %s (%s) \
+                    has a different checksum from the given migration! \
+                    Modifying already-executed migrations is not supported.\
                     """).formatted(
                     protocol.getVersion(), protocol.getScriptName()));
         }
@@ -280,21 +292,11 @@ public class MigrationServiceImpl implements MigrationService {
         }
     }
 
+    @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
     static class ExecutionResult {
+        @Getter
         private final MigrationScriptProtocol protocol;
+        @Getter
         private final Optional<RuntimeException> error;
-
-        private ExecutionResult(MigrationScriptProtocol protocol, Optional<RuntimeException> error) {
-            this.protocol = protocol;
-            this.error = error;
-        }
-
-        public MigrationScriptProtocol getProtocol() {
-            return protocol;
-        }
-
-        public Optional<RuntimeException> getError() {
-            return error;
-        }
     }
 }

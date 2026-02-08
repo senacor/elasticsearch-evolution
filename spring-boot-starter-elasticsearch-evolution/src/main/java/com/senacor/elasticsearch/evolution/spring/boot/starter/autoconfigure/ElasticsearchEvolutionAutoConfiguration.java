@@ -4,11 +4,12 @@ import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
 import com.senacor.elasticsearch.evolution.core.ElasticsearchEvolution;
 import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
-import com.senacor.elasticsearch.evolution.rest.abstracion.esclient.EvolutionESRestClient;
-import com.senacor.elasticsearch.evolution.rest.abstracion.os.genericclient.EvolutionOpenSearchGenericClient;
-import com.senacor.elasticsearch.evolution.rest.abstracion.os.restclient.EvolutionOpenSearchRestClient;
-import com.senacor.elasticsearch.evolution.rest.abstracion.rest5client.EvolutionESRest5Client;
+import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfigImpl;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.esclient.EvolutionESRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.os.genericclient.EvolutionOpenSearchGenericClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.os.restclient.EvolutionOpenSearchRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.rest5client.EvolutionESRest5Client;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
@@ -19,6 +20,7 @@ import org.opensearch.client.transport.TransportOptions;
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -54,7 +56,7 @@ import java.util.List;
         })
 @ConditionalOnProperty(prefix = "spring.elasticsearch.evolution", name = "enabled", havingValue = "true", matchIfMissing = true)
 @ConditionalOnClass(ElasticsearchEvolution.class)
-@EnableConfigurationProperties({ElasticsearchEvolutionConfig.class})
+@EnableConfigurationProperties({ElasticsearchEvolutionConfigImpl.class})
 public class ElasticsearchEvolutionAutoConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchEvolutionAutoConfiguration.class);
@@ -63,7 +65,13 @@ public class ElasticsearchEvolutionAutoConfiguration {
     @ConditionalOnMissingBean
     @ConditionalOnBean(EvolutionRestClient.class)
     public ElasticsearchEvolution elasticsearchEvolution(ElasticsearchEvolutionConfig elasticsearchEvolutionConfig,
-                                                         EvolutionRestClient restClient) {
+                                                         EvolutionRestClient<?> restClient,
+                                                         ObjectProvider<ElasticsearchEvolutionConfigCustomizer> configCustomizers) {
+        if (elasticsearchEvolutionConfig instanceof ElasticsearchEvolutionConfigImpl elasticsearchEvolutionConfigImpl) {
+            configCustomizers.orderedStream()
+                    .forEach(customizer -> customizer.accept(elasticsearchEvolutionConfigImpl));
+        }
+
         return new ElasticsearchEvolution(elasticsearchEvolutionConfig, restClient);
     }
 

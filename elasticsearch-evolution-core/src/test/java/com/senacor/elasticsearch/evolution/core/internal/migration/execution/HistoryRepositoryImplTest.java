@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.test.ArgumentProviders;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestResponse;
-import com.senacor.elasticsearch.evolution.rest.abstracion.HttpMethod;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestResponse;
+import com.senacor.elasticsearch.evolution.rest.abstraction.HttpMethod;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ class HistoryRepositoryImplTest {
     private static final String INDEX = "es_evolution";
 
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-    private EvolutionRestClient evolutionRestClient;
+    private EvolutionRestClient<?> evolutionRestClient;
     private HistoryRepositoryImpl underTest;
 
     @BeforeEach

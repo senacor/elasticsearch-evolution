@@ -1,6 +1,6 @@
 package com.senacor.elasticsearch.evolution.core.internal.migration.execution;
 
-import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

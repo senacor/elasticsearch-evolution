@@ -2,12 +2,12 @@ package com.senacor.elasticsearch.evolution.core.internal.migration.execution;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.ElasticsearchArgumentsProvider;
 import com.senacor.elasticsearch.evolution.core.test.EsUtils;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestClient;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -432,7 +432,7 @@ class HistoryRepositoryImplIT {
         logger.debug("all documents in index '{}': {}", INDEX, esUtils.fetchAllDocuments(INDEX));
     }
 
-    private HistoryRepositoryImpl createHistoryRepositoryImpl(EvolutionRestClient restClient) {
+    private HistoryRepositoryImpl createHistoryRepositoryImpl(EvolutionRestClient<?> restClient) {
         final ObjectMapper objectMapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return new HistoryRepositoryImpl(restClient, INDEX, new MigrationScriptProtocolMapper(), 1000, objectMapper);

@@ -11,7 +11,6 @@ import org.springframework.web.client.RestClient;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,7 +51,7 @@ class ApplicationTests {
                     .withEnv("cluster.routing.allocation.disk.watermark.low", "97%")
                     .withEnv("cluster.routing.allocation.disk.watermark.high", "98%")
                     .withEnv("cluster.routing.allocation.disk.watermark.flood_stage", "99%");
-            container.setPortBindings(Collections.singletonList(ELASTICSEARCH_PORT + ":9200"));
+            container.setPortBindings(List.of(ELASTICSEARCH_PORT + ":9200", (ELASTICSEARCH_PORT + 1000) + ":9300"));
             container.start();
             return container;
         }

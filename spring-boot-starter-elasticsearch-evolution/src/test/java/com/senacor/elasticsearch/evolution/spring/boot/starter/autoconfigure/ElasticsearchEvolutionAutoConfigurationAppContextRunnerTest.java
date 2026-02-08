@@ -3,12 +3,12 @@ package com.senacor.elasticsearch.evolution.spring.boot.starter.autoconfigure;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
 import com.senacor.elasticsearch.evolution.core.ElasticsearchEvolution;
-import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
-import com.senacor.elasticsearch.evolution.rest.abstracion.esclient.EvolutionESRestClient;
-import com.senacor.elasticsearch.evolution.rest.abstracion.os.genericclient.EvolutionOpenSearchGenericClient;
-import com.senacor.elasticsearch.evolution.rest.abstracion.os.restclient.EvolutionOpenSearchRestClient;
-import com.senacor.elasticsearch.evolution.rest.abstracion.rest5client.EvolutionESRest5Client;
+import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfigImpl;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.esclient.EvolutionESRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.os.genericclient.EvolutionOpenSearchGenericClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.os.restclient.EvolutionOpenSearchRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.rest5client.EvolutionESRest5Client;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
                 .withPropertyValues("spring.elasticsearch.evolution.enabled=true")
                 .withUserConfiguration(MockRestClientConfig.class)
                 .run(context -> {
-                    assertThat(context).hasSingleBean(ElasticsearchEvolutionConfig.class)
+                    assertThat(context).hasSingleBean(ElasticsearchEvolutionConfigImpl.class)
                             .hasSingleBean(ElasticsearchEvolution.class);
                 });
     }
@@ -54,7 +54,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
         contextRunner
                 .withUserConfiguration(MockRestClientConfig.class)
                 .run(context -> {
-                    assertThat(context).hasSingleBean(ElasticsearchEvolutionConfig.class)
+                    assertThat(context).hasSingleBean(ElasticsearchEvolutionConfigImpl.class)
                             .hasSingleBean(ElasticsearchEvolution.class);
                 });
     }
@@ -64,7 +64,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
         contextRunner
                 .withPropertyValues("spring.elasticsearch.evolution.enabled=false")
                 .run(context -> {
-                    assertThat(context).doesNotHaveBean(ElasticsearchEvolutionConfig.class)
+                    assertThat(context).doesNotHaveBean(ElasticsearchEvolutionConfigImpl.class)
                             .doesNotHaveBean(ElasticsearchEvolution.class);
                 });
     }
@@ -87,7 +87,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
         contextRunner
                 .withClassLoader(new FilteredClassLoader(EvolutionESRest5Client.class, EvolutionOpenSearchGenericClient.class, EvolutionOpenSearchRestClient.class))
                 .run(context -> {
-                    assertThat(context).hasSingleBean(ElasticsearchEvolutionConfig.class)
+                    assertThat(context).hasSingleBean(ElasticsearchEvolutionConfigImpl.class)
                             .hasSingleBean(RestClient.class)
                             .hasSingleBean(ElasticsearchEvolution.class);
                 });
@@ -305,7 +305,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
     @Configuration
     static class MockRestClientConfig {
         @Bean
-        public EvolutionRestClient evolutionRestClient() {
+        public EvolutionRestClient<?> evolutionRestClient() {
             return mock(EvolutionRestClient.class);
         }
     }
@@ -321,7 +321,7 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
         }
 
         @Bean
-        public EvolutionRestClient evolutionRestClient() {
+        public EvolutionRestClient<?> evolutionRestClient() {
             return mock(EvolutionRestClient.class);
         }
     }
@@ -352,9 +352,9 @@ class ElasticsearchEvolutionAutoConfigurationAppContextRunnerTest {
 
     @Configuration
     static class CustomEvolutionRestClientConfig {
-        final EvolutionRestClient evolutionRestClient = mock(EvolutionRestClient.class);
+        final EvolutionRestClient<?> evolutionRestClient = mock(EvolutionRestClient.class);
         @Bean
-        public EvolutionRestClient evolutionRestClient() {
+        public EvolutionRestClient<?> evolutionRestClient() {
             return evolutionRestClient;
         }
     }

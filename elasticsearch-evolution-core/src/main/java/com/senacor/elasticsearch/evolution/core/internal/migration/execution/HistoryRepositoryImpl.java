@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
-import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationVersion;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestResponse;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestResponse;
 import lombok.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +20,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.senacor.elasticsearch.evolution.core.internal.utils.AssertionUtils.requireNotBlank;
-import static com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient.APPLICATION_JSON_UTF8;
-import static com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient.HEADER_NAME_CONTENT_TYPE;
-import static com.senacor.elasticsearch.evolution.rest.abstracion.HttpMethod.*;
+import static com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestClient.APPLICATION_JSON_UTF8;
+import static com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestClient.HEADER_NAME_CONTENT_TYPE;
+import static com.senacor.elasticsearch.evolution.rest.abstraction.HttpMethod.*;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -35,13 +35,13 @@ public class HistoryRepositoryImpl implements HistoryRepository {
     private static final MigrationVersion INTERNAL_VERSIONS = MigrationVersion.fromVersion("0");
     static final String INDEX_TYPE_DOC = "_doc";
 
-    private final EvolutionRestClient restClient;
+    private final EvolutionRestClient<?> restClient;
     private final String historyIndex;
     private final MigrationScriptProtocolMapper migrationScriptProtocolMapper;
     private final int querySize;
     private final ObjectMapper objectMapper;
 
-    public HistoryRepositoryImpl(EvolutionRestClient restClient,
+    public HistoryRepositoryImpl(EvolutionRestClient<?> restClient,
                                  String historyIndex,
                                  MigrationScriptProtocolMapper migrationScriptProtocolMapper,
                                  int querySize,

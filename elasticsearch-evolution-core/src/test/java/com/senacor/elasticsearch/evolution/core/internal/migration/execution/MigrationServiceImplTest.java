@@ -1,17 +1,22 @@
 package com.senacor.elasticsearch.evolution.core.internal.migration.execution;
 
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
+import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfigImpl;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationVersion;
+import com.senacor.elasticsearch.evolution.core.api.migration.java.Context;
+import com.senacor.elasticsearch.evolution.core.api.migration.java.JavaMigration;
 import com.senacor.elasticsearch.evolution.core.internal.migration.execution.MigrationServiceImpl.ExecutionResult;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.FileNameInfoImpl;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.JavaMigrationRequestContent;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest;
-import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigration;
 import com.senacor.elasticsearch.evolution.core.test.ArgumentProviders;
 import com.senacor.elasticsearch.evolution.core.test.ArgumentProviders.FailingHttpCodesProvider;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestResponse;
-import com.senacor.elasticsearch.evolution.rest.abstracion.HttpMethod;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestResponse;
+import com.senacor.elasticsearch.evolution.rest.abstraction.HttpMethod;
 import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -38,7 +43,7 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.stream.Stream;
 
-import static com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion.fromVersion;
+import static com.senacor.elasticsearch.evolution.core.api.migration.MigrationVersion.fromVersion;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,7 +62,7 @@ class MigrationServiceImplTest {
     @Mock
     private HistoryRepository historyRepository;
     @Mock
-    private EvolutionRestClient restClient;
+    private EvolutionRestClient<?> restClient;
 
     private final Charset encoding = StandardCharsets.UTF_8;
     private final String defaultContentType = ContentType.APPLICATION_JSON.toString();
@@ -75,7 +80,13 @@ class MigrationServiceImplTest {
         void noLockExists() {
             doReturn(false).when(historyRepository).isLocked();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    2000, 2000, restClient, defaultContentType, encoding, true, "1.0", false);
+                    2000, 2000, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
             assertTimeout(Duration.ofSeconds(1), underTest::waitUntilUnlocked);
 
@@ -88,7 +99,13 @@ class MigrationServiceImplTest {
         void LockExistsAndGetsReleased() {
             doReturn(true, false).when(historyRepository).isLocked();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    100, 100, restClient, defaultContentType, encoding, true, "1.0", false);
+                    100, 100, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
             assertTimeout(Duration.ofMillis(300), underTest::waitUntilUnlocked);
 
@@ -104,14 +121,20 @@ class MigrationServiceImplTest {
         void emptyHistory_allScriptsHaveToBeReturned() {
             doReturn(new TreeSet<>()).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
-            ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
-            ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
-            List<ParsedMigrationScript> parsedMigrationScripts = asList(
-                    parsedMigrationScript1_1,
-                    parsedMigrationScript1_0);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
+            ParsedMigration<?> parsedMigration1_1 = createParsedMigrationScript("1.1");
+            ParsedMigration<?> parsedMigration1_0 = createParsedMigrationScript("1.0");
+            List<ParsedMigration<?>> parsedMigrations = asList(
+                    parsedMigration1_1,
+                    parsedMigration1_0);
 
-            List<ParsedMigrationScript> res = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+            List<ParsedMigration<?>> res = underTest.getPendingScriptsToBeExecuted(parsedMigrations);
 
             assertThat(res).hasSize(2);
             assertThat(res.get(0).getFileNameInfo().getVersion()).isEqualTo(fromVersion("1.0"));
@@ -128,13 +151,19 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.1", true)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            List<ParsedMigrationScript> parsedMigrationScripts = asList(
+            List<ParsedMigration<?>> parsedMigrations = asList(
                     createParsedMigrationScript("1.1"),
                     createParsedMigrationScript("1.0"));
 
-            List<ParsedMigrationScript> res = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+            List<ParsedMigration<?>> res = underTest.getPendingScriptsToBeExecuted(parsedMigrations);
 
             assertThat(res).isEmpty();
             InOrder order = inOrder(historyRepository);
@@ -149,18 +178,24 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.1", false)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
-            ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
-            List<ParsedMigrationScript> parsedMigrationScripts = asList(
-                    parsedMigrationScript1_1,
-                    parsedMigrationScript1_0);
+            ParsedMigration<?> parsedMigration1_0 = createParsedMigrationScript("1.0");
+            ParsedMigration<?> parsedMigration1_1 = createParsedMigrationScript("1.1");
+            List<ParsedMigration<?>> parsedMigrations = asList(
+                    parsedMigration1_1,
+                    parsedMigration1_0);
 
-            List<ParsedMigrationScript> res = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+            List<ParsedMigration<?>> res = underTest.getPendingScriptsToBeExecuted(parsedMigrations);
 
             assertThat(res).hasSize(1);
-            assertThat(res.get(0)).isSameAs(parsedMigrationScript1_1);
+            assertThat(res.get(0)).isSameAs(parsedMigration1_1);
             InOrder order = inOrder(historyRepository);
             order.verify(historyRepository).findAll();
             order.verifyNoMoreInteractions();
@@ -174,15 +209,21 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.2", false)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
-            ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
-            List<ParsedMigrationScript> parsedMigrationScripts = asList(
-                    parsedMigrationScript1_1,
-                    parsedMigrationScript1_0);
+            ParsedMigration<?> parsedMigration1_0 = createParsedMigrationScript("1.0");
+            ParsedMigration<?> parsedMigration1_1 = createParsedMigrationScript("1.1");
+            List<ParsedMigration<?>> parsedMigrations = asList(
+                    parsedMigration1_1,
+                    parsedMigration1_0);
 
-            List<ParsedMigrationScript> res = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+            List<ParsedMigration<?>> res = underTest.getPendingScriptsToBeExecuted(parsedMigrations);
 
             assertThat(res).isEmpty();
             InOrder order = inOrder(historyRepository);
@@ -197,17 +238,23 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.1", true)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
-            ParsedMigrationScript parsedMigrationScript1_0_1 = createParsedMigrationScript("1.0.1");
-            ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
-            List<ParsedMigrationScript> parsedMigrationScripts = asList(
-                    parsedMigrationScript1_1,
-                    parsedMigrationScript1_0_1,
-                    parsedMigrationScript1_0);
+            ParsedMigration<?> parsedMigration1_0 = createParsedMigrationScript("1.0");
+            ParsedMigration<?> parsedMigration1_0_1 = createParsedMigrationScript("1.0.1");
+            ParsedMigration<?> parsedMigration1_1 = createParsedMigrationScript("1.1");
+            List<ParsedMigration<?>> parsedMigrations = asList(
+                    parsedMigration1_1,
+                    parsedMigration1_0_1,
+                    parsedMigration1_0);
 
-            assertThatThrownBy(() -> underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts))
+            assertThatThrownBy(() -> underTest.getPendingScriptsToBeExecuted(parsedMigrations))
                     .isInstanceOf(MigrationException.class)
                     .hasMessage("The logged execution in the Elasticsearch-Evolution history index at position 1 is version 1.1 and in the same position in the given migration scripts is version 1.0.1! Out of order execution is not supported. Or maybe you have added new migration scripts in between or have to cleanup the Elasticsearch-Evolution history index manually");
         }
@@ -219,19 +266,25 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.1", true)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", true);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(true));
 
-            ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
-            ParsedMigrationScript parsedMigrationScript1_0_1 = createParsedMigrationScript("1.0.1");
-            ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
-            List<ParsedMigrationScript> parsedMigrationScripts = asList(
-                    parsedMigrationScript1_1,
-                    parsedMigrationScript1_0_1,
-                    parsedMigrationScript1_0);
+            ParsedMigration<?> parsedMigration1_0 = createParsedMigrationScript("1.0");
+            ParsedMigration<?> parsedMigration1_0_1 = createParsedMigrationScript("1.0.1");
+            ParsedMigration<?> parsedMigration1_1 = createParsedMigrationScript("1.1");
+            List<ParsedMigration<?>> parsedMigrations = asList(
+                    parsedMigration1_1,
+                    parsedMigration1_0_1,
+                    parsedMigration1_0);
 
-            final List<ParsedMigrationScript> pendingScriptsToBeExecuted = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+            final List<ParsedMigration<?>> pendingScriptsToBeExecuted = underTest.getPendingScriptsToBeExecuted(parsedMigrations);
             assertThat(pendingScriptsToBeExecuted)
-                    .containsExactly(parsedMigrationScript1_0_1);
+                    .containsExactly(parsedMigration1_0_1);
         }
 
         @Test
@@ -241,17 +294,23 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.1", true)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", true);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(true));
 
-            ParsedMigrationScript parsedMigrationScript1_0_1 = createParsedMigrationScript("1.0.1");
-            ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
-            List<ParsedMigrationScript> parsedMigrationScripts = asList(
-                    parsedMigrationScript1_1,
-                    parsedMigrationScript1_0_1);
+            ParsedMigration<?> parsedMigration1_0_1 = createParsedMigrationScript("1.0.1");
+            ParsedMigration<?> parsedMigration1_1 = createParsedMigrationScript("1.1");
+            List<ParsedMigration<?>> parsedMigrations = asList(
+                    parsedMigration1_1,
+                    parsedMigration1_0_1);
 
-            final List<ParsedMigrationScript> pendingScriptsToBeExecuted = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+            final List<ParsedMigration<?>> pendingScriptsToBeExecuted = underTest.getPendingScriptsToBeExecuted(parsedMigrations);
             assertThat(pendingScriptsToBeExecuted)
-                    .containsExactly(parsedMigrationScript1_0_1);
+                    .containsExactly(parsedMigration1_0_1);
         }
 
         @Test
@@ -261,21 +320,27 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.1", true)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", true);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(true));
 
-            ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0");
-            ParsedMigrationScript parsedMigrationScript1_0_1 = createParsedMigrationScript("1.0.1");
-            ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1");
-            List<ParsedMigrationScript> parsedMigrationScripts = asList(
-                    parsedMigrationScript1_1,
-                    parsedMigrationScript1_0_1,
-                    parsedMigrationScript1_0);
+            ParsedMigration<?> parsedMigration1_0 = createParsedMigrationScript("1.0");
+            ParsedMigration<?> parsedMigration1_0_1 = createParsedMigrationScript("1.0.1");
+            ParsedMigration<?> parsedMigration1_1 = createParsedMigrationScript("1.1");
+            List<ParsedMigration<?>> parsedMigrations = asList(
+                    parsedMigration1_1,
+                    parsedMigration1_0_1,
+                    parsedMigration1_0);
 
-            final List<ParsedMigrationScript> pendingScriptsToBeExecuted = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+            final List<ParsedMigration<?>> pendingScriptsToBeExecuted = underTest.getPendingScriptsToBeExecuted(parsedMigrations);
             assertThat(pendingScriptsToBeExecuted)
                     .containsExactly(
-                            parsedMigrationScript1_0,
-                            parsedMigrationScript1_0_1);
+                            parsedMigration1_0,
+                            parsedMigration1_0_1);
         }
 
         @Test
@@ -285,21 +350,27 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.1", false, 2)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0", 1);
-            ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1", 3);
-            ParsedMigrationScript parsedMigrationScript1_2 = createParsedMigrationScript("1.2", 4);
-            List<ParsedMigrationScript> parsedMigrationScripts = asList(
-                    parsedMigrationScript1_1,
-                    parsedMigrationScript1_0,
-                    parsedMigrationScript1_2);
+            ParsedMigration<?> parsedMigration1_0 = createParsedMigrationScript("1.0", 1);
+            ParsedMigration<?> parsedMigration1_1 = createParsedMigrationScript("1.1", 3);
+            ParsedMigration<?> parsedMigration1_2 = createParsedMigrationScript("1.2", 4);
+            List<ParsedMigration<?>> parsedMigrations = asList(
+                    parsedMigration1_1,
+                    parsedMigration1_0,
+                    parsedMigration1_2);
 
-            List<ParsedMigrationScript> res = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+            List<ParsedMigration<?>> res = underTest.getPendingScriptsToBeExecuted(parsedMigrations);
 
             assertThat(res).hasSize(2);
-            assertThat(res.get(0)).isSameAs(parsedMigrationScript1_1);
-            assertThat(res.get(1)).isSameAs(parsedMigrationScript1_2);
+            assertThat(res.get(0)).isSameAs(parsedMigration1_1);
+            assertThat(res.get(1)).isSameAs(parsedMigration1_2);
             InOrder order = inOrder(historyRepository);
             order.verify(historyRepository).findAll();
             order.verifyNoMoreInteractions();
@@ -312,20 +383,26 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.1", true, 2)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0", 1);
-            ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1", 3);
-            List<ParsedMigrationScript> parsedMigrationScripts = asList(
-                    parsedMigrationScript1_1,
-                    parsedMigrationScript1_0);
+            ParsedMigration<?> parsedMigration1_0 = createParsedMigrationScript("1.0", 1);
+            ParsedMigration<?> parsedMigration1_1 = createParsedMigrationScript("1.1", 3);
+            List<ParsedMigration<?>> parsedMigrations = asList(
+                    parsedMigration1_1,
+                    parsedMigration1_0);
 
-            assertThatThrownBy(() -> underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts))
+            assertThatThrownBy(() -> underTest.getPendingScriptsToBeExecuted(parsedMigrations))
                     .isInstanceOf(MigrationException.class)
                     .hasMessage("""
-                            The logged execution for the migration script version 1.1 (V1.1__1.1.http) \
-                            has a different checksum from the given migration script! \
-                            Modifying already-executed scripts is not supported.\
+                            The logged execution for the migration version 1.1 (V1.1__1.1.http) \
+                            has a different checksum from the given migration! \
+                            Modifying already-executed migrations is not supported.\
                             """);
         }
 
@@ -336,15 +413,21 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.1", true, 2)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, false, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(false)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            ParsedMigrationScript parsedMigrationScript1_0 = createParsedMigrationScript("1.0", 1);
-            ParsedMigrationScript parsedMigrationScript1_1 = createParsedMigrationScript("1.1", 3);
-            List<ParsedMigrationScript> parsedMigrationScripts = asList(
-                    parsedMigrationScript1_1,
-                    parsedMigrationScript1_0);
+            ParsedMigration<?> parsedMigration1_0 = createParsedMigrationScript("1.0", 1);
+            ParsedMigration<?> parsedMigration1_1 = createParsedMigrationScript("1.1", 3);
+            List<ParsedMigration<?>> parsedMigrations = asList(
+                    parsedMigration1_1,
+                    parsedMigration1_0);
 
-            List<ParsedMigrationScript> res = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+            List<ParsedMigration<?>> res = underTest.getPendingScriptsToBeExecuted(parsedMigrations);
 
             assertThat(res).isEmpty();
             InOrder order = inOrder(historyRepository);
@@ -356,13 +439,19 @@ class MigrationServiceImplTest {
         void usingABaseline_onlyScriptsWithVersionHigherThanBaselineWillBeReturned() {
             doReturn(new TreeSet<>()).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "2.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("2.0")
+                            .setOutOfOrder(false));
 
-            List<ParsedMigrationScript> parsedMigrationScripts = asList(
+            List<ParsedMigration<?>> parsedMigrations = asList(
                     createParsedMigrationScript("1.0"),
                     createParsedMigrationScript("2.0"));
 
-            List<ParsedMigrationScript> res = underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+            List<ParsedMigration<?>> res = underTest.getPendingScriptsToBeExecuted(parsedMigrations);
 
             assertThat(res)
                     .hasSize(1)
@@ -375,9 +464,15 @@ class MigrationServiceImplTest {
         @Test
         void noPendingScriptsIfMigrationScriptListIsEmpty() {
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "2.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("2.0")
+                            .setOutOfOrder(false));
 
-            List<ParsedMigrationScript> res = underTest.getPendingScriptsToBeExecuted(emptyList());
+            List<ParsedMigration<?>> res = underTest.getPendingScriptsToBeExecuted(emptyList());
 
             assertThat(res).isEmpty();
             Mockito.verifyNoInteractions(historyRepository);
@@ -386,16 +481,22 @@ class MigrationServiceImplTest {
         @Test
         void duplicateVersions_should_failWithMigrationException() {
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            List<ParsedMigrationScript> parsedMigrationScripts = asList(
+            List<ParsedMigration<?>> parsedMigrations = asList(
                     createParsedMigrationScript("1.0"),
                     createParsedMigrationScript("1.0")
             );
 
-            assertThatThrownBy(() -> underTest.getPendingScriptsToBeExecuted(parsedMigrationScripts))
+            assertThatThrownBy(() -> underTest.getPendingScriptsToBeExecuted(parsedMigrations))
                     .isInstanceOf(MigrationException.class)
-                    .hasMessage("There are multiple migration scripts with the same version '1': [V1.0__1.0.http, V1.0__1.0.http]");
+                    .hasMessage("There are multiple migrations with the same version '1': [V1.0__1.0.http, V1.0__1.0.http]");
         }
     }
 
@@ -403,14 +504,20 @@ class MigrationServiceImplTest {
     class executeScript {
         @Test
         void OK_resultIsSetCorrect() throws IOException {
-            ParsedMigrationScript script = createParsedMigrationScript("1.1");
+            ParsedMigration<MigrationScriptRequest> script = createParsedMigrationScript("1.1");
             EvolutionRestResponse responseMock = createResponseMock(200);
             doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
+            MigrationScriptProtocol res = underTest.executeMigration(script).getProtocol();
 
             OffsetDateTime afterExecution = OffsetDateTime.now();
             assertSoftly(softly -> {
@@ -437,110 +544,137 @@ class MigrationServiceImplTest {
             });
 
             InOrder order = inOrder(historyRepository, restClient);
-            order.verify(restClient).execute(eq(script.getMigrationScriptRequest().getHttpMethod()),
-                    eq(script.getMigrationScriptRequest().getPath()),
+            order.verify(restClient).execute(eq(script.getMigrationRequest().getHttpMethod()),
+                    eq(script.getMigrationRequest().getPath()),
                     anyMap(),
                     isNull(),
-                    eq(script.getMigrationScriptRequest().getBody()));
+                    eq(script.getMigrationRequest().getBody()));
             order.verifyNoMoreInteractions();
         }
 
         @Test
         void OK_requestWithBody() throws IOException {
-            ParsedMigrationScript script = createParsedMigrationScript("1.1");
-            script.getMigrationScriptRequest().setBody("my-body");
+            ParsedMigration<MigrationScriptRequest> script = createParsedMigrationScript("1.1");
+            final MigrationScriptRequest migrationRequest = script.getMigrationRequest();
+            migrationRequest.setBody("my-body");
             EvolutionRestResponse responseMock = createResponseMock(200);
             doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
+            MigrationScriptProtocol res = underTest.executeMigration(script).getProtocol();
 
             assertThat(res.isSuccess()).isTrue();
 
             InOrder order = inOrder(historyRepository, restClient);
             order.verify(restClient).getContentType(anyMap());
-            order.verify(restClient).execute(eq(script.getMigrationScriptRequest().getHttpMethod()),
-                    eq(script.getMigrationScriptRequest().getPath()),
+            order.verify(restClient).execute(eq(migrationRequest.getHttpMethod()),
+                    eq(migrationRequest.getPath()),
                     eq(Map.of(EvolutionRestClient.HEADER_NAME_CONTENT_TYPE, defaultContentType)),
                     isNull(),
-                    eq(script.getMigrationScriptRequest().getBody()));
+                    eq(migrationRequest.getBody()));
             order.verifyNoMoreInteractions();
         }
 
         @Test
         void OK_requestWithCustomContentTypeAndDefaultCharset() throws IOException {
-            ParsedMigrationScript script = createParsedMigrationScript("1.1");
+            ParsedMigration<MigrationScriptRequest> script = createParsedMigrationScript("1.1");
             String contentType = "text/plain";
-            script.getMigrationScriptRequest().setBody("my-body")
+            final MigrationScriptRequest migrationRequest = script.getMigrationRequest();
+            migrationRequest.setBody("my-body")
                     .addHttpHeader("content-type", contentType);
             EvolutionRestResponse responseMock = createResponseMock(200);
             doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
+            MigrationScriptProtocol res = underTest.executeMigration(script).getProtocol();
 
             assertThat(res.isSuccess()).isTrue();
 
             InOrder order = inOrder(historyRepository, restClient);
             order.verify(restClient).getContentType(anyMap());
-            order.verify(restClient).execute(eq(script.getMigrationScriptRequest().getHttpMethod()),
-                    eq(script.getMigrationScriptRequest().getPath()),
+            order.verify(restClient).execute(eq(migrationRequest.getHttpMethod()),
+                    eq(migrationRequest.getPath()),
                     eq(Map.of(EvolutionRestClient.HEADER_NAME_CONTENT_TYPE, contentType + "; charset=" + encoding)),
                     isNull(),
-                    eq(script.getMigrationScriptRequest().getBody()));
+                    eq(migrationRequest.getBody()));
             order.verifyNoMoreInteractions();
         }
 
         @Test
         void OK_requestWithCustomContentTypeAndCustomCharset() throws IOException {
-            ParsedMigrationScript script = createParsedMigrationScript("1.1");
+            ParsedMigration<MigrationScriptRequest> script = createParsedMigrationScript("1.1");
             String contentType = "text/plain; charset=" + StandardCharsets.ISO_8859_1;
-            script.getMigrationScriptRequest().setBody("my-body")
+            final MigrationScriptRequest migrationRequest = script.getMigrationRequest();
+            migrationRequest.setBody("my-body")
                     .addHttpHeader("content-type", contentType);
             EvolutionRestResponse responseMock = createResponseMock(200);
             doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
+            MigrationScriptProtocol res = underTest.executeMigration(script).getProtocol();
 
             assertThat(res.isSuccess()).isTrue();
 
             InOrder order = inOrder(historyRepository, restClient);
             order.verify(restClient).getContentType(anyMap());
-            order.verify(restClient).execute(eq(script.getMigrationScriptRequest().getHttpMethod()),
-                    eq(script.getMigrationScriptRequest().getPath()),
+            order.verify(restClient).execute(eq(migrationRequest.getHttpMethod()),
+                    eq(migrationRequest.getPath()),
                     eq(Map.of(EvolutionRestClient.HEADER_NAME_CONTENT_TYPE, contentType)),
                     isNull(),
-                    eq(script.getMigrationScriptRequest().getBody()));
+                    eq(migrationRequest.getBody()));
             order.verifyNoMoreInteractions();
         }
 
         @Test
         void OK_requestWithCustomHeader() throws IOException {
-            ParsedMigrationScript script = createParsedMigrationScript("1.1");
+            ParsedMigration<MigrationScriptRequest> script = createParsedMigrationScript("1.1");
             String headerKey = "X-Custom-header";
             String headerValue = "custom-value";
-            script.getMigrationScriptRequest()
+            script.getMigrationRequest()
                     .addHttpHeader(headerKey, headerValue);
             EvolutionRestResponse responseMock = createResponseMock(200);
             doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
+            MigrationScriptProtocol res = underTest.executeMigration(script).getProtocol();
 
             assertThat(res.isSuccess()).isTrue();
 
             InOrder order = inOrder(historyRepository, restClient);
-            order.verify(restClient).execute(eq(script.getMigrationScriptRequest().getHttpMethod()),
-                    eq(script.getMigrationScriptRequest().getPath()),
+            order.verify(restClient).execute(eq(script.getMigrationRequest().getHttpMethod()),
+                    eq(script.getMigrationRequest().getPath()),
                     eq(Map.of(headerKey, headerValue)),
                     isNull(),
                     eq(""));
@@ -550,32 +684,44 @@ class MigrationServiceImplTest {
         @ParameterizedTest
         @ArgumentsSource(HandledErrorsProvider.class)
         void executeScript_failed_status(Exception handledError) throws IOException {
-            ParsedMigrationScript script = createParsedMigrationScript("1.1");
+            ParsedMigration<?> script = createParsedMigrationScript("1.1");
             doThrow(handledError).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            ExecutionResult res = underTest.executeScript(script);
+            ExecutionResult res = underTest.executeMigration(script);
 
             assertThat(res.getProtocol().isSuccess()).isFalse();
             assertThat(res.getError()).isNotEmpty();
             assertThat(res.getError().get())
                     .isInstanceOf(MigrationException.class)
-                    .hasMessage("execution of script '%s' failed", script.getFileNameInfo());
+                    .hasMessage("execution of migration '%s' failed", script.getFileNameInfo());
         }
 
         @ParameterizedTest
         @ArgumentsSource(FailingHttpCodesProvider.class)
         void executeScript_failed_status(int httpStatusCode) throws IOException {
-            ParsedMigrationScript script = createParsedMigrationScript("1.1");
+            ParsedMigration<?> script = createParsedMigrationScript("1.1");
             EvolutionRestResponse responseMock = createResponseMock(httpStatusCode);
             doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            ExecutionResult res = underTest.executeScript(script);
+            ExecutionResult res = underTest.executeMigration(script);
 
             assertThat(res.getProtocol().isSuccess()).isFalse();
             assertThat(res.getError()).isNotEmpty();
@@ -589,16 +735,136 @@ class MigrationServiceImplTest {
         @ParameterizedTest
         @ArgumentsSource(ArgumentProviders.SuccessHttpCodesProvider.class)
         void executeScript_OK_status(int httpStatusCode) throws IOException {
-            ParsedMigrationScript script = createParsedMigrationScript("1.1");
+            ParsedMigration<?> script = createParsedMigrationScript("1.1");
             EvolutionRestResponse responseMock = createResponseMock(httpStatusCode);
             doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
-            MigrationScriptProtocol res = underTest.executeScript(script).getProtocol();
+            MigrationScriptProtocol res = underTest.executeMigration(script).getProtocol();
 
             assertThat(res.isSuccess()).isTrue();
+        }
+
+        @Test
+        void OK_JavaMigration_happyPath(@Mock JavaMigration javaMigration) throws Exception {
+            ParsedMigration<JavaMigrationRequestContent> script = new ParsedMigration<JavaMigrationRequestContent>()
+                    .setFileNameInfo(new FileNameInfoImpl(MigrationVersion.fromVersion("1.1"), "description", "V1.1__description"))
+                    .setChecksum(1)
+                    .setMigrationRequest(new JavaMigrationRequestContent(javaMigration));
+
+            final ElasticsearchEvolutionConfigImpl config = new ElasticsearchEvolutionConfigImpl()
+                    .setDefaultContentType(defaultContentType)
+                    .setEncoding(encoding)
+                    .setValidateOnMigrate(true)
+                    .setBaselineVersion("1.0")
+                    .setOutOfOrder(false);
+            MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
+                    0, 0, restClient, config);
+
+            MigrationScriptProtocol res = underTest.executeMigration(script).getProtocol();
+
+            OffsetDateTime afterExecution = OffsetDateTime.now();
+            assertSoftly(softly -> {
+                softly.assertThat(res.getVersion())
+                        .as("version")
+                        .isEqualTo(script.getFileNameInfo().getVersion())
+                        .isNotNull();
+                softly.assertThat(res.getChecksum())
+                        .as("checksum")
+                        .isEqualTo(script.getChecksum())
+                        .isNotNull();
+                softly.assertThat(res.getDescription())
+                        .as("description")
+                        .isEqualTo(script.getFileNameInfo().getDescription())
+                        .isNotNull();
+                softly.assertThat(res.getScriptName())
+                        .as("scriptName")
+                        .isEqualTo(script.getFileNameInfo().getScriptName())
+                        .isNotNull();
+                softly.assertThat(res.isSuccess())
+                        .as("isSuccess")
+                        .isTrue();
+                softly.assertThat(res.isLocked())
+                        .as("isLocked")
+                        .isTrue();
+                softly.assertThat(res.getExecutionRuntimeInMillis())
+                        .as("executionRuntimeInMillis")
+                        .isBetween(0, 200);
+                softly.assertThat(res.getExecutionTimestamp())
+                        .as("executionTimestamp")
+                        .isBetween(afterExecution.minus(200, ChronoUnit.MILLIS), afterExecution);
+            });
+
+            InOrder order = inOrder(historyRepository, restClient, javaMigration);
+            order.verify(javaMigration).migrate(Context.of(config, restClient));
+            order.verifyNoMoreInteractions();
+        }
+
+        @Test
+        void failed_JavaMigration_throwsException(@Mock JavaMigration javaMigration) throws Exception {
+            ParsedMigration<JavaMigrationRequestContent> script = new ParsedMigration<JavaMigrationRequestContent>()
+                    .setFileNameInfo(new FileNameInfoImpl(MigrationVersion.fromVersion("1.1"), "description", "V1.1__description"))
+                    .setChecksum(1)
+                    .setMigrationRequest(new JavaMigrationRequestContent(javaMigration));
+            doThrow(new IOException("Simulated Exception"))
+                    .when(javaMigration).migrate(any());
+
+            final ElasticsearchEvolutionConfigImpl config = new ElasticsearchEvolutionConfigImpl()
+                    .setDefaultContentType(defaultContentType)
+                    .setEncoding(encoding)
+                    .setValidateOnMigrate(true)
+                    .setBaselineVersion("1.0")
+                    .setOutOfOrder(false);
+            MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
+                    0, 0, restClient, config);
+
+
+            MigrationScriptProtocol res = underTest.executeMigration(script).getProtocol();
+
+
+            OffsetDateTime afterExecution = OffsetDateTime.now();
+            assertSoftly(softly -> {
+                softly.assertThat(res.getVersion())
+                        .as("version")
+                        .isEqualTo(script.getFileNameInfo().getVersion())
+                        .isNotNull();
+                softly.assertThat(res.getChecksum())
+                        .as("checksum")
+                        .isEqualTo(script.getChecksum())
+                        .isNotNull();
+                softly.assertThat(res.getDescription())
+                        .as("description")
+                        .isEqualTo(script.getFileNameInfo().getDescription())
+                        .isNotNull();
+                softly.assertThat(res.getScriptName())
+                        .as("scriptName")
+                        .isEqualTo(script.getFileNameInfo().getScriptName())
+                        .isNotNull();
+                softly.assertThat(res.isSuccess())
+                        .as("isSuccess")
+                        .isFalse();
+                softly.assertThat(res.isLocked())
+                        .as("isLocked")
+                        .isTrue();
+                softly.assertThat(res.getExecutionRuntimeInMillis())
+                        .as("executionRuntimeInMillis")
+                        .isBetween(0, 200);
+                softly.assertThat(res.getExecutionTimestamp())
+                        .as("executionTimestamp")
+                        .isBetween(afterExecution.minus(200, ChronoUnit.MILLIS), afterExecution);
+            });
+
+            InOrder order = inOrder(historyRepository, restClient, javaMigration);
+            order.verify(javaMigration).migrate(Context.of(config, restClient));
+            order.verifyNoMoreInteractions();
         }
     }
 
@@ -606,7 +872,7 @@ class MigrationServiceImplTest {
     class executePendingScripts {
         @Test
         void allOK() throws IOException {
-            List<ParsedMigrationScript> scripts = asList(
+            List<ParsedMigration<?>> scripts = asList(
                     createParsedMigrationScript("1.0"),
                     createParsedMigrationScript("1.1"));
             doReturn(false).when(historyRepository).isLocked();
@@ -617,7 +883,13 @@ class MigrationServiceImplTest {
             EvolutionRestResponse responseMock = createResponseMock(200);
             doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
             List<MigrationScriptProtocol> res = underTest.executePendingScripts(scripts);
 
@@ -638,7 +910,7 @@ class MigrationServiceImplTest {
 
         @Test
         void firstExecutionFailed() throws IOException {
-            List<ParsedMigrationScript> scripts = asList(
+            List<ParsedMigration<?>> scripts = asList(
                     createParsedMigrationScript("1.0"),
                     createParsedMigrationScript("1.1"));
             doReturn(false).when(historyRepository).isLocked();
@@ -651,7 +923,13 @@ class MigrationServiceImplTest {
             when(restClient.execute(any(), anyString(), anyMap(), isNull(), anyString()))
                     .thenReturn(responseMock);
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
             assertThatThrownBy(() -> underTest.executePendingScripts(scripts))
                     .isInstanceOf(MigrationException.class)
@@ -672,7 +950,7 @@ class MigrationServiceImplTest {
 
         @Test
         void error_unlockWasNotSuccessful() throws IOException {
-            List<ParsedMigrationScript> scripts = asList(
+            List<ParsedMigration<?>> scripts = asList(
                     createParsedMigrationScript("1.0"),
                     createParsedMigrationScript("1.1"));
             doReturn(false).when(historyRepository).isLocked();
@@ -683,7 +961,13 @@ class MigrationServiceImplTest {
             EvolutionRestResponse responseMock = createResponseMock(200);
             doReturn(responseMock).when(restClient).execute(any(), anyString(), anyMap(), isNull(), anyString());
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
             assertThatThrownBy(() -> underTest.executePendingScripts(scripts))
                     .isInstanceOf(MigrationException.class)
@@ -704,7 +988,7 @@ class MigrationServiceImplTest {
 
         @Test
         void error_lockWasNotSuccessful() {
-            List<ParsedMigrationScript> scripts = asList(
+            List<ParsedMigration<?>> scripts = asList(
                     createParsedMigrationScript("1.0"),
                     createParsedMigrationScript("1.1"));
             doReturn(false).when(historyRepository).isLocked();
@@ -713,7 +997,13 @@ class MigrationServiceImplTest {
             doReturn(new TreeSet<>()).when(historyRepository).findAll();
 
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
             assertThatThrownBy(() -> underTest.executePendingScripts(scripts))
                     .isInstanceOf(MigrationException.class)
@@ -731,7 +1021,13 @@ class MigrationServiceImplTest {
         @Test
         void emptyScriptsCollection() {
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
             List<MigrationScriptProtocol> res = underTest.executePendingScripts(emptyList());
 
@@ -742,7 +1038,7 @@ class MigrationServiceImplTest {
 
         @Test
         void noPendingScripts_shouldNotLockRepository() {
-            List<ParsedMigrationScript> scripts = asList(
+            List<ParsedMigration<?>> scripts = asList(
                     createParsedMigrationScript("1.0"),
                     createParsedMigrationScript("1.1"));
             doReturn(new TreeSet<>(asList(
@@ -750,7 +1046,13 @@ class MigrationServiceImplTest {
                     createMigrationScriptProtocol("1.1", true)
             ))).when(historyRepository).findAll();
             MigrationServiceImpl underTest = new MigrationServiceImpl(historyRepository,
-                    0, 0, restClient, defaultContentType, encoding, true, "1.0", false);
+                    0, 0, restClient,
+                    new ElasticsearchEvolutionConfigImpl()
+                            .setDefaultContentType(defaultContentType)
+                            .setEncoding(encoding)
+                            .setValidateOnMigrate(true)
+                            .setBaselineVersion("1.0")
+                            .setOutOfOrder(false));
 
             List<MigrationScriptProtocol> res = underTest.executePendingScripts(scripts);
 
@@ -781,16 +1083,16 @@ class MigrationServiceImplTest {
                 .setScriptName(createDefaultScriptName(version));
     }
 
-    private ParsedMigrationScript createParsedMigrationScript(String version) {
+    private ParsedMigration<MigrationScriptRequest> createParsedMigrationScript(String version) {
         return createParsedMigrationScript(version, 1);
     }
 
-    private ParsedMigrationScript createParsedMigrationScript(String version, int checksum) {
-        return new ParsedMigrationScript()
+    private ParsedMigration<MigrationScriptRequest> createParsedMigrationScript(String version, int checksum) {
+        return new ParsedMigration<MigrationScriptRequest>()
                 .setFileNameInfo(
                         new FileNameInfoImpl(fromVersion(version), version, createDefaultScriptName(version)))
                 .setChecksum(checksum)
-                .setMigrationScriptRequest(new MigrationScriptRequest()
+                .setMigrationRequest(new MigrationScriptRequest()
                         .setHttpMethod(HttpMethod.DELETE)
                         .setPath("/"));
     }

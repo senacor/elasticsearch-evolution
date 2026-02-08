@@ -2,16 +2,19 @@ package com.senacor.elasticsearch.evolution.core.internal.migration.input;
 
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptParser;
+import com.senacor.elasticsearch.evolution.core.api.migration.MigrationVersion;
+import com.senacor.elasticsearch.evolution.core.api.migration.java.JavaMigration;
+import com.senacor.elasticsearch.evolution.core.api.migration.java.JavaMigrationMetadata;
 import com.senacor.elasticsearch.evolution.core.internal.model.FileNameInfo;
-import com.senacor.elasticsearch.evolution.core.internal.model.MigrationVersion;
-import com.senacor.elasticsearch.evolution.core.internal.model.migration.FileNameInfoImpl;
-import com.senacor.elasticsearch.evolution.core.internal.model.migration.MigrationScriptRequest;
-import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
-import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
-import com.senacor.elasticsearch.evolution.rest.abstracion.HttpMethod;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.*;
+import com.senacor.elasticsearch.evolution.rest.abstraction.HttpMethod;
 import org.assertj.core.util.Maps;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
@@ -23,6 +26,7 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 /**
  * @author Andreas Keefer
  */
+@ExtendWith(MockitoExtension.class)
 class MigrationScriptParserImplTest {
 
     @Nested
@@ -82,7 +86,7 @@ class MigrationScriptParserImplTest {
     @Nested
     class parseFilename {
 
-        private MigrationScriptParserImpl underTest = new MigrationScriptParserImpl(
+        private final MigrationScriptParserImpl underTest = new MigrationScriptParserImpl(
                 "V",
                 Collections.singletonList(".http"),
                 null,
@@ -94,7 +98,7 @@ class MigrationScriptParserImplTest {
         @Test
         void isParsable() {
             String fileName = "V0123.01_0002__my_description text.http";
-            FileNameInfo fileNameInfo = underTest.parseFileName(fileName);
+            FileNameInfo fileNameInfo = underTest.parseFileNameFromScriptMigration(fileName);
 
             assertSoftly(softly -> {
                 softly.assertThat(fileNameInfo.getDescription()).isEqualTo("my description text");
@@ -107,7 +111,7 @@ class MigrationScriptParserImplTest {
         void notMatching_MajorVersionMustBeGreaterThan0() {
             String fileName = "V0.1__my_description text.http";
 
-            assertThatThrownBy(() -> underTest.parseFileName(fileName))
+            assertThatThrownBy(() -> underTest.parseFileNameFromScriptMigration(fileName))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessage("used version '0.1' in migration file '%s' is not allowed. Major version must be greater than 0"
                             , fileName);
@@ -117,7 +121,7 @@ class MigrationScriptParserImplTest {
         void notMatching_otherFileEnding() {
             String fileName = "V0123.01_0002__my_description text.https";
 
-            assertThatThrownBy(() -> underTest.parseFileName(fileName))
+            assertThatThrownBy(() -> underTest.parseFileNameFromScriptMigration(fileName))
                     .isInstanceOf(MigrationException.class)
                     .hasMessage("Wrong versioned migration name format: '%s'. It must end with a configured suffix: '[.http]'"
                             , fileName);
@@ -127,7 +131,7 @@ class MigrationScriptParserImplTest {
         void notMatching_wrongSeparator() {
             String fileName = "V0123.01_0002-my_description text.http";
 
-            assertThatThrownBy(() -> underTest.parseFileName(fileName))
+            assertThatThrownBy(() -> underTest.parseFileNameFromScriptMigration(fileName))
                     .isInstanceOf(MigrationException.class)
                     .hasMessage("Description in migration filename is required: '%s'. It should look like this: 'V1.2__some_desctiption here.http'"
                             , fileName);
@@ -137,7 +141,7 @@ class MigrationScriptParserImplTest {
         void notMatching_wrongVersion() {
             String fileName = "V123.a__my_description text.http";
 
-            assertThatThrownBy(() -> underTest.parseFileName(fileName))
+            assertThatThrownBy(() -> underTest.parseFileNameFromScriptMigration(fileName))
                     .isInstanceOf(MigrationException.class)
                     .hasMessage("Invalid version containing non-numeric characters. Only 0..9 and . are allowed. Invalid version: 123.a");
         }
@@ -145,7 +149,7 @@ class MigrationScriptParserImplTest {
 
     @Nested
     class parseCollection {
-        private MigrationScriptParser underTest = new MigrationScriptParserImpl(
+        private final MigrationScriptParser underTest = new MigrationScriptParserImpl(
                 "V",
                 Collections.singletonList(".http"),
                 null,
@@ -158,12 +162,13 @@ class MigrationScriptParserImplTest {
         void success() {
             String defaultContent = createDefaultContent();
 
-            Collection<ParsedMigrationScript> res = underTest.parse(Arrays.asList(new RawMigrationScript()
+            Collection<ParsedMigration<?>> res = underTest.parse(Arrays.asList(
+                    new RawMigrationScript<>()
                             .setFileName("V1__create.http")
-                            .setContent(defaultContent),
-                    new RawMigrationScript()
+                            .setContent(new ScriptMigrationContent(defaultContent)),
+                    new RawMigrationScript<>()
                             .setFileName("V2__update.http")
-                            .setContent(defaultContent)));
+                            .setContent(new ScriptMigrationContent(defaultContent))));
 
 
             MigrationScriptRequest expectedRequest = new MigrationScriptRequest()
@@ -172,20 +177,20 @@ class MigrationScriptParserImplTest {
                     .setHttpHeader(Map.of("Header", "value"))
                     .addToBody("{" + lineSeparator() + "\"body\":\"value\"" + lineSeparator() + "}");
             assertThat(res).containsExactlyInAnyOrder(
-                    new ParsedMigrationScript()
+                    new ParsedMigration<>()
                             .setChecksum(defaultContent.hashCode())
                             .setFileNameInfo(new FileNameInfoImpl(MigrationVersion.fromVersion("1"), "create", "V1__create.http"))
-                            .setMigrationScriptRequest(expectedRequest),
-                    new ParsedMigrationScript()
+                            .setMigrationRequest(expectedRequest),
+                    new ParsedMigration<>()
                             .setChecksum(defaultContent.hashCode())
                             .setFileNameInfo(new FileNameInfoImpl(MigrationVersion.fromVersion("2"), "update", "V2__update.http"))
-                            .setMigrationScriptRequest(expectedRequest));
+                            .setMigrationRequest(expectedRequest));
         }
     }
 
     @Nested
     class parseSingle {
-        private MigrationScriptParserImpl underTest = new MigrationScriptParserImpl(
+        private final MigrationScriptParserImpl underTest = new MigrationScriptParserImpl(
                 "V",
                 Collections.singletonList(".http"),
                 null,
@@ -199,9 +204,9 @@ class MigrationScriptParserImplTest {
             String defaultContent = createDefaultContent();
 
             String fileName = "V1__create.http";
-            ParsedMigrationScript res = underTest.parse(new RawMigrationScript()
+            ParsedMigration<MigrationScriptRequest> res = (ParsedMigration<MigrationScriptRequest>) underTest.parse(new RawMigrationScript<ScriptMigrationContent>()
                     .setFileName(fileName)
-                    .setContent(defaultContent));
+                    .setContent(new ScriptMigrationContent(defaultContent)));
 
             assertSoftly(softly -> {
                 softly.assertThat(res.getChecksum())
@@ -216,17 +221,17 @@ class MigrationScriptParserImplTest {
                 softly.assertThat(res.getFileNameInfo().getDescription())
                         .as("description")
                         .isEqualTo("create");
-                softly.assertThat(res.getMigrationScriptRequest().getHttpMethod())
+                softly.assertThat(res.getMigrationRequest().getHttpMethod())
                         .as("methot")
                         .isEqualTo(HttpMethod.PUT);
-                softly.assertThat(res.getMigrationScriptRequest().getPath())
+                softly.assertThat(res.getMigrationRequest().getPath())
                         .as("path")
                         .isEqualTo("/");
-                softly.assertThat(res.getMigrationScriptRequest().getHttpHeader())
+                softly.assertThat(res.getMigrationRequest().getHttpHeader())
                         .as("header")
                         .containsEntry("Header", "value")
                         .hasSize(1);
-                softly.assertThat(res.getMigrationScriptRequest().getBody())
+                softly.assertThat(res.getMigrationRequest().getBody())
                         .as("body")
                         .isEqualTo("{" + lineSeparator() + "\"body\":\"value\"" + lineSeparator() + "}");
             });
@@ -239,9 +244,9 @@ class MigrationScriptParserImplTest {
                     "{" + lineSeparator() + "\"body\":\"value\"" + lineSeparator() + "}";
 
             String fileName = "V1__create.http";
-            ParsedMigrationScript res = underTest.parse(new RawMigrationScript()
+            ParsedMigration<MigrationScriptRequest> res = (ParsedMigration<MigrationScriptRequest>) underTest.parse(new RawMigrationScript<ScriptMigrationContent>()
                     .setFileName(fileName)
-                    .setContent(defaultContent));
+                    .setContent(new ScriptMigrationContent(defaultContent)));
 
             assertSoftly(softly -> {
                 softly.assertThat(res.getChecksum())
@@ -256,16 +261,16 @@ class MigrationScriptParserImplTest {
                 softly.assertThat(res.getFileNameInfo().getDescription())
                         .as("description")
                         .isEqualTo("create");
-                softly.assertThat(res.getMigrationScriptRequest().getHttpMethod())
+                softly.assertThat(res.getMigrationRequest().getHttpMethod())
                         .as("methot")
                         .isEqualTo(HttpMethod.PUT);
-                softly.assertThat(res.getMigrationScriptRequest().getPath())
+                softly.assertThat(res.getMigrationRequest().getPath())
                         .as("path")
                         .isEqualTo("/");
-                softly.assertThat(res.getMigrationScriptRequest().getHttpHeader())
+                softly.assertThat(res.getMigrationRequest().getHttpHeader())
                         .as("header")
                         .isEmpty();
-                softly.assertThat(res.getMigrationScriptRequest().getBody())
+                softly.assertThat(res.getMigrationRequest().getBody())
                         .as("body")
                         .isEqualTo("{" + lineSeparator() + "\"body\":\"value\"" + lineSeparator() + "}");
             });
@@ -277,9 +282,9 @@ class MigrationScriptParserImplTest {
                     "Header = value:a";
 
             String fileName = "V1__create.http";
-            ParsedMigrationScript res = underTest.parse(new RawMigrationScript()
+            ParsedMigration<MigrationScriptRequest> res = (ParsedMigration<MigrationScriptRequest>) underTest.parse(new RawMigrationScript<ScriptMigrationContent>()
                     .setFileName(fileName)
-                    .setContent(defaultContent));
+                    .setContent(new ScriptMigrationContent(defaultContent)));
 
             assertSoftly(softly -> {
                 softly.assertThat(res.getChecksum())
@@ -294,17 +299,17 @@ class MigrationScriptParserImplTest {
                 softly.assertThat(res.getFileNameInfo().getDescription())
                         .as("description")
                         .isEqualTo("create");
-                softly.assertThat(res.getMigrationScriptRequest().getHttpMethod())
+                softly.assertThat(res.getMigrationRequest().getHttpMethod())
                         .as("methot")
                         .isEqualTo(HttpMethod.PUT);
-                softly.assertThat(res.getMigrationScriptRequest().getPath())
+                softly.assertThat(res.getMigrationRequest().getPath())
                         .as("path")
                         .isEqualTo("/");
-                softly.assertThat(res.getMigrationScriptRequest().getHttpHeader())
+                softly.assertThat(res.getMigrationRequest().getHttpHeader())
                         .as("header")
                         .containsEntry("Header", "value:a")
                         .hasSize(1);
-                softly.assertThat(res.getMigrationScriptRequest().getBody())
+                softly.assertThat(res.getMigrationRequest().getBody())
                         .as("body")
                         .isBlank();
             });
@@ -315,9 +320,9 @@ class MigrationScriptParserImplTest {
             String defaultContent = "put /";
 
             String fileName = "V1__create.http";
-            ParsedMigrationScript res = underTest.parse(new RawMigrationScript()
+            ParsedMigration<MigrationScriptRequest> res = (ParsedMigration<MigrationScriptRequest>) underTest.parse(new RawMigrationScript<ScriptMigrationContent>()
                     .setFileName(fileName)
-                    .setContent(defaultContent));
+                    .setContent(new ScriptMigrationContent(defaultContent)));
 
             assertSoftly(softly -> {
                 softly.assertThat(res.getChecksum())
@@ -332,16 +337,16 @@ class MigrationScriptParserImplTest {
                 softly.assertThat(res.getFileNameInfo().getDescription())
                         .as("description")
                         .isEqualTo("create");
-                softly.assertThat(res.getMigrationScriptRequest().getHttpMethod())
+                softly.assertThat(res.getMigrationRequest().getHttpMethod())
                         .as("methot")
                         .isEqualTo(HttpMethod.PUT);
-                softly.assertThat(res.getMigrationScriptRequest().getPath())
+                softly.assertThat(res.getMigrationRequest().getPath())
                         .as("path")
                         .isEqualTo("/");
-                softly.assertThat(res.getMigrationScriptRequest().getHttpHeader())
+                softly.assertThat(res.getMigrationRequest().getHttpHeader())
                         .as("header")
                         .isEmpty();
-                softly.assertThat(res.getMigrationScriptRequest().getBody())
+                softly.assertThat(res.getMigrationRequest().getBody())
                         .as("body")
                         .isBlank();
             });
@@ -358,7 +363,7 @@ class MigrationScriptParserImplTest {
             placeholders.put("index", "my-index");
             placeholders.put("auth", "my-auth-key");
 
-            ParsedMigrationScript res = new MigrationScriptParserImpl(
+            ParsedMigration<MigrationScriptRequest> res = (ParsedMigration<MigrationScriptRequest>) new MigrationScriptParserImpl(
                     "V",
                     Collections.singletonList(".http"),
                     placeholders,
@@ -366,9 +371,9 @@ class MigrationScriptParserImplTest {
                     "}",
                     true,
                     "\n")
-                    .parse(new RawMigrationScript()
+                    .parse(new RawMigrationScript<ScriptMigrationContent>()
                             .setFileName(fileName)
-                            .setContent(defaultContent));
+                            .setContent(new ScriptMigrationContent(defaultContent)));
 
             assertSoftly(softly -> {
                 softly.assertThat(res.getChecksum())
@@ -383,16 +388,16 @@ class MigrationScriptParserImplTest {
                 softly.assertThat(res.getFileNameInfo().getDescription())
                         .as("description")
                         .isEqualTo("create");
-                softly.assertThat(res.getMigrationScriptRequest().getHttpMethod())
+                softly.assertThat(res.getMigrationRequest().getHttpMethod())
                         .as("methot")
                         .isEqualTo(HttpMethod.PUT);
-                softly.assertThat(res.getMigrationScriptRequest().getPath())
+                softly.assertThat(res.getMigrationRequest().getPath())
                         .as("path")
                         .isEqualTo("/my-index");
-                softly.assertThat(res.getMigrationScriptRequest().getHttpHeader())
+                softly.assertThat(res.getMigrationRequest().getHttpHeader())
                         .as("header")
                         .containsEntry("Authorization", "my-auth-key");
-                softly.assertThat(res.getMigrationScriptRequest().getBody())
+                softly.assertThat(res.getMigrationRequest().getBody())
                         .as("body")
                         .isEqualTo("{" + lineSeparator() + "\"index\":\"my-index\"" + lineSeparator() + "}");
             });
@@ -407,7 +412,7 @@ class MigrationScriptParserImplTest {
             String fileName = "V1__create.http";
             HashMap<String, String> placeholders = new HashMap<>();
 
-            ParsedMigrationScript res = new MigrationScriptParserImpl(
+            ParsedMigration<MigrationScriptRequest> res = (ParsedMigration<MigrationScriptRequest>) new MigrationScriptParserImpl(
                     "V",
                     Collections.singletonList(".http"),
                     placeholders,
@@ -415,9 +420,9 @@ class MigrationScriptParserImplTest {
                     "}",
                     false,
                     "\n")
-                    .parse(new RawMigrationScript()
+                    .parse(new RawMigrationScript<ScriptMigrationContent>()
                             .setFileName(fileName)
-                            .setContent(defaultContent));
+                            .setContent(new ScriptMigrationContent(defaultContent)));
 
             assertSoftly(softly -> {
                 softly.assertThat(res.getChecksum())
@@ -432,16 +437,16 @@ class MigrationScriptParserImplTest {
                 softly.assertThat(res.getFileNameInfo().getDescription())
                         .as("description")
                         .isEqualTo("create");
-                softly.assertThat(res.getMigrationScriptRequest().getHttpMethod())
+                softly.assertThat(res.getMigrationRequest().getHttpMethod())
                         .as("methot")
                         .isEqualTo(HttpMethod.PUT);
-                softly.assertThat(res.getMigrationScriptRequest().getPath())
+                softly.assertThat(res.getMigrationRequest().getPath())
                         .as("path")
                         .isEqualTo("/my-index");
-                softly.assertThat(res.getMigrationScriptRequest().getHttpHeader())
+                softly.assertThat(res.getMigrationRequest().getHttpHeader())
                         .as("header")
                         .isEmpty();
-                softly.assertThat(res.getMigrationScriptRequest().getBody())
+                softly.assertThat(res.getMigrationRequest().getBody())
                         .as("body")
                         .isEqualTo("{" + lineSeparator() + "\"index\":\"my-index\"" + lineSeparator() + "}" + lineSeparator());
             });
@@ -449,9 +454,9 @@ class MigrationScriptParserImplTest {
 
         @Test
         void failed_MethodAndPathInvalid() {
-            final RawMigrationScript rawMigrationScript = new RawMigrationScript()
+            final RawMigrationScript<?> rawMigrationScript = new RawMigrationScript<ScriptMigrationContent>()
                     .setFileName("V1__create.http")
-                    .setContent("/");
+                    .setContent(new ScriptMigrationContent("/"));
 
             assertThatThrownBy(() -> underTest.parse(rawMigrationScript))
                     .isInstanceOf(MigrationException.class)
@@ -460,9 +465,9 @@ class MigrationScriptParserImplTest {
 
         @Test
         void failed_methodNotSupported() {
-            final RawMigrationScript rawMigrationScript = new RawMigrationScript()
+            final RawMigrationScript<?> rawMigrationScript = new RawMigrationScript<ScriptMigrationContent>()
                     .setFileName("V1__create.http")
-                    .setContent("TRACE /");
+                    .setContent(new ScriptMigrationContent("TRACE /"));
 
             assertThatThrownBy(() -> underTest.parse(rawMigrationScript))
                     .isInstanceOf(IllegalArgumentException.class)
@@ -471,14 +476,57 @@ class MigrationScriptParserImplTest {
 
         @Test
         void failed_headerInvalid() {
-            final RawMigrationScript rawMigrationScript = new RawMigrationScript()
+            final RawMigrationScript<?> rawMigrationScript = new RawMigrationScript<ScriptMigrationContent>()
                     .setFileName("V1__create.http")
-                    .setContent("PUT /" + lineSeparator() + "Header value");
+                    .setContent(new ScriptMigrationContent("PUT /" + lineSeparator() + "Header value"));
 
             assertThatThrownBy(() ->
                     underTest.parse(rawMigrationScript))
                     .isInstanceOf(MigrationException.class)
                     .hasMessage("can't parse header: 'Header value'. Header must be separated by ':' and should look like this: 'Content-Type: application/json'");
+        }
+
+        @Test
+        void should_ParseJavaMigration_fromFileName(@Mock JavaMigration javaMigration) {
+            final JavaMigrationRequestContent content = new JavaMigrationRequestContent(javaMigration);
+            final String fileName = "V1_2__create";
+
+            final ParsedMigration<?> res = underTest.parse(new RawMigrationScript<JavaMigrationRequestContent>()
+                    .setFileName(fileName)
+                    .setContent(content));
+
+            assertThat(res.getMigrationRequest())
+                    .as("MigrationRequest")
+                    .isSameAs(content);
+            assertThat(res.getChecksum())
+                    .as("Checksum")
+                    .isZero();
+            assertThat(res.getFileNameInfo())
+                    .as("FileNameInfo")
+                    .isEqualTo(new FileNameInfoImpl(MigrationVersion.fromVersion("1.2"), "create", fileName));
+        }
+
+        @Test
+        void should_ParseJavaMigration_fromMetadata(@Mock JavaMigration javaMigration) {
+            final JavaMigrationMetadata metadata = new JavaMigrationMetadata(MigrationVersion.fromVersion("3.1"), "my description");
+            Mockito.when(javaMigration.getMetadata())
+                    .thenReturn(metadata);
+            final JavaMigrationRequestContent content = new JavaMigrationRequestContent(javaMigration);
+            final String fileName = "V1_2__create";
+
+            final ParsedMigration<?> res = underTest.parse(new RawMigrationScript<JavaMigrationRequestContent>()
+                    .setFileName(fileName)
+                    .setContent(content));
+
+            assertThat(res.getMigrationRequest())
+                    .as("MigrationRequest")
+                    .isSameAs(content);
+            assertThat(res.getChecksum())
+                    .as("Checksum")
+                    .isZero();
+            assertThat(res.getFileNameInfo())
+                    .as("FileNameInfo")
+                    .isEqualTo(new FileNameInfoImpl(metadata.version(), metadata.description(), fileName));
         }
     }
 

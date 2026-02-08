@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senacor.elasticsearch.evolution.core.api.MigrationException;
 import com.senacor.elasticsearch.evolution.core.api.ValidateException;
 import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfig;
+import com.senacor.elasticsearch.evolution.core.api.config.ElasticsearchEvolutionConfigImpl;
 import com.senacor.elasticsearch.evolution.core.api.migration.HistoryRepository;
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptParser;
 import com.senacor.elasticsearch.evolution.core.api.migration.MigrationScriptReader;
@@ -15,9 +16,9 @@ import com.senacor.elasticsearch.evolution.core.internal.migration.execution.Mig
 import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptParserImpl;
 import com.senacor.elasticsearch.evolution.core.internal.migration.input.MigrationScriptReaderImpl;
 import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.MigrationScriptProtocol;
-import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigrationScript;
+import com.senacor.elasticsearch.evolution.core.internal.model.migration.ParsedMigration;
 import com.senacor.elasticsearch.evolution.core.internal.model.migration.RawMigrationScript;
-import com.senacor.elasticsearch.evolution.rest.abstracion.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +28,7 @@ import java.util.List;
 import static java.util.Objects.requireNonNull;
 
 /**
- * This is the centre point of Elasticsearch-Evolution, and for most users, the only class they will ever have to deal with.
+ * This is the center point of Elasticsearch-Evolution, and for most users, the only class they will ever have to deal with.
  * <p>
  * It is THE public API from which all important Elasticsearch-Evolution functions such as migrate can be called.
  * </p>
@@ -46,7 +47,7 @@ public class ElasticsearchEvolution {
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchEvolution.class);
 
     private final ElasticsearchEvolutionConfig config;
-    private final EvolutionRestClient restClient;
+    private final EvolutionRestClient<?> restClient;
 
     private final MigrationScriptReader migrationScriptReader;
     private final MigrationScriptParser migrationScriptParser;
@@ -65,8 +66,8 @@ public class ElasticsearchEvolution {
      *
      * @return A new configuration from which ElasticsearchEvolution can be loaded.
      */
-    public static ElasticsearchEvolutionConfig configure() {
-        return new ElasticsearchEvolutionConfig();
+    public static ElasticsearchEvolutionConfigImpl configure() {
+        return new ElasticsearchEvolutionConfigImpl();
     }
 
     /**
@@ -76,7 +77,7 @@ public class ElasticsearchEvolution {
      * @param restClient                   REST client to interact with Elasticsearch
      */
     public ElasticsearchEvolution(ElasticsearchEvolutionConfig elasticsearchEvolutionConfig,
-                                  EvolutionRestClient restClient) {
+                                  EvolutionRestClient<?> restClient) {
         this.config = requireNonNull(elasticsearchEvolutionConfig, "elasticsearchEvolutionConfig must not be null")
                 .validate();
         this.restClient = requireNonNull(restClient, "restClient must not be null");
@@ -105,16 +106,16 @@ public class ElasticsearchEvolution {
         if (getConfig().isEnabled()) {
             logger.info("start migration...");
             logger.info("reading migration scripts...");
-            Collection<RawMigrationScript> rawMigrationScripts = migrationScriptReader.read();
+            Collection<RawMigrationScript<?>> rawMigrationScripts = migrationScriptReader.read();
             if (rawMigrationScripts.size() > getConfig().getHistoryMaxQuerySize()) {
                 throw new MigrationException("configured historyMaxQuerySize of '%s' is too low for the number of migration scripts of '%s'".formatted(
                         getConfig().getHistoryMaxQuerySize(), rawMigrationScripts.size()));
             }
 
             logger.info("parsing migration scripts...");
-            Collection<ParsedMigrationScript> parsedMigrationScripts = migrationScriptParser.parse(rawMigrationScripts);
+            Collection<ParsedMigration<?>> parsedMigrations = migrationScriptParser.parse(rawMigrationScripts);
             logger.info("execute migration scripts...");
-            List<MigrationScriptProtocol> executedScripts = migrationService.executePendingScripts(parsedMigrationScripts);
+            List<MigrationScriptProtocol> executedScripts = migrationService.executePendingScripts(parsedMigrations);
             return (int) executedScripts.stream()
                     .filter(MigrationScriptProtocol::isSuccess)
                     .count();
@@ -139,21 +140,21 @@ public class ElasticsearchEvolution {
         if (getConfig().isEnabled()) {
             logger.info("start validate...");
             logger.info("reading migration scripts...");
-            Collection<RawMigrationScript> rawMigrationScripts = migrationScriptReader.read();
+            Collection<RawMigrationScript<?>> rawMigrationScripts = migrationScriptReader.read();
             if (rawMigrationScripts.size() > getConfig().getHistoryMaxQuerySize()) {
                 throw new ValidateException("configured historyMaxQuerySize of '%s' is too low for the number of migration scripts of '%s'".formatted(
                         getConfig().getHistoryMaxQuerySize(), rawMigrationScripts.size()));
             }
 
             logger.info("parsing migration scripts...");
-            Collection<ParsedMigrationScript> parsedMigrationScripts = migrationScriptParser.parse(rawMigrationScripts);
+            Collection<ParsedMigration<?>> parsedMigrations = migrationScriptParser.parse(rawMigrationScripts);
             logger.info("validating migration scripts...");
             try {
-                List<ParsedMigrationScript> pendingScriptsToBeExecuted = migrationService.getPendingScriptsToBeExecuted(parsedMigrationScripts);
+                List<ParsedMigration<?>> pendingScriptsToBeExecuted = migrationService.getPendingScriptsToBeExecuted(parsedMigrations);
 
                 if (!pendingScriptsToBeExecuted.isEmpty()) {
                     throw new ValidateException(pendingScriptsToBeExecuted.stream()
-                            .map(ParsedMigrationScript::getFileNameInfo)
+                            .map(ParsedMigration::getFileNameInfo)
                             .toList());
                 }
             } catch (MigrationException migrationException) {
@@ -169,7 +170,7 @@ public class ElasticsearchEvolution {
         return config;
     }
 
-    protected EvolutionRestClient getRestClient() {
+    protected EvolutionRestClient<?> getRestClient() {
         return restClient;
     }
 
@@ -192,13 +193,7 @@ public class ElasticsearchEvolution {
     }
 
     protected MigrationScriptReader createMigrationScriptReader() {
-        return new MigrationScriptReaderImpl(
-                getConfig().getLocations(),
-                getConfig().getEncoding(),
-                getConfig().getEsMigrationPrefix(),
-                getConfig().getEsMigrationSuffixes(),
-                getConfig().getLineSeparator(),
-                getConfig().isTrimTrailingNewlineInMigrations());
+        return new MigrationScriptReaderImpl(getConfig());
     }
 
     protected HistoryRepository createHistoryRepository() {
@@ -216,10 +211,6 @@ public class ElasticsearchEvolution {
                 1_000,
                 10_000,
                 getRestClient(),
-                getConfig().getDefaultContentType(),
-                getConfig().getEncoding(),
-                getConfig().isValidateOnMigrate(),
-                getConfig().getBaselineVersion(),
-                getConfig().isOutOfOrder());
+                getConfig());
     }
 }
