@@ -440,6 +440,18 @@ public ElasticsearchEvolutionInitializer customElasticsearchEvolutionInitializer
 }
 ```
 
+##### 5.1.3.5 Customize Elasticsearch-Evolution configuration
+
+If you want to customize the Elasticsearch-Evolution configuration after the configuration properties have been applied, you can provide a Spring Bean implementing `ElasticsearchEvolutionConfigCustomizer` like this:
+
+```java
+@Bean
+ElasticsearchEvolutionConfigCustomizer javaMigrationBeansCustomizer(ObjectProvider<JavaMigration> javaMigrations) {
+    // provide additional Java Migrations to Elasticsearch-Evolution managed as Spring Beans
+    return config -> config.setJavaMigrations(javaMigrations.stream().toList());
+}
+```
+
 ### 5.2 Core library
 
 You can set the above configurations via the `ElasticsearchEvolutionConfig` fluent builder like this:
