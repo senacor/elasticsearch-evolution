@@ -454,7 +454,7 @@ ElasticsearchEvolution.configure()
 
 ## 6 Changelog
 
-### v1.0.0
+### v1.0.0-SNAPSHOT
 
 - Support Java Migrations ([#577](https://github.com/senacor/elasticsearch-evolution/issues/577)).
 
