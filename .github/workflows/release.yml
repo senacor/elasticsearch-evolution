@@ -42,10 +42,12 @@ jobs:
       - name: Import GPG key to sign maven build artifacts (this may fail when this job was triggered from an untrusted source because then the required environment variable is not available)
         uses: crazy-max/ghaction-import-gpg@v6
         with:
-          gpg_private_key: ${{ secrets.GPG_SECRET_KEYS }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          gpg_private_key: ${{ secrets.GPG_SECRET_KEYS_NEW }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE_NEW }}
           git_user_signingkey: true
           git_commit_gpgsign: true
+      - name: List gpg keys
+        run: gpg -K
       - name: Set up JDK 17
         # with JDK 11 the maven-javadoc-plugin > 3.0.1 fails with "cannot find symbol org.elasticsearch.*"
         uses: actions/setup-java@v5
@@ -54,10 +56,11 @@ jobs:
           java-version: 17
       - name: Release to maven central
         env:
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE_NEW }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        run: $MVN_CMD deploy -DskipTests=true -Drelease -Dmaven.deploy.skip=true -DskipNexusStagingDeployMojo=true -DskipPublishing=true
+        run: |
+          $MVN_CMD deploy -DskipTests=true -Drelease -Dmaven.deploy.skip=true -DskipNexusStagingDeployMojo=true -DskipPublishing=true
       - name: prepare release version
         run: source prepare_release_version.sh
 
@@ -82,10 +85,12 @@ jobs:
       - name: Import GPG key to sign maven build artifacts
         uses: crazy-max/ghaction-import-gpg@v6
         with:
-          gpg_private_key: ${{ secrets.GPG_SECRET_KEYS }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          gpg_private_key: ${{ secrets.GPG_SECRET_KEYS_NEW }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE_NEW }}
           git_user_signingkey: true
           git_commit_gpgsign: true
+      - name: List gpg keys
+        run: gpg -K
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
@@ -95,10 +100,11 @@ jobs:
         run: ./setNextVersion.sh "${{ github.event.inputs.release_version }}" "${{ github.ref_name }}"
       - name: Release to maven central
         env:
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE_NEW }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-        run: $MVN_CMD deploy -DskipTests=true -Drelease
+        run: |
+          $MVN_CMD deploy -DskipTests=true -Drelease
       - name: prepare release version
         run: source prepare_release_version.sh
       - name: Create Github Release
