@@ -5,7 +5,7 @@
 
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-parent</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -296,8 +296,9 @@
                         <waitPollingInterval>10</waitPollingInterval>
                         <!-- Maximum amount of seconds to waitUntil a state has been reached.
                         Cannot be less than 1800 seconds.
-                        Sometimes the publishing at maven central takes longer than 30 Minutes (Default wait time) -->
-                        <waitMaxTime>3600</waitMaxTime>
+                        Often in rush-times the publishing at maven central takes longer than 30 Minutes (Default wait time)
+                        setting it to 4 hours -->
+                        <waitMaxTime>14400</waitMaxTime>
                     </configuration>
                 </plugin>
                 <plugin>

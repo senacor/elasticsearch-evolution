@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.senacor.elasticsearch.evolution</groupId>
 	<artifactId>test-os-restclient-spring-boot-3.5</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<description>Demo project for Spring Boot with OpenSearch RestClient</description>
 
 	<properties>

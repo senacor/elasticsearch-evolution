@@ -12,6 +12,8 @@
 [![Coverage Status](https://coveralls.io/repos/github/senacor/elasticsearch-evolution/badge.svg?branch=master)](https://coveralls.io/github/senacor/elasticsearch-evolution?branch=master)
 ![Libraries.io dependency status for GitHub repo](https://img.shields.io/librariesio/github/senacor/elasticsearch-evolution)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11573/badge)](https://www.bestpractices.dev/projects/11573)
+<!-- explicitly send a `page` query parameter to Scarf to work around GitHub pre-caching -->
+<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=24949dce-e8ef-4b52-82f1-1b2664b9bbc8&page=README.md" />
 
 <img src="Elasticsearch-Evolution-logo-544x545.png" alt="Elasticsearch-Evolution logo" width="200" height="200" title="Elasticsearch-Evolution logo"/>
 
@@ -58,12 +60,12 @@ and choose an `elasticsearch-evolution-rest-abstraction` implementation (here: E
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>spring-boot-starter-elasticsearch-evolution</artifactId>
-    <version>0.9.0</version>
+    <version>1.0.0</version>
 </dependency>
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
-    <version>0.9.0</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -80,12 +82,12 @@ and choose an `elasticsearch-evolution-rest-abstraction` implementation (here: E
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-core</artifactId>
-    <version>0.9.0</version>
+    <version>1.0.0</version>
 </dependency>
 <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
-    <version>0.9.0</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -133,7 +135,7 @@ Elasticsearch-Evolution uses a REST client abstraction (`EvolutionRestClient`). 
   <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
-    <version>0.9.0</version>
+    <version>1.0.0</version>
   </dependency>
   ```
 * Elasticsearch [Rest5Client](https://central.sonatype.com/artifact/co.elastic.clients/elasticsearch-rest5-client) implementation: `EvolutionESRest5Client` which is designed for Elasticsearch `9.x` and Spring Boot `4.x`.
@@ -141,7 +143,7 @@ Elasticsearch-Evolution uses a REST client abstraction (`EvolutionRestClient`). 
   <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-es-rest5client</artifactId>
-    <version>0.9.0</version>
+    <version>1.0.0</version>
   </dependency>
   ```  
 * OpenSearch [RestClient](https://central.sonatype.com/artifact/org.opensearch.client/opensearch-rest-client) implementation: `EvolutionOpenSearchRestClient` which is designed for OpenSearch `2.x` because the `RestClientTransport` is deprecated for removal since `3.x`.
@@ -149,7 +151,7 @@ Elasticsearch-Evolution uses a REST client abstraction (`EvolutionRestClient`). 
   <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-os-restclient</artifactId>
-    <version>0.9.0</version>
+    <version>1.0.0</version>
   </dependency>
   ```
 * OpenSearch [OpenSearchGenericClient](https://central.sonatype.com/artifact/org.opensearch.client/opensearch-java) implementation: `EvolutionOpenSearchGenericClient` which is designed for OpenSearch `3.x` and later.
@@ -157,7 +159,7 @@ Elasticsearch-Evolution uses a REST client abstraction (`EvolutionRestClient`). 
   <dependency>
     <groupId>com.senacor.elasticsearch.evolution</groupId>
     <artifactId>elasticsearch-evolution-rest-abstraction-os-genericclient</artifactId>
-    <version>0.9.0</version>
+    <version>1.0.0</version>
   </dependency>
   ```  
 
@@ -166,7 +168,7 @@ You can provide your own implementation of `EvolutionRestClient` if you want to 
 <dependency>
   <groupId>com.senacor.elasticsearch.evolution</groupId>
   <artifactId>elasticsearch-evolution-rest-abstraction</artifactId>
-  <version>0.9.0</version>
+  <version>1.0.0</version>
 </dependency>
 ```
 - With the Spring Boot starter, you have to create a bean with your custom `EvolutionRestClient` implementation like this:
@@ -466,7 +468,11 @@ ElasticsearchEvolution.configure()
 
 ## 6 Changelog
 
-### v1.0.0-SNAPSHOT
+### v1.0.1-SNAPSHOT
+
+- ...
+
+### v1.0.0
 
 - Support Java Migrations ([#577](https://github.com/senacor/elasticsearch-evolution/issues/577)).
 
