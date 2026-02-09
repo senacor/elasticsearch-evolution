@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.senacor.elasticsearch.evolution</groupId>
 	<artifactId>test-os-genericclient-spring-boot-3.5</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<description>Demo project for Spring Boot with OpenSearchGenericClient</description>
 
 	<properties>

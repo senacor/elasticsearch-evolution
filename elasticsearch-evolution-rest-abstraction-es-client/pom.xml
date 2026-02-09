@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.senacor.elasticsearch.evolution</groupId>
         <artifactId>elasticsearch-evolution-parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
         <relativePath>../</relativePath>
     </parent>
     <artifactId>elasticsearch-evolution-rest-abstraction-es-client</artifactId>
