@@ -470,7 +470,8 @@ ElasticsearchEvolution.configure()
 
 ### v1.0.1-SNAPSHOT
 
-- ...
+- Added regression tests against OpenSearch 3.5
+- Added regression tests against Elasticsearch 9.3
 
 ### v1.0.0
 
