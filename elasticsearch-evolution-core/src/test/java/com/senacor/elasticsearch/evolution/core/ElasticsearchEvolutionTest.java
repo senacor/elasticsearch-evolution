@@ -45,7 +45,7 @@ class ElasticsearchEvolutionTest {
 
             assertThatThrownBy(underTest::migrate)
                     .isInstanceOf(MigrationException.class)
-                    .hasMessage("configured historyMaxQuerySize of '%s' is too low for the number of migration scripts of '%s'", historyMaxQuerySize, 8);
+                    .hasMessage("configured historyMaxQuerySize of '%s' is too low for the number of migration scripts of '%s'", historyMaxQuerySize, 10);
 
             InOrder order = inOrder(evolutionRestClient);
             order.verify(evolutionRestClient).info();
@@ -101,7 +101,7 @@ class ElasticsearchEvolutionTest {
 
             assertThatThrownBy(underTest::validate)
                     .isInstanceOf(ValidateException.class)
-                    .hasMessage("configured historyMaxQuerySize of '%s' is too low for the number of migration scripts of '%s'", historyMaxQuerySize, 8);
+                    .hasMessage("configured historyMaxQuerySize of '%s' is too low for the number of migration scripts of '%s'", historyMaxQuerySize, 10);
 
             InOrder order = inOrder(evolutionRestClient);
             order.verify(evolutionRestClient).info();
