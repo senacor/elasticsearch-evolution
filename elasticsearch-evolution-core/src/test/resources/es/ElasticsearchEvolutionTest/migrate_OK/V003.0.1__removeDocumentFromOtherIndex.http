@@ -1,0 +1,1 @@
+DELETE /test_2/_doc/1?refresh

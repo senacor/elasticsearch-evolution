@@ -64,10 +64,10 @@ class ElasticsearchEvolutionIT {
         assertSoftly(softly -> {
             softly.assertThat(underTest.migrate())
                     .as("# of successful executed scripts ")
-                    .isEqualTo(8);
+                    .isEqualTo(10);
             softly.assertThat(historyRepository.findAll())
                     .as("# of historyIndex entries and all are successful")
-                    .hasSize(8)
+                    .hasSize(10)
                     .allMatch(MigrationScriptProtocol::isSuccess);
         });
         esUtils.refreshIndices();

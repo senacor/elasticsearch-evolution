@@ -1,9 +1,10 @@
-PUT /test_1/_doc/1?refresh
+PUT /test_2/_doc/1?refresh
 Content-Type: application/json
 
 {
   "searchable": {
-    "version": "1"
+    "version": "1",
+    "locked": false
   },
   "doc": {
     "version": "1",
