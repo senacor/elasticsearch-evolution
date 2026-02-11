@@ -108,10 +108,11 @@
         <!-- Dependency Versions -->
         <commons-io.version>2.21.0</commons-io.version>
         <!--when updating elasticsearch versions, also update "ElasticsearchContainer" version in EmbeddedElasticsearchExtension-->
-        <elasticsearch.version>8.19.10</elasticsearch.version>
+        <elasticsearch.version>8.19.11</elasticsearch.version>
         <elasticsearch-rest5-client.version>9.3.0</elasticsearch-rest5-client.version>
-        <opensearch-java.version>3.5.0</opensearch-java.version>
-        <opensearch-rest-client.version>2.19.4</opensearch-rest-client.version>
+        <opensearch-java3.version>3.5.0</opensearch-java3.version>
+        <opensearch-java2.version>2.26.0</opensearch-java2.version>
+        <opensearch-rest-client2.version>2.19.4</opensearch-rest-client2.version>
         <classgraph.version>4.8.184</classgraph.version>
         <testcontainers.elasticsearch.version>2.0.3</testcontainers.elasticsearch.version>
         <lombok.version>1.18.42</lombok.version>
@@ -164,12 +165,12 @@
             <dependency>
                 <groupId>org.opensearch.client</groupId>
                 <artifactId>opensearch-rest-client</artifactId>
-                <version>${opensearch-rest-client.version}</version>
+                <version>${opensearch-rest-client2.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.opensearch.client</groupId>
                 <artifactId>opensearch-java</artifactId>
-                <version>${opensearch-java.version}</version>
+                <version>${opensearch-java3.version}</version>
             </dependency>
 
             <dependency>

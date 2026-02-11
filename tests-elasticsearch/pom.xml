@@ -14,7 +14,7 @@
     <description>aggregator module for integration test projects with Elasticsearch</description>
 
     <properties>
-        <elasticsearch.version>8.19.10</elasticsearch.version>
+        <elasticsearch.version>8.19.11</elasticsearch.version>
     </properties>
 
     <modules>
