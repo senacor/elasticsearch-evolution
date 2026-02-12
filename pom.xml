@@ -110,7 +110,7 @@
         <!--when updating elasticsearch versions, also update "ElasticsearchContainer" version in EmbeddedElasticsearchExtension-->
         <elasticsearch.version>8.19.10</elasticsearch.version>
         <elasticsearch-rest5-client.version>9.3.0</elasticsearch-rest5-client.version>
-        <opensearch-java.version>3.5.0</opensearch-java.version>
+        <opensearch-java.version>3.6.0</opensearch-java.version>
         <opensearch-rest-client.version>2.19.4</opensearch-rest-client.version>
         <classgraph.version>4.8.184</classgraph.version>
         <testcontainers.elasticsearch.version>2.0.3</testcontainers.elasticsearch.version>
