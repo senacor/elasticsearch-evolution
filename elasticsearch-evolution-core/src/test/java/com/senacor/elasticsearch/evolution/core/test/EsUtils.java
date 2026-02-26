@@ -1,21 +1,21 @@
 package com.senacor.elasticsearch.evolution.core.test;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestResponse;
+import com.senacor.elasticsearch.evolution.rest.abstraction.HttpMethod;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.io.IOUtils;
-import org.opensearch.client.Request;
-import org.opensearch.client.Response;
-import org.opensearch.client.RestClient;
 import org.opensearch.client.opensearch.OpenSearchClient;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -29,15 +29,13 @@ public class EsUtils {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @NonNull
-    private final RestClient restClient;
-    @NonNull
     private final EvolutionRestClient<?> evolutionRestClient;
     @NonNull
     private final OpenSearchClient openSearchClient;
 
     public void refreshIndices() {
         try {
-            restClient.performRequest(new Request("GET", "/_refresh"));
+            evolutionRestClient.execute(HttpMethod.GET, "/_refresh");
         } catch (IOException e) {
             throw new IllegalStateException("refreshIndices failed", e);
         }
@@ -45,21 +43,24 @@ public class EsUtils {
 
     public List<String> fetchAllDocuments(String index) {
         try {
-            Request post = new Request("POST", "/" + index + "/_search");
-            post.setJsonEntity("""
+            EvolutionRestResponse response = evolutionRestClient.execute(
+                    HttpMethod.POST,
+                    "/" + index + "/_search",
+                    Map.of("Content-Type", "application/json"),
+                    null,
+                    """
                     {\
                         "query": {\
                             "match_all": {}\
                         }\
                     }\
                     """);
-            Response response = restClient.performRequest(post);
-            int statusCode = response.getStatusLine().getStatusCode();
+            int statusCode = response.statusCode();
             if (statusCode < 200 || statusCode >= 300) {
                 throw new IllegalStateException("fetchAllDocuments(" + index + ") failed with HTTP status " +
-                        statusCode + ": " + response.toString());
+                        statusCode + ": " + response.asString());
             }
-            String body = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+            String body = response.body().orElse("");
 
             return parseDocuments(body)
                     .toList();
@@ -81,17 +82,69 @@ public class EsUtils {
 
     public void indexDocument(String index, String id, HashMap<String, Object> source) {
         try {
-            final Request indexRequest = new Request("PUT", "/" + index + "/_doc/" + id);
-            indexRequest.setJsonEntity(OBJECT_MAPPER.writeValueAsString(source));
-            final Response res = restClient.performRequest(indexRequest);
-            if (res.getStatusLine().getStatusCode() != 201) {
+            final EvolutionRestResponse res = evolutionRestClient.execute(
+                    HttpMethod.PUT,
+                    "/" + index + "/_doc/" + id,
+                    Map.of("Content-Type", "application/json"),
+                    null,
+                    OBJECT_MAPPER.writeValueAsString(source));
+            if (res.statusCode() != 201) {
                 throw new IllegalStateException("indexDocument failed with status code %s: %s".formatted(
-                        res.getStatusLine().getStatusCode(),
-                        res.getStatusLine().getReasonPhrase()));
+                        res.statusCode(),
+                        res.statusReasonPhrase().orElse("")));
             }
         } catch (IOException e) {
             throw new IllegalStateException("indexDocument failed", e);
         }
     }
-}
 
+    public Set<String> getAllIndices() {
+        try {
+            Map<String, String> params = new HashMap<>();
+            params.put("ignore_unavailable", "true");
+            params.put("allow_no_indices", "true");
+            EvolutionRestResponse response = evolutionRestClient.execute(
+                    HttpMethod.GET,
+                    "/_all",
+                    null,
+                    params,
+                    null);
+            int statusCode = response.statusCode();
+            if (statusCode < 200 || statusCode >= 300) {
+                throw new IllegalStateException("getAllIndices failed with HTTP status " +
+                        statusCode + ": " + response.asString());
+            }
+            if (response.body().isEmpty()) {
+                return Set.of();
+            }
+            Map<String, Object> indices = OBJECT_MAPPER.readValue(response.body().get(), new TypeReference<>() {
+            });
+            return indices.keySet();
+        } catch (IOException e) {
+            throw new IllegalStateException("getAllIndices failed", e);
+        }
+    }
+
+    public void deleteIndices(Set<String> indices) {
+        try {
+            if (null == indices || indices.isEmpty()) {
+                return;
+            }
+            String indexNames = String.join(",", indices);
+            EvolutionRestResponse response = evolutionRestClient.execute(
+                    HttpMethod.DELETE,
+                    "/" + indexNames);
+            int statusCode = response.statusCode();
+            if (statusCode < 200 || statusCode >= 300) {
+                throw new IllegalStateException("deleteIndices failed with HTTP status " +
+                        statusCode + ": " + response.asString());
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("deleteIndices failed", e);
+        }
+    }
+
+    public EvolutionRestResponse deleteAllTemplates() throws IOException {
+        return evolutionRestClient.execute(HttpMethod.DELETE, "/_template/*");
+    }
+}
