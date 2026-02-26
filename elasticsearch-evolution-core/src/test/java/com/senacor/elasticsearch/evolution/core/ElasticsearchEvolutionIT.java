@@ -13,19 +13,17 @@ import com.senacor.elasticsearch.evolution.core.internal.model.dbhistory.Migrati
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension;
 import com.senacor.elasticsearch.evolution.core.test.EmbeddedElasticsearchExtension.ElasticsearchArgumentsProvider;
 import com.senacor.elasticsearch.evolution.core.test.EsUtils;
-import org.apache.commons.io.IOUtils;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestResponse;
+import com.senacor.elasticsearch.evolution.rest.abstraction.HttpMethod;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.opensearch.client.Request;
-import org.opensearch.client.Response;
 import org.opensearch.client.opensearch._types.FieldValue;
 import org.opensearch.client.opensearch.core.SearchResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
@@ -76,9 +74,9 @@ class ElasticsearchEvolutionIT {
                 .doesNotThrowAnyException();
 
         String testIndex = "test_*";
-        Response getIndexResponse = esUtils.getRestClient().performRequest(new Request("GET", "/" + testIndex));
-        String getIndexResponseBody = IOUtils.toString(getIndexResponse.getEntity().getContent(), StandardCharsets.UTF_8);
-        logger.debug("GetIndexResponse: {}; BODY={}", getIndexResponse, getIndexResponseBody);
+        EvolutionRestResponse getIndexResponse = esUtils.getEvolutionRestClient().execute(HttpMethod.GET, "/" + testIndex);
+        String getIndexResponseBody = getIndexResponse.body().orElse("");
+        logger.debug("GetIndexResponse: {}; BODY={}", getIndexResponse.asString(), getIndexResponseBody);
         Map<String, Map<String, Map>> bodyParsed = new ObjectMapper().readValue(getIndexResponseBody,
                 new TypeReference<Map<String, Map<String, Map>>>() {
                 });

@@ -2,6 +2,7 @@ package com.senacor.elasticsearch.evolution.core.test;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestClient;
+import com.senacor.elasticsearch.evolution.rest.abstraction.EvolutionRestResponse;
 import com.senacor.elasticsearch.evolution.rest.abstraction.os.restclient.EvolutionOpenSearchRestClient;
 import lombok.Builder;
 import lombok.NonNull;
@@ -13,12 +14,9 @@ import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
 import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
-import org.opensearch.client.Request;
-import org.opensearch.client.Response;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchClient;
-import org.opensearch.client.opensearch.indices.GetIndexResponse;
 import org.opensearch.client.transport.OpenSearchTransport;
 import org.opensearch.client.transport.rest_client.RestClientTransport;
 import org.slf4j.Logger;
@@ -52,9 +50,9 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
             ofOpensearch("3.4.0"),
             ofOpensearch("2.19.4"),
 
-            ofElasticsearch("9.3.0"),
-            ofElasticsearch("9.2.5"),
-            ofElasticsearch("8.19.11")
+            ofElasticsearch("9.3.1"),
+            ofElasticsearch("9.2.6"),
+            ofElasticsearch("8.19.12")
     )));
 
     @Override
@@ -116,22 +114,16 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     }
 
     private static void cleanup(EsUtils esUtils,
-                                String versionInfo,
-                                OpenSearchClient openSearchClient,
-                                RestClient restClient) {
+                                String versionInfo) {
         logger.debug("cleanup ElasticsearchContainer {}", versionInfo);
         try {
-            // get all indices
-            final GetIndexResponse allIndices = openSearchClient.indices().get(get -> get
-                    .index("_all")
-                    .ignoreUnavailable(true)
-                    .allowNoIndices(true));
-            if (!allIndices.result().isEmpty()) {
-                logger.debug("delete indices {}", allIndices.result().keySet());
-                openSearchClient.indices().delete(builder -> builder.index(List.copyOf((allIndices.result().keySet()))));
+            final Set<String> allIndexNames = esUtils.getAllIndices();
+            if (!allIndexNames.isEmpty()) {
+                logger.debug("delete indices {}", allIndexNames);
+                esUtils.deleteIndices(allIndexNames);
             }
-            Response deleteRes = restClient.performRequest(new Request("DELETE", "/_template/*"));
-            logger.debug("deleted all templates: {}", deleteRes);
+            EvolutionRestResponse deleteRes = esUtils.deleteAllTemplates();
+            logger.debug("deleted all templates: {}", deleteRes.asString());
         } catch (IOException e) {
             throw new IllegalStateException("ElasticsearchContainer cleanup failed", e);
         }
@@ -158,8 +150,8 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
                         final RestClient restClient = createRestClient(searchContainer.getInfo(), elasticsearchContainer);
                         final OpenSearchClient openSearchClient = createOpenSearchClient(restClient);
                         final EvolutionRestClient<?> evolutionRestClient = new EvolutionOpenSearchRestClient(restClient);
-                        final EsUtils esUtils = new EsUtils(restClient, evolutionRestClient, openSearchClient);
-                        cleanup(esUtils, searchContainer.getInfo(), openSearchClient, restClient);
+                        final EsUtils esUtils = new EsUtils(evolutionRestClient, openSearchClient);
+                        cleanup(esUtils, searchContainer.getInfo());
                         return Arguments.of(searchContainer.getShortInfo(), esUtils);
                     });
         }
