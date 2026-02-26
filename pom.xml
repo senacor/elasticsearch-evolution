@@ -108,7 +108,7 @@
         <!-- Dependency Versions -->
         <commons-io.version>2.21.0</commons-io.version>
         <!--when updating elasticsearch versions, also update "ElasticsearchContainer" version in EmbeddedElasticsearchExtension-->
-        <elasticsearch.version>8.19.11</elasticsearch.version>
+        <elasticsearch.version>8.19.12</elasticsearch.version>
         <elasticsearch-rest5-client.version>9.3.1</elasticsearch-rest5-client.version>
         <opensearch-java3.version>3.5.0</opensearch-java3.version>
         <opensearch-java2.version>2.26.0</opensearch-java2.version>
