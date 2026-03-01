@@ -1,8 +1,6 @@
-package com.senacor.elasticsearch.evolution.springboot40;
+package com.senacor.elasticsearch.evolution.springboot41;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledForJreRange;
-import org.junit.jupiter.api.condition.JRE;
 import org.opensearch.testcontainers.OpenSearchContainer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,10 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 @SpringBootTest(properties = {"opensearch.uris=http://localhost:" + ApplicationTests.OPENSEARCH_PORT})
-@EnabledForJreRange(min = JRE.JAVA_21) // spring-data-opensearch-starter requires Java 21+
 class ApplicationTests {
 
-    static final int OPENSEARCH_PORT = 18778;
+    static final int OPENSEARCH_PORT = 18782;
 
     @Autowired
     private EsUtils esUtils;

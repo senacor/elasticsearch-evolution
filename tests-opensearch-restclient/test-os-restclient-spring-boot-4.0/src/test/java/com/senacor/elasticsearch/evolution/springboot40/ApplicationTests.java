@@ -29,7 +29,7 @@ class ApplicationTests {
 
         List<String> documents = esUtils.fetchAllDocuments("test_1");
 
-        assertThat(documents).hasSize(2);
+        assertThat(documents).hasSize(3);
     }
 
     @TestConfiguration
