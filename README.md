@@ -472,6 +472,7 @@ ElasticsearchEvolution.configure()
 
 - Added regression tests against OpenSearch 3.5
 - Added regression tests against Elasticsearch 9.3
+- Added regression tests against Spring Boot 4.1
 
 ### v1.0.0
 
