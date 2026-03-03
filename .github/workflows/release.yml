@@ -40,7 +40,7 @@ jobs:
           # Fetch all history for all tags and branches
           fetch-depth: 0
       - name: Import GPG key to sign maven build artifacts (this may fail when this job was triggered from an untrusted source because then the required environment variable is not available)
-        uses: crazy-max/ghaction-import-gpg@v6
+        uses: crazy-max/ghaction-import-gpg@v7
         with:
           gpg_private_key: ${{ secrets.GPG_SECRET_KEYS_NEW }}
           passphrase: ${{ secrets.GPG_PASSPHRASE_NEW }}
@@ -83,7 +83,7 @@ jobs:
           # use a GitHub deploy key to be able to push to protected master branch: https://stackoverflow.com/a/76135647/6579203
           ssh-key: ${{ secrets.ACTIONS_RELEASE_PUSH_TO_PROTECTED_MASTER_BRANCH_SSH_KEY }}
       - name: Import GPG key to sign maven build artifacts
-        uses: crazy-max/ghaction-import-gpg@v6
+        uses: crazy-max/ghaction-import-gpg@v7
         with:
           gpg_private_key: ${{ secrets.GPG_SECRET_KEYS_NEW }}
           passphrase: ${{ secrets.GPG_PASSPHRASE_NEW }}
