@@ -65,6 +65,6 @@ jobs:
       - name: run SpotBugs
         run: $MVN_CMD install spotbugs:spotbugs -DskipTests=true
       - name: Publish SpotBugs Code Analysis report (this may fail when this job was triggered from an untrusted source because then the required environment variable is not available)
-        uses: lcollins/spotbugs-github-action@v3.1.0
+        uses: lcollins/spotbugs-github-action@v3.2.0
         with:
           path: '**/spotbugsXml.xml'
