@@ -10,7 +10,6 @@
 [![Maven Matrix Build](https://github.com/senacor/elasticsearch-evolution/actions/workflows/maven-matrix.yml/badge.svg)](https://github.com/senacor/elasticsearch-evolution/actions/workflows/maven-matrix.yml)
 [![Quality analysis](https://github.com/senacor/elasticsearch-evolution/actions/workflows/quality.yml/badge.svg)](https://github.com/senacor/elasticsearch-evolution/actions/workflows/quality.yml)
 [![Coverage Status](https://coveralls.io/repos/github/senacor/elasticsearch-evolution/badge.svg?branch=master)](https://coveralls.io/github/senacor/elasticsearch-evolution?branch=master)
-![Libraries.io dependency status for GitHub repo](https://img.shields.io/librariesio/github/senacor/elasticsearch-evolution)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11573/badge)](https://www.bestpractices.dev/projects/11573)
 <!-- explicitly send a `page` query parameter to Scarf to work around GitHub pre-caching -->
 <img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=24949dce-e8ef-4b52-82f1-1b2664b9bbc8&page=README.md" />
