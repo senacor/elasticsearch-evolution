@@ -115,7 +115,7 @@
         <opensearch-rest-client2.version>2.19.4</opensearch-rest-client2.version>
         <classgraph.version>4.8.184</classgraph.version>
         <testcontainers.elasticsearch.version>2.0.3</testcontainers.elasticsearch.version>
-        <lombok.version>1.18.42</lombok.version>
+        <lombok.version>1.18.44</lombok.version>
     </properties>
 
     <dependencyManagement>
