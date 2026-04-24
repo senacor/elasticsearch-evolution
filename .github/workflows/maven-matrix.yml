@@ -40,8 +40,8 @@ jobs:
   build-with-es:
     strategy:
       matrix:
-        elasticsearchVersion: [ "9.3.2", "9.2.7", "9.1.10", "9.0.8",
-                                "8.19.13"]
+        elasticsearchVersion: [ "9.3.3", "9.2.8", "9.1.10", "9.0.8",
+                                "8.19.14"]
       fail-fast: false
     runs-on: ubuntu-24.04
     steps:
