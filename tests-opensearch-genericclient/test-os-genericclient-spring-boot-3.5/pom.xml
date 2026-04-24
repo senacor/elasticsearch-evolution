@@ -17,7 +17,7 @@
 		<java.version>17</java.version>
 
 		<commons-io.version>2.22.0</commons-io.version>
-		<opensearch.version>2.19.4</opensearch.version>
+		<opensearch.version>2.19.5</opensearch.version>
 	</properties>
 
 	<dependencies>
