@@ -106,7 +106,7 @@
         <mockito-maven-plugin.version>1.0.0</mockito-maven-plugin.version>
 
         <!-- Dependency Versions -->
-        <commons-io.version>2.21.0</commons-io.version>
+        <commons-io.version>2.22.0</commons-io.version>
         <!--when updating elasticsearch versions, also update "ElasticsearchContainer" version in EmbeddedElasticsearchExtension-->
         <elasticsearch.version>8.19.13</elasticsearch.version>
         <elasticsearch-rest5-client.version>9.3.3</elasticsearch-rest5-client.version>
