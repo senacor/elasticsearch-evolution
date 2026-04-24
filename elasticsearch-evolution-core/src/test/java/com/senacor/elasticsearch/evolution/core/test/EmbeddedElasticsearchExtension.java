@@ -46,9 +46,9 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedElasticsearchExtension.class);
     private static final Namespace NAMESPACE = Namespace.create(ExtensionContext.class);
     private static final SortedSet<SearchContainer> SUPPORTED_SEARCH_VERSIONS = Collections.unmodifiableSortedSet(new TreeSet<>(Arrays.asList(
+            ofOpensearch("3.6.0"),
             ofOpensearch("3.5.0"),
-            ofOpensearch("3.4.0"),
-            ofOpensearch("2.19.4"),
+            ofOpensearch("2.19.5"),
 
             ofElasticsearch("9.3.3"),
             ofElasticsearch("9.2.8"),
@@ -93,10 +93,6 @@ public class EmbeddedElasticsearchExtension implements TestInstancePostProcessor
         int httpPort = TestSocketUtils.findAvailableTcpPort();
         int transportPort = TestSocketUtils.findAvailableTcpPort();
         container.setPortBindings(Arrays.asList(httpPort + ":9200", transportPort + ":" + searchContainer.transportPort));
-//        container.setWaitStrategy(new HttpWaitStrategy()
-//                .forPort(9200)
-//                .forStatusCodeMatching(response -> response == HTTP_OK || response == HTTP_UNAUTHORIZED)
-//                .withStartupTimeout(ofMinutes(5)));
         container.setWaitStrategy(new LogMessageWaitStrategy()
                 .withRegEx(".*(\"message\":\\s?\"started[\\s?|\"].*|] started\n$)")
                 .withStartupTimeout(ofMinutes(15)));

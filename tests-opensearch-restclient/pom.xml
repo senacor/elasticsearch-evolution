@@ -14,7 +14,7 @@
     <description>aggregator module for integration test projects with opensearch restclient</description>
 
     <properties>
-        <opensearch.version>2.19.4</opensearch.version>
+        <opensearch.version>2.19.5</opensearch.version>
     </properties>
 
     <modules>
