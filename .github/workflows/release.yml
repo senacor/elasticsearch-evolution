@@ -50,7 +50,7 @@ jobs:
         run: gpg -K
       - name: Set up JDK 17
         # with JDK 11 the maven-javadoc-plugin > 3.0.1 fails with "cannot find symbol org.elasticsearch.*"
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: zulu
           java-version: 17
@@ -92,7 +92,7 @@ jobs:
       - name: List gpg keys
         run: gpg -K
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: zulu
           java-version: 17
